@@ -7,7 +7,7 @@
 | | 前端 | 后端 |
 | --- | --- | --- |
 | 目录 | `web/`、`seed/` | `api/`、`ai-worker/` |
-| 负责 | 手机端屏 1–10；合作社电脑看板；Google Maps 圈地块与面积预览；拍照并直传 Storage；Firebase 登录、Hosting、Firestore 安全规则；导出（浏览器打印 PDF、CSV）；200 个模拟地块；演示视频 | C# API：新建地块、保存多边形、登记文件并发上传网址、开始评估、看板统计；AI 服务：Gemini 抽取、规则核对（面积、有效期、姓名）、Earth Engine 森林初筛、缺口清单、红黄绿定级；Cloud Run、Cloud Tasks、Secret Manager、日志 |
+| 负责 | 手机端屏 1–10；合作社电脑看板；Google Maps 圈地块与面积预览；拍照并直传 Storage；Firebase 登录、Hosting、Firestore 安全规则；导出（浏览器打印 PDF、CSV）；200 个模拟地块；演示视频 | Python FastAPI：新建地块、保存多边形、登记文件并发上传网址、开始评估、看板统计；AI 服务：Gemini 抽取、规则核对（面积、有效期、姓名）、Earth Engine 森林初筛、缺口清单、红黄绿定级；Cloud Run、Cloud Tasks、Secret Manager、日志 |
 | 写哪些数据 | 只把照片传到 Storage，Firestore 一律只读、实时订阅 | `plots`、`documents`、`titles` 等由 API 写；`assessments`、`gaps` 和 `plots.status` 只由 AI 服务写 |
 
 **交界只有 `contract/`**：4 个接口的请求与响应、状态值（`pending` / `green` / `yellow` / `red` / `needs_review`）、三份示例 JSON（绿、黄、红）。
