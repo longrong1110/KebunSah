@@ -1,4 +1,4 @@
-# api：ASP.NET Core Web API（后端）
+# api：Python FastAPI（后端）
 
 部署到 Cloud Run 服务 `kebunsah-api`（asia-southeast1）。接口清单见 `contract/api.md`。
 
