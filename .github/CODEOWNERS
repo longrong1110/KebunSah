@@ -1,0 +1,12 @@
+# 开 PR 时自动请对应的人看。把 @PARTNER 换成队友的 GitHub 用户名。
+# 甲 = 用户端与数据，乙 = 评估端与后端（企划书 v3 第 11 章）。
+# 先按 Xiaoye 是甲、队友是乙写的，分工不同就对调。
+
+/web/        @longrong1110
+/seed/       @longrong1110
+# /api/        @PARTNER
+# /ai-worker/  @PARTNER
+
+# 两人共管：改之前先说一声，合并前要对方 Approve
+/contract/   @longrong1110
+/infra/      @longrong1110

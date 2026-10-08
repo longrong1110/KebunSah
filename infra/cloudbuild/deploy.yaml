@@ -1,0 +1,40 @@
+# 合并到 main 后部署：两个 Cloud Run 服务 + Firebase Hosting。
+# 前提：asia-southeast1 已建 Docker 仓库 kebunsah，api/ 与 ai-worker/ 各有 Dockerfile，web/ 已建好 Angular 工程。
+substitutions:
+  _REGION: asia-southeast1
+  _REPO: asia-southeast1-docker.pkg.dev/${PROJECT_ID}/kebunsah
+steps:
+  - id: api-build
+    name: gcr.io/cloud-builders/docker
+    args: [build, -t, '${_REPO}/api:${SHORT_SHA}', ./api]
+  - id: api-push
+    name: gcr.io/cloud-builders/docker
+    args: [push, '${_REPO}/api:${SHORT_SHA}']
+  - id: api-deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args: [run, deploy, kebunsah-api, '--image=${_REPO}/api:${SHORT_SHA}', '--region=${_REGION}']
+
+  - id: ai-build
+    name: gcr.io/cloud-builders/docker
+    args: [build, -t, '${_REPO}/ai-worker:${SHORT_SHA}', ./ai-worker]
+  - id: ai-push
+    name: gcr.io/cloud-builders/docker
+    args: [push, '${_REPO}/ai-worker:${SHORT_SHA}']
+  - id: ai-deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args: [run, deploy, kebunsah-ai, '--image=${_REPO}/ai-worker:${SHORT_SHA}', '--region=${_REGION}', --no-allow-unauthenticated]
+
+  - id: web-build
+    name: node:20
+    dir: web
+    entrypoint: bash
+    args: [-c, 'npm ci && npx ng build --configuration production']
+  - id: web-deploy
+    name: node:20
+    entrypoint: bash
+    args: [-c, 'npx firebase-tools deploy --only hosting --project ${PROJECT_ID}']
+options:
+  logging: CLOUD_LOGGING_ONLY
+  dynamicSubstitutions: true  # 让 _REPO 能引用 ${PROJECT_ID}

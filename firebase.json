@@ -1,0 +1,10 @@
+{
+  "hosting": {
+    "public": "web/dist/web/browser",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [{ "source": "**", "destination": "/index.html" }]
+  },
+  "firestore": {
+    "rules": "infra/firestore.rules"
+  }
+}
