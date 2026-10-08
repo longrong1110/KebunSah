@@ -37,6 +37,21 @@ git push -u origin fe/screens-1-3
 gh pr create --fill
 ```
 
+## 本地运行（Firebase 模拟器）
+
+第一次演示全部在本地跑，用 Firebase 模拟器（Auth、Firestore、Storage），不连线上项目。
+
+**前置条件**（每台开发机都要装）：
+
+- Java 11 或更新版本（Firestore 和 Storage 模拟器依赖 Java）
+- `firebase-tools`：`npm install -g firebase-tools`，或每次用 `npx firebase-tools`
+
+**待办**：`firebase.json` 还没有 `emulators` 设置，模拟器暂时起不来。补上之后用下面的命令启动：
+
+```bash
+firebase emulators:start --only auth,firestore,storage
+```
+
 ## 发布流水线
 
 PR → Cloud Build 检查（`dotnet test`、`ng build`）→ 合并 main → Cloud Build 部署（`infra/cloudbuild/deploy.yaml`）：
