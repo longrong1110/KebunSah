@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 客户端只读：所有写入都走后端的 API 和 AI 服务（服务账号不受这里的规则限制）。
+    // 起步先放宽到「登录即可读」，看板和按合作社、按园主的读取范围等功能定了再收紧。
+    match /{document=**} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+  }
+}
