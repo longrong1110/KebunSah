@@ -31,7 +31,9 @@ FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 npm run load     # PowerShell：$env:FIRE
 
 `firebase.json` 目前没有 `emulators` 节（共管文件，先和队友说），所以端口用默认值 8080。重跑会整篇覆盖同 ID 文档，不产生重复。
 
-## 输出文件（`seed/data/`，不提交）
+## 输出文件（`seed/data/`，已入库）
+
+生成物直接提交进仓库，队友克隆后不用跑 Node 就能读到（前端也可以直接 import 这些 JSON 做界面）。改了 `src/` 之后要重新 `npm run generate` 并把变化一起提交；`seed/data/.gitattributes` 强制 JSON 用 LF 换行，所以 Windows 上 `autocrlf` 不会让校验器误报。
 
 每个文件是数组，元素 `{ "path": "plots/<id>/documents/<docId>", "data": { … } }`；`_manifest.json` 记种子、基准日和各集合数量。
 
@@ -83,5 +85,5 @@ FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 npm run load     # PowerShell：$env:FIRE
 generate.mjs  validate.mjs  load-emulator.mjs   命令行入口
 src/          rng · dates · units · geo · people · similarity · rules · scenarios · demo · entities · documents · build · shape · constants
 test/         node --test
-data/         生成物（不提交）
+data/         生成物（已入库；改了 src/ 要重新生成）
 ```

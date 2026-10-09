@@ -1,0 +1,24 @@
+{
+  "seed": 20261009,
+  "asOf": "2026-10-09",
+  "statusCounts": {
+    "green": 110,
+    "yellow": 50,
+    "red": 24,
+    "needs_review": 16
+  },
+  "collections": {
+    "persons": 200,
+    "cooperatives": 1,
+    "users": 5,
+    "titles": 200,
+    "mpobLicences": 195,
+    "mspoCertificates": 4,
+    "mspoMembers": 181,
+    "plots": 200,
+    "documents": 989,
+    "assessments": 200,
+    "config": 1
+  },
+  "note": "全部为虚构的模拟数据（isSynthetic = true）。由 seed/generate.mjs 生成，勿手改。"
+}
