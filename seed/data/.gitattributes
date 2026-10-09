@@ -1,0 +1,2 @@
+# 生成物逐字节可重现，且 validate.mjs 要求 LF。Windows 的 core.autocrlf=true 会在检出时改成 CRLF，这里强制 LF。
+*.json text eol=lf

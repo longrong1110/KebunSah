@@ -1,0 +1,16 @@
+{
+  "name": "kebunsah-seed",
+  "private": true,
+  "description": "KebunSah 模拟数据：200 个虚构地块，Firestore 形状的 JSON",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "generate": "node generate.mjs",
+    "validate": "node validate.mjs",
+    "all": "node generate.mjs && node validate.mjs",
+    "load": "node load-emulator.mjs",
+    "test": "node --test"
+  }
+}
