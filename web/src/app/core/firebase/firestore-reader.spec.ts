@@ -68,6 +68,16 @@ describe('FirestoreReader', () => {
     ]);
   });
 
+  it('等值过滤透传给 facade；不传时第四个参数是 undefined', () => {
+    const { reader, watchCollection } = setup();
+    reader.collection$('plots').subscribe().unsubscribe();
+    expect(watchCollection.mock.calls[0][3]).toBeUndefined();
+
+    const where = [{ field: 'operatorPersonId', value: 'p1' }] as const;
+    reader.collection$('plots', { where }).subscribe().unsubscribe();
+    expect(watchCollection.mock.calls[1][3]).toEqual(where);
+  });
+
   it('监听出错时，错误传给订阅者', () => {
     const { reader, failCollection } = setup();
     const onError = vi.fn();

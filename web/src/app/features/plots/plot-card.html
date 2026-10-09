@@ -1,0 +1,18 @@
+@let v = view();
+<article class="plot-card" [class.plot-card--warn]="v.status.key === 'yellow'">
+  <span class="plot-card__pin" aria-hidden="true">📍</span>
+  <div class="plot-card__body">
+    @if (v.loading) {
+      <span class="skeleton skeleton--title" aria-hidden="true"></span>
+    } @else {
+      <p class="plot-card__title">{{ v.heading }}</p>
+    }
+    <div class="plot-card__row">
+      <p class="plot-card__meta">{{ v.subtitle }}</p>
+      <span class="chip tone-{{ v.status.tone }}">
+        <span aria-hidden="true">{{ v.status.icon }}</span>
+        <span>{{ v.statusLabel }}</span>
+      </span>
+    </div>
+  </div>
+</article>

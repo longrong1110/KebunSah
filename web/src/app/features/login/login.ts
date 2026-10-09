@@ -10,52 +10,45 @@ import {
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/firebase/auth.service';
 import { NotConfiguredError } from '../../core/firebase/firebase';
+import type { Dict } from '../../core/i18n/dict.ms';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { normalizePhone } from '../../core/phone';
+import { LangButton } from '../../shared/lang-button';
 
 type Step = 'phone' | 'code';
 
+/** 错误只存词典的键，不存翻译后的文字：切换语言时已经显示的错误会跟着变 */
+export type LoginErrorKey = keyof Dict['login']['errors'];
+
 const RESEND_SECONDS = 30;
 
-// 文案取自企划书 v3 的屏 1 线框与「状态与文案规范」：说人话，给下一步，不责怪用户。
-const TEXT = {
-  phoneEmpty: 'Sila masukkan nombor telefon anda.',
-  phoneFormat: 'Nombor telefon ini tidak betul. Cuba contoh: 012-345 6789.',
-  codeFormat: 'Sila masukkan kod 6 digit daripada SMS.',
-  codeWrong: 'Kod tidak betul. Semak SMS anda dan cuba lagi.',
-  codeExpired: 'Kod sudah tamat tempoh. Tekan Hantar semula kod.',
-  tooMany: 'Terlalu banyak percubaan. Cuba lagi sebentar lagi.',
-  network: 'Tiada sambungan. Semak internet anda dan cuba lagi.',
-  notConfigured: 'Perkhidmatan belum disediakan.',
-  generic: 'Ada masalah. Cuba lagi sebentar lagi.',
-} as const;
-
-function messageFor(err: unknown): string {
-  if (err instanceof NotConfiguredError) return TEXT.notConfigured;
+function errorKeyFor(err: unknown): LoginErrorKey {
+  if (err instanceof NotConfiguredError) return 'notConfigured';
   const code = (err as { code?: string } | null)?.code;
   switch (code) {
     case 'auth/network-request-failed':
-      return TEXT.network;
+      return 'network';
     case 'auth/invalid-phone-number':
     case 'auth/missing-phone-number':
-      return TEXT.phoneFormat;
+      return 'phoneFormat';
     case 'auth/too-many-requests':
     case 'auth/quota-exceeded':
-      return TEXT.tooMany;
+      return 'tooMany';
     case 'auth/invalid-verification-code':
     case 'auth/missing-verification-code':
-      return TEXT.codeWrong;
+      return 'codeWrong';
     case 'auth/code-expired':
     case 'auth/session-expired':
-      return TEXT.codeExpired;
+      return 'codeExpired';
     default:
-      return TEXT.generic;
+      return 'generic';
   }
 }
 
-// 最小可用的登录页（脚手架）：两步，手机号 → 验证码。
-// 屏 1 的正式界面由 fe/screens-1-3 按 screen-01.png 做，到时替换本页；服务层与错误处理沿用。
+// 屏 1 登录（线框 docs/ui/screen-01.png）：两步，手机号 → 验证码；右上角常驻语言按钮。
 @Component({
   selector: 'app-login',
+  imports: [LangButton],
   templateUrl: './login.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -63,12 +56,14 @@ export class Login {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly recaptcha = viewChild.required<ElementRef<HTMLElement>>('recaptcha');
+  private readonly i18n = inject(I18nService);
+  protected readonly t = this.i18n.t;
 
   readonly step = signal<Step>('phone');
   readonly phone = signal('');
   readonly code = signal('');
   readonly busy = signal(false);
-  readonly error = signal('');
+  readonly error = signal<LoginErrorKey | null>(null);
   readonly cooldown = signal(0);
   /** 验证码已发往的号码（E.164），步骤 2 显示给用户看 */
   readonly sentTo = signal('');
@@ -76,6 +71,8 @@ export class Login {
   private timer: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
+    // 登录页只在没登录时可达：上一个账号的 users.language 默认值不能留到这里（本机选过的不动）
+    this.i18n.clearProfileDefault();
     inject(DestroyRef).onDestroy(() => {
       this.stopCooldown();
       this.auth.resetFlow();
@@ -98,11 +95,11 @@ export class Login {
     if (this.busy()) return;
     const parsed = normalizePhone(this.phone());
     if (!parsed.ok) {
-      this.error.set(parsed.reason === 'empty' ? TEXT.phoneEmpty : TEXT.phoneFormat);
+      this.error.set(parsed.reason === 'empty' ? 'phoneEmpty' : 'phoneFormat');
       return;
     }
     this.busy.set(true);
-    this.error.set('');
+    this.error.set(null);
     try {
       await this.auth.sendCode(parsed.e164, this.recaptcha().nativeElement);
       this.sentTo.set(parsed.e164);
@@ -110,7 +107,7 @@ export class Login {
       this.step.set('code');
       this.startCooldown();
     } catch (err) {
-      this.error.set(messageFor(err));
+      this.error.set(errorKeyFor(err));
     } finally {
       this.busy.set(false);
     }
@@ -119,16 +116,16 @@ export class Login {
   async confirm(): Promise<void> {
     if (this.busy()) return;
     if (!/^\d{6}$/.test(this.code())) {
-      this.error.set(TEXT.codeFormat);
+      this.error.set('codeFormat');
       return;
     }
     this.busy.set(true);
-    this.error.set('');
+    this.error.set(null);
     try {
       await this.auth.confirmCode(this.code());
       await this.router.navigateByUrl('/', { replaceUrl: true });
     } catch (err) {
-      this.error.set(messageFor(err));
+      this.error.set(errorKeyFor(err));
     } finally {
       this.busy.set(false);
     }
@@ -144,7 +141,7 @@ export class Login {
     this.stopCooldown();
     this.auth.resetFlow();
     this.code.set('');
-    this.error.set('');
+    this.error.set(null);
     this.cooldown.set(0);
     this.step.set('phone');
   }

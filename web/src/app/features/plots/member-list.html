@@ -1,0 +1,55 @@
+<label for="member-search">{{ t().members.searchLabel }}</label>
+<div class="search">
+  <input
+    id="member-search"
+    class="field search-field"
+    type="search"
+    autocomplete="off"
+    autocapitalize="off"
+    [placeholder]="t().members.searchPlaceholder"
+    [value]="query()"
+    (input)="onQuery($event)"
+  />
+  @if (query()) {
+    <button type="button" class="btn-link" id="member-clear" (click)="query.set('')">
+      {{ t().members.clear }}
+    </button>
+  }
+</div>
+
+@switch (state()) {
+  @case ('loading') {
+    <p class="hint" id="members-loading">{{ t().common.loading }}</p>
+    <div class="skeleton-row" aria-hidden="true"></div>
+    <div class="skeleton-row" aria-hidden="true"></div>
+  }
+  @case ('offline') {
+    <p class="error" id="members-error" role="alert">
+      <span aria-hidden="true">⚠</span> {{ t().plots.offline }}
+    </p>
+    <button type="button" class="btn btn-quiet" (click)="retry()">{{ t().common.retry }}</button>
+  }
+  @case ('error') {
+    <p class="error" id="members-error" role="alert">
+      <span aria-hidden="true">⚠</span> {{ t().plots.error }}
+    </p>
+    <button type="button" class="btn btn-quiet" (click)="retry()">{{ t().common.retry }}</button>
+  }
+  @case ('empty') {
+    <p class="hint" id="members-empty">{{ t().members.empty }}</p>
+  }
+  @case ('noMatch') {
+    <p class="hint" id="members-no-match">{{ t().members.noMatch }}</p>
+  }
+  @default {
+    <ul class="member-list">
+      @for (m of visible(); track m.id) {
+        <li>
+          <button type="button" class="member-row" (click)="selected.emit(m.id)">
+            {{ m.display }}
+          </button>
+        </li>
+      }
+    </ul>
+  }
+}

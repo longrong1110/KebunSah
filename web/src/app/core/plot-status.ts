@@ -1,24 +1,36 @@
 // 地块状态：值取自 contract/status.md 的 plots.status，不另起别名。
-// 标签与图标取自企划书 v3 的「状态与文案规范」：状态永远是「颜色 + 图标 + 文字」三件套，不只靠颜色。
+// 状态永远是「颜色 + 图标 + 文字」三件套，不只靠颜色（企划书 v3 的「状态与文案规范」）。
+// 文字在词典里（随语言切换）：t().status[key]；这里只管图标与色调。
 
 export const PLOT_STATUSES = ['green', 'yellow', 'red', 'needs_review', 'pending'] as const;
 export type PlotStatus = (typeof PLOT_STATUSES)[number];
 
 export interface StatusView {
-  label: string;
   icon: string;
   /** 对应 styles.scss 里的 .tone-* */
   tone: 'ok' | 'warn' | 'bad' | 'review' | 'idle';
 }
 
 export const STATUS_VIEW: Record<PlotStatus, StatusView> = {
-  green: { label: 'Lengkap', icon: '✓', tone: 'ok' },
-  yellow: { label: 'Perlu semakan', icon: '⚠', tone: 'warn' },
-  red: { label: 'Perlu tindakan', icon: '✕', tone: 'bad' },
-  // ui-rules-1.png 里没有这个状态，临时标签；10/15 fe/polish 统一
-  needs_review: { label: 'Perlu semakan pegawai', icon: '?', tone: 'review' },
-  pending: { label: 'Belum mula', icon: '○', tone: 'idle' },
+  green: { icon: '✓', tone: 'ok' },
+  yellow: { icon: '⚠', tone: 'warn' },
+  red: { icon: '✕', tone: 'bad' },
+  needs_review: { icon: '?', tone: 'review' },
+  pending: { icon: '○', tone: 'idle' },
 };
+
+/** 不认识的状态值：显示中性芯片，不崩，也不会被当成绿色 */
+export const UNKNOWN_STATUS_VIEW: StatusView = { icon: '?', tone: 'idle' };
+
+export type StatusKey = PlotStatus | 'unknown';
+
+/** 任意值 → 词典键 + 图标 + 色调；不是合同里的五个值就归为 unknown */
+export function statusOf(status: unknown): { key: StatusKey } & StatusView {
+  if (typeof status === 'string' && (PLOT_STATUSES as readonly string[]).includes(status)) {
+    return { key: status as PlotStatus, ...STATUS_VIEW[status as PlotStatus] };
+  }
+  return { key: 'unknown', ...UNKNOWN_STATUS_VIEW };
+}
 
 export interface StatusCounts {
   total: number;
@@ -27,6 +39,7 @@ export interface StatusCounts {
   unknown: number;
 }
 
+// 合作社看板（屏 11）要用：按状态计数
 export function countByStatus(docs: readonly { data: { status?: unknown } }[]): StatusCounts {
   const byStatus = Object.fromEntries(PLOT_STATUSES.map((s) => [s, 0])) as Record<
     PlotStatus,
@@ -34,16 +47,9 @@ export function countByStatus(docs: readonly { data: { status?: unknown } }[]): 
   >;
   let unknown = 0;
   for (const d of docs) {
-    const s = d.data.status;
-    if (typeof s === 'string' && (PLOT_STATUSES as readonly string[]).includes(s))
-      byStatus[s as PlotStatus]++;
-    else unknown++;
+    const s = statusOf(d.data.status);
+    if (s.key === 'unknown') unknown++;
+    else byStatus[s.key]++;
   }
   return { total: docs.length, byStatus, unknown };
 }
-
-export const ROLE_LABEL: Record<string, string> = {
-  smallholder: 'Pekebun kecil',
-  field_officer: 'Pegawai lapangan',
-  coop_admin: 'Pentadbir koperasi',
-};

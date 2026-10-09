@@ -1,4 +1,6 @@
-import { PLOT_STATUSES, STATUS_VIEW, countByStatus } from './plot-status';
+import { en } from './i18n/dict.en';
+import { ms } from './i18n/dict.ms';
+import { PLOT_STATUSES, STATUS_VIEW, countByStatus, statusOf } from './plot-status';
 
 const doc = (status: unknown) => ({ data: { status } });
 
@@ -31,11 +33,32 @@ describe('countByStatus', () => {
     expect(c.total).toBe(0);
     expect(Object.values(c.byStatus).every((n) => n === 0)).toBe(true);
   });
+});
 
-  it('每个状态都有图标与文字（不只靠颜色）', () => {
+describe('statusOf', () => {
+  it('每个合同状态都有图标、色调，以及两种语言的文字（颜色＋图标＋文字三件套）', () => {
     for (const s of PLOT_STATUSES) {
-      expect(STATUS_VIEW[s].icon.length).toBeGreaterThan(0);
-      expect(STATUS_VIEW[s].label.length).toBeGreaterThan(0);
+      const v = statusOf(s);
+      expect(v.key).toBe(s);
+      expect(v.icon.length).toBeGreaterThan(0);
+      expect(STATUS_VIEW[s].tone).toBe(v.tone);
+      expect(ms.status[s].length).toBeGreaterThan(0);
+      expect(en.status[s].length).toBeGreaterThan(0);
     }
+  });
+
+  it('未知值、空值、非字符串：归为 unknown，中性色调，不会被当成绿色', () => {
+    for (const bad of ['purple', '', undefined, null, 42, {}]) {
+      const v = statusOf(bad);
+      expect(v.key, String(bad)).toBe('unknown');
+      expect(v.tone).toBe('idle');
+      expect(v.icon.length).toBeGreaterThan(0);
+    }
+    expect(ms.status.unknown.length).toBeGreaterThan(0);
+  });
+
+  it('红、黄、绿用不同的图标与色调（不只靠颜色区分）', () => {
+    const icons = new Set(['green', 'yellow', 'red'].map((s) => statusOf(s).icon));
+    expect(icons.size).toBe(3);
   });
 });
