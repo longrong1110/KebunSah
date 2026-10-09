@@ -27,12 +27,12 @@ steps:
     args: [run, deploy, kebunsah-ai, '--image=${_REPO}/ai-worker:${SHORT_SHA}', '--region=${_REGION}', --no-allow-unauthenticated]
 
   - id: web-build
-    name: node:20
+    name: node:24
     dir: web
     entrypoint: bash
     args: [-c, 'npm ci && npx ng build --configuration production']
   - id: web-deploy
-    name: node:20
+    name: node:24
     entrypoint: bash
     args: [-c, 'npx firebase-tools deploy --only hosting --project ${PROJECT_ID}']
 options:
