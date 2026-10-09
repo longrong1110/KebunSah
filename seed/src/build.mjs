@@ -1,5 +1,5 @@
 // 把场景、实体、文件、评估组装成全部集合。纯函数，不碰文件系统；写盘在 generate.mjs。
-// 每个地块造完都会用规则引擎重算一遍状态，和场景里的目标状态对不上就直接抛错（AC-12）。
+// 每个地块造完都会用规则引擎重算一遍状态，和场景里的目标状态对不上就直接抛错。
 import {
   SEED, AS_OF, DEMO_COOP_ID, DEMO_OFFICER_UID, RULE_PARAMS, MSPO_SCHEMES, MSPO_STANDARD, MSPO_CERT_BODY,
   MODEL_VERSION, RULES_VERSION,
@@ -110,7 +110,7 @@ export function build({ seed = SEED, scenarios: injected = null } = {}) {
     plots: [...demo.plots], documents: [...demo.yellowDocuments], assessments: [...demo.assessments], config: [],
   };
 
-  // 3 个园主账号，对应 3 个演示园主；uid 对不上 Auth 模拟器，等 fe/setup 接线后再对齐
+  // 3 个园主账号，对应 3 个演示园主；uid 就是 users 文档 id，load-emulator.mjs 会在 Auth 模拟器里按这个 uid 预建账号
   ['1', '2', '3'].forEach((n, i) => {
     out.users.push({
       path: `users/demo-smallholder-${n}`,

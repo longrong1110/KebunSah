@@ -1,0 +1,254 @@
+// 全局样式：色板取自企划书 v3 页面的 CSS 变量，浅色 / 深色跟随系统。
+// 大字、大按钮、状态不只靠颜色（企划书 v3 的六条设计原则）：正文 ≥16px，触控目标 ≥48px。
+// 不引入外部字体（离线可用，也不牵涉 CSP），用系统字体栈。
+
+:root {
+  --palm: #1f5a3f;
+  --fruit: #b8660b;
+  --ok: #2e7d4f;
+  --warn: #b7861a;
+  --bad: #b23a2e;
+  --bg: #f4f6f1;
+  --ink: #15231b;
+  --surface: #ffffff;
+  --line: #d3dbd1;
+  --muted: #4a5a50;
+  --on-palm: #ffffff;
+  --focus: #1f5a3f;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --palm: #7cc49a;
+    --fruit: #e9a54a;
+    --ok: #6fc08e;
+    --warn: #e2b44c;
+    --bad: #e57a6d;
+    --bg: #101813;
+    --ink: #e4ece5;
+    --surface: #17211a;
+    --line: #2b3a30;
+    --muted: #a9b9ad;
+    --on-palm: #0d1a12;
+    --focus: #7cc49a;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    'Noto Sans',
+    Arial,
+    sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+h1,
+.brand {
+  font-family: 'Noto Serif', Georgia, 'Times New Roman', serif;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+// ---- 页面骨架：手机优先，宽屏居中 ----
+.screen {
+  min-height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  flex: 1;
+  padding: 56px 20px 24px;
+}
+
+.brand {
+  margin: 0 0 24px;
+  font-size: 2.25rem;
+  line-height: 1.1;
+  font-weight: 600;
+  color: var(--palm);
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 1.75rem;
+  line-height: 1.2;
+}
+
+.lead {
+  margin: 0 0 20px;
+  color: var(--muted);
+  font-size: 1.125rem;
+}
+
+.hint {
+  margin: 12px 0 0;
+  color: var(--muted);
+}
+
+// ---- 表单 ----
+label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.field {
+  width: 100%;
+  min-height: 56px;
+  padding: 12px 16px;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-family: ui-monospace, 'JetBrains Mono', Consolas, monospace;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.field[aria-invalid='true'] {
+  border-color: var(--bad);
+}
+
+.code-field {
+  text-align: center;
+  letter-spacing: 0.4em;
+  font-size: 1.5rem;
+}
+
+.error {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--bad);
+  background: color-mix(in srgb, var(--bad) 10%, transparent);
+  color: var(--bad);
+  font-weight: 600;
+}
+
+// ---- 底部固定操作栏 ----
+.bar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 20px calc(16px + env(safe-area-inset-bottom));
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+}
+
+.btn {
+  min-height: 56px;
+  padding: 12px 20px;
+  border: 2px solid var(--palm);
+  border-radius: 14px;
+  background: var(--palm);
+  color: var(--on-palm);
+  font: inherit;
+  font-size: 1.125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-quiet {
+  background: transparent;
+  color: var(--palm);
+}
+
+// ---- 状态三件套：颜色 + 图标 + 文字 ----
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--tone, var(--muted)) 14%, transparent);
+  color: var(--tone, var(--muted));
+}
+
+.tone-ok {
+  --tone: var(--ok);
+}
+.tone-warn {
+  --tone: var(--warn);
+}
+.tone-bad {
+  --tone: var(--bad);
+}
+.tone-review {
+  --tone: var(--fruit);
+}
+.tone-idle {
+  --tone: var(--muted);
+}
+
+// reCAPTCHA 容器：不可见模式下只需要存在
+.recaptcha-slot {
+  height: 0;
+  overflow: hidden;
+}
+
+// ---- 首页占位 ----
+h2 {
+  margin: 28px 0 8px;
+  font-size: 1.25rem;
+}
+
+.total {
+  margin: 0 0 12px;
+  font-family: ui-monospace, 'JetBrains Mono', Consolas, monospace;
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.status-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 48px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  strong {
+    font-family: ui-monospace, 'JetBrains Mono', Consolas, monospace;
+    font-size: 1.25rem;
+  }
+}

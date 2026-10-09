@@ -20,16 +20,16 @@ npm test            # 纯计算的单元测试
 npm run all         # generate + validate
 ```
 
-灌入本机 Firestore 模拟器（项目 `demo-kebunsah`；只允许回环地址，没设环境变量就什么都不做）：
+灌入本机模拟器（项目 `demo-kebunsah`；只允许回环地址，没设环境变量就什么都不做）：
 
 ```bash
-firebase emulators:start --only firestore --project demo-kebunsah
-# 另开一个终端：
-cd seed
-FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 npm run load     # PowerShell：$env:FIRESTORE_EMULATOR_HOST="127.0.0.1:8080"; npm run load
+cd web && npm run emulators          # 终端 1：Auth(9099) + Firestore(8080)，为什么这样启动见 web/README.md
+cd seed                              # 终端 2：
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 npm run load
+# PowerShell：$env:FIRESTORE_EMULATOR_HOST="127.0.0.1:8080"; $env:FIREBASE_AUTH_EMULATOR_HOST="127.0.0.1:9099"; npm run load
 ```
 
-`firebase.json` 目前没有 `emulators` 节（共管文件，先和队友说），所以端口用默认值 8080。重跑会整篇覆盖同 ID 文档，不产生重复。
+两个变量各管一步，**设了哪个就做哪一步**：`FIRESTORE_EMULATOR_HOST` 灌 Firestore（整篇覆盖同 ID 文档，重跑不产生重复）；`FIREBASE_AUTH_EMULATOR_HOST` 在 Auth 模拟器里建 `users` 里那 5 个账号（uid = `users` 文档 id，手机号 = `phone`），所以用测试号登录后 uid 能对上 `users/{uid}`。账号已存在就跳过，重跑不报错。两个变量都没设就什么都不做；任一主机不是回环地址就整体拒绝。模拟器一重启数据和账号都会清空，要重新灌入。
 
 ## 输出文件（`seed/data/`，已入库）
 
@@ -66,7 +66,7 @@ FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 npm run load     # PowerShell：$env:FIRE
 7. **`config/ruleParams` 内部结构**：本次 `{ "CC-01": { area_tolerance_pct: {value, unit, basis, note}, … }, … }`。
 8. **看板（屏 11）需要的 lotNo、成员姓名、主要问题**：`plots` 上只复制了 state／district／titleNo，其余要么前端 join，要么走 `/api/coop/dashboard`（响应还没定）。
 9. **屏 7 分步进度、屏 8 原图裁剪框**在 schema 里没有对应字段。
-10. **`users/{uid}` 的 uid** 必须等于 Firebase Auth 里的 uid。seed 里的 `demo-officer-1`、`demo-smallholder-1..3` 只是占位，要等 Auth 模拟器接线后对齐（模拟器能否预建账号并指定 uid 尚未验证）。首次登录谁建 `users` 档，合同也没有答案。
+10. **`users/{uid}` 的 uid** 必须等于 Firebase Auth 里的 uid。**已验证可行**（2026-10-09，Auth 模拟器）：`npm run load` 用 `accounts:batchCreate` 预建账号并指定 uid（如 `demo-officer-1`），之后用对应手机号走手机号登录，得到的 uid 就是它；没预建的号码得到随机 uid，读不到 `users/{uid}`。线上 Firebase Auth 不能这样预设，要么首次登录由后端按 uid 建 `users` 档，要么用 Admin SDK 预建账号。**首次登录谁建 `users` 档、`lastLoginAt` 谁写，合同还没有答案**，前端本次不创建（首页显示「Profil anda belum dibuat.」）。
 11. **姓名相似度算法**没定义。seed 用归一化编辑距离，并在 (0.60, 0.90) 之间不造样本，后端换算法也不容易翻转。
 12. **CC-02 边界**：schema 注释写「不足 90 天」，企划书 §8.6 写「90 天内」。seed 按 `< 90` 才警告，且不造 89／90／91 天的样本。
 

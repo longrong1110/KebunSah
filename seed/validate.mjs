@@ -1,4 +1,4 @@
-// 独立校验 seed/data/ 是否满足 specs/seed-data/spec.md 的验收标准：node seed/validate.mjs
+// 独立校验 seed/data/ 是否自洽、是否符合 contract/schema.sql 与企划书 §8.10：node seed/validate.mjs
 // 刻意不引用 src/ 下的规则、几何、相似度实现：规则和面积在这里重新写了一遍，
 // 枚举值直接从 contract/schema.sql 的 CHECK 约束里解析，阈值读输出里的 config/ruleParams。
 // 有任何一条不满足就非零退出。

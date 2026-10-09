@@ -1,0 +1,76 @@
+<main class="screen">
+  <section class="content">
+    <p class="brand">KebunSah</p>
+
+    @if (step() === 'phone') {
+      <h1>Log masuk</h1>
+      <p class="lead">Masukkan nombor telefon anda. Tidak perlu kata laluan.</p>
+
+      <label for="phone">Nombor telefon</label>
+      <input
+        id="phone"
+        class="field"
+        type="tel"
+        inputmode="tel"
+        autocomplete="tel"
+        placeholder="+60 12-345 6789"
+        [value]="phone()"
+        [attr.aria-invalid]="error() ? 'true' : null"
+        aria-describedby="hint error"
+        (input)="onPhone($event)"
+        (keydown.enter)="submit()"
+      />
+      <p id="hint" class="hint">Kami hantar kod 6 digit melalui SMS.</p>
+    } @else {
+      <h1>Masukkan kod</h1>
+      <p class="lead">Kami telah hantar kod 6 digit ke {{ sentTo() }}.</p>
+
+      <label for="code">Kod OTP</label>
+      <input
+        id="code"
+        class="field code-field"
+        type="text"
+        inputmode="numeric"
+        autocomplete="one-time-code"
+        maxlength="6"
+        placeholder="------"
+        [value]="code()"
+        [attr.aria-invalid]="error() ? 'true' : null"
+        aria-describedby="error"
+        (input)="onCode($event)"
+        (keydown.enter)="submit()"
+      />
+    }
+
+    <p id="error" class="error" role="alert" [hidden]="!error()">
+      <span aria-hidden="true">⚠</span> {{ error() }}
+    </p>
+  </section>
+
+  <footer class="bar">
+    <button type="button" class="btn" [disabled]="busy()" (click)="submit()">
+      @if (step() === 'phone') {
+        {{ busy() ? 'Sedang menghantar…' : 'Hantar kod OTP' }}
+      } @else {
+        {{ busy() ? 'Sedang mengesahkan…' : 'Sahkan dan log masuk' }}
+      }
+    </button>
+
+    @if (step() === 'code') {
+      <button
+        type="button"
+        class="btn btn-quiet"
+        [disabled]="busy() || cooldown() > 0"
+        (click)="resend()"
+      >
+        {{ cooldown() > 0 ? 'Hantar semula dalam ' + cooldown() + 's' : 'Hantar semula kod' }}
+      </button>
+      <button type="button" class="btn btn-quiet" [disabled]="busy()" (click)="changeNumber()">
+        Tukar nombor telefon
+      </button>
+    }
+  </footer>
+
+  <!-- 不可见 reCAPTCHA 要一个容器；开发环境（模拟器）下 SDK 会跳过真正的校验 -->
+  <div #recaptcha class="recaptcha-slot" aria-hidden="true"></div>
+</main>
