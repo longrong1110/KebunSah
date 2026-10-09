@@ -9,7 +9,7 @@ steps:
       - |
         if ls api/*.sln api/*.csproj >/dev/null 2>&1; then cd api && dotnet test; else echo "api: 还没有代码，跳过"; fi
   - id: web-build
-    name: node:20
+    name: node:24
     entrypoint: bash
     args:
       - -c
