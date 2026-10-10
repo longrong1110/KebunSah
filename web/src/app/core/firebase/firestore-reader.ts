@@ -1,6 +1,8 @@
 import { Injectable, InjectionToken, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { realFirestoreFacade, type FirestoreFacade } from './firestore-facade';
+import { realFirestoreFacade, type EqualityFilter, type FirestoreFacade } from './firestore-facade';
+
+export type { EqualityFilter } from './firestore-facade';
 
 export const FIRESTORE_FACADE = new InjectionToken<FirestoreFacade>('FIRESTORE_FACADE', {
   providedIn: 'root',
@@ -20,8 +22,14 @@ export interface CollectionState<T> {
   fromCache: boolean;
 }
 
+export interface CollectionOptions {
+  /** 只读的等值过滤（field == value），多个条件是"并且" */
+  where?: readonly EqualityFilter[];
+}
+
 // 前端读 Firestore 的唯一入口：只有订阅，没有任何写方法。
 // 返回冷 Observable：订阅时才开监听，取消订阅（组件销毁、toSignal 销毁、takeUntilDestroyed）时关监听。
+// 公开面只有 doc$ 与 collection$（有测试把关）：要加过滤，给 collection$ 加可选参数，不要加新方法。
 @Injectable({ providedIn: 'root' })
 export class FirestoreReader {
   private readonly facade = inject(FIRESTORE_FACADE);
@@ -41,7 +49,10 @@ export class FirestoreReader {
     );
   }
 
-  collection$<T = Record<string, unknown>>(path: string): Observable<CollectionState<T>> {
+  collection$<T = Record<string, unknown>>(
+    path: string,
+    options?: CollectionOptions,
+  ): Observable<CollectionState<T>> {
     return new Observable<CollectionState<T>>((subscriber) =>
       this.facade.watchCollection(
         path,
@@ -51,6 +62,7 @@ export class FirestoreReader {
             fromCache: snap.fromCache,
           }),
         (err) => subscriber.error(err),
+        options?.where,
       ),
     );
   }

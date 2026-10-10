@@ -1,31 +1,36 @@
 <main class="screen">
+  <header class="topbar">
+    <app-lang-button />
+  </header>
+
   <section class="content">
     <p class="brand">KebunSah</p>
+    @let key = error();
 
     @if (step() === 'phone') {
-      <h1>Log masuk</h1>
-      <p class="lead">Masukkan nombor telefon anda. Tidak perlu kata laluan.</p>
+      <h1>{{ t().login.title }}</h1>
+      <p class="lead">{{ t().login.lead }}</p>
 
-      <label for="phone">Nombor telefon</label>
+      <label for="phone">{{ t().login.phoneLabel }}</label>
       <input
         id="phone"
         class="field"
         type="tel"
         inputmode="tel"
         autocomplete="tel"
-        placeholder="+60 12-345 6789"
+        [placeholder]="t().login.phonePlaceholder"
         [value]="phone()"
-        [attr.aria-invalid]="error() ? 'true' : null"
+        [attr.aria-invalid]="key ? 'true' : null"
         aria-describedby="hint error"
         (input)="onPhone($event)"
         (keydown.enter)="submit()"
       />
-      <p id="hint" class="hint">Kami hantar kod 6 digit melalui SMS.</p>
+      <p id="hint" class="hint">{{ t().login.hint }}</p>
     } @else {
-      <h1>Masukkan kod</h1>
-      <p class="lead">Kami telah hantar kod 6 digit ke {{ sentTo() }}.</p>
+      <h1>{{ t().login.codeTitle }}</h1>
+      <p class="lead">{{ t().login.codeLead(sentTo()) }}</p>
 
-      <label for="code">Kod OTP</label>
+      <label for="code">{{ t().login.codeLabel }}</label>
       <input
         id="code"
         class="field code-field"
@@ -35,24 +40,24 @@
         maxlength="6"
         placeholder="------"
         [value]="code()"
-        [attr.aria-invalid]="error() ? 'true' : null"
+        [attr.aria-invalid]="key ? 'true' : null"
         aria-describedby="error"
         (input)="onCode($event)"
         (keydown.enter)="submit()"
       />
     }
 
-    <p id="error" class="error" role="alert" [hidden]="!error()">
-      <span aria-hidden="true">⚠</span> {{ error() }}
+    <p id="error" class="error" role="alert" [hidden]="!key">
+      <span aria-hidden="true">⚠</span> {{ key ? t().login.errors[key] : '' }}
     </p>
   </section>
 
   <footer class="bar">
     <button type="button" class="btn" [disabled]="busy()" (click)="submit()">
       @if (step() === 'phone') {
-        {{ busy() ? 'Sedang menghantar…' : 'Hantar kod OTP' }}
+        {{ busy() ? t().login.sending : t().login.send }}
       } @else {
-        {{ busy() ? 'Sedang mengesahkan…' : 'Sahkan dan log masuk' }}
+        {{ busy() ? t().login.confirming : t().login.confirm }}
       }
     </button>
 
@@ -63,10 +68,10 @@
         [disabled]="busy() || cooldown() > 0"
         (click)="resend()"
       >
-        {{ cooldown() > 0 ? 'Hantar semula dalam ' + cooldown() + 's' : 'Hantar semula kod' }}
+        {{ cooldown() > 0 ? t().login.resendIn(cooldown()) : t().login.resend }}
       </button>
       <button type="button" class="btn btn-quiet" [disabled]="busy()" (click)="changeNumber()">
-        Tukar nombor telefon
+        {{ t().login.changeNumber }}
       </button>
     }
   </footer>

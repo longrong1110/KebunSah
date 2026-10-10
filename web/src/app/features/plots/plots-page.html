@@ -1,0 +1,117 @@
+<main class="screen">
+  @if (loggingOut()) {
+    <section class="content">
+      <p id="logging-out" class="hint">{{ t().plots.loggingOut }}</p>
+    </section>
+  } @else {
+    <header class="topbar">
+      @if (mode() === 'officer' && memberId()) {
+        <button
+          type="button"
+          class="icon-btn"
+          id="back-to-members"
+          [attr.aria-label]="t().common.back"
+          (click)="backToMembers()"
+        >
+          ←
+        </button>
+      }
+      <span class="spacer"></span>
+      <app-lang-button />
+      <button type="button" class="btn-link" id="logout" (click)="logout()">
+        {{ t().plots.logout }}
+      </button>
+    </header>
+
+    <section class="content">
+      @switch (mode()) {
+        @case ('loading') {
+          <p id="profile-loading" class="hint">{{ t().common.loading }}</p>
+          <div class="skeleton-card" aria-hidden="true"></div>
+        }
+        @case ('offline') {
+          <p id="profile-error" class="error" role="alert">
+            <span aria-hidden="true">⚠</span> {{ t().plots.offline }}
+          </p>
+          <button type="button" class="btn btn-quiet" (click)="retryProfile()">
+            {{ t().common.retry }}
+          </button>
+        }
+        @case ('error') {
+          <p id="profile-error" class="error" role="alert">
+            <span aria-hidden="true">⚠</span> {{ t().plots.error }}
+          </p>
+          <button type="button" class="btn btn-quiet" (click)="retryProfile()">
+            {{ t().common.retry }}
+          </button>
+        }
+        @case ('noprofile') {
+          <h1>{{ t().plots.title }}</h1>
+          <p id="no-profile" class="lead">{{ t().plots.noProfile }}</p>
+          <p class="hint">{{ t().plots.noProfileHelp }}</p>
+        }
+        @default {
+          <h1>{{ heading() }}</h1>
+          @if (subheading(); as sub) {
+            <p id="subheading" class="lead">{{ sub }}</p>
+          }
+
+          @if (mode() === 'officer' && !memberId()) {
+            <app-member-list [(query)]="memberQuery" (selected)="selectMember($event)" />
+          } @else {
+            @switch (plotsState()) {
+              @case ('loading') {
+                <p id="plots-loading" class="hint">{{ t().plots.loadingPlots }}</p>
+                <div class="skeleton-card" aria-hidden="true"></div>
+                <div class="skeleton-card" aria-hidden="true"></div>
+              }
+              @case ('offline') {
+                <p id="plots-error" class="error" role="alert">
+                  <span aria-hidden="true">⚠</span> {{ t().plots.offline }}
+                </p>
+                <button type="button" class="btn btn-quiet" (click)="retryPlots()">
+                  {{ t().common.retry }}
+                </button>
+              }
+              @case ('error') {
+                <p id="plots-error" class="error" role="alert">
+                  <span aria-hidden="true">⚠</span> {{ t().plots.error }}
+                </p>
+                <button type="button" class="btn btn-quiet" (click)="retryPlots()">
+                  {{ t().common.retry }}
+                </button>
+              }
+              @case ('empty') {
+                <p id="plots-empty" class="lead">{{ t().plots.empty }}</p>
+              }
+              @case ('list') {
+                <ul class="plot-list">
+                  @for (p of sortedPlots(); track p.id) {
+                    <li><app-plot-card [plot]="p" /></li>
+                  }
+                </ul>
+                @if (fromCache()) {
+                  <p id="plots-cached" class="hint">{{ t().plots.cached }}</p>
+                }
+              }
+            }
+          }
+        }
+      }
+
+      @if (logoutFailed()) {
+        <p id="logout-error" class="error" role="alert">
+          <span aria-hidden="true">⚠</span> {{ t().plots.logoutFailed }}
+        </p>
+      }
+    </section>
+
+    @if (showAdd()) {
+      <footer class="bar">
+        <button type="button" class="btn" id="add" (click)="add()">
+          <span aria-hidden="true">＋</span> {{ t().plots.add }}
+        </button>
+      </footer>
+    }
+  }
+</main>
