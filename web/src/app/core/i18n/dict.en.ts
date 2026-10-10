@@ -1,4 +1,5 @@
 import type { Dict } from './dict.ms';
+import type { GapCtx } from './gap-text';
 
 // 英语词典：只覆盖屏 1–4。声明为 Dict，缺键或多键都编译不过。
 export const en: Dict = {
@@ -124,5 +125,158 @@ export const en: Dict = {
       tooBig: 'That picture is too large. Choose a smaller one.',
       unreadable: "The picture is unclear or can't be read. Please retake it.",
     },
+  },
+  result: {
+    title: 'Result',
+    notFound: 'This land could not be found.',
+    backToList: 'Back to my land',
+    checkedOn: (day: string) => `Checked on ${day}`,
+    banner: {
+      green: { headline: 'All clear', sub: (_n: number) => 'Your documents are complete.' },
+      yellow: {
+        headline: 'Almost there',
+        sub: (n: number) =>
+          n > 0
+            ? `${n} ${n === 1 ? 'thing needs' : 'things need'} doing before your documents are complete.`
+            : 'A few things need checking.',
+      },
+      red: {
+        headline: 'Action needed',
+        sub: (_n: number) =>
+          'There are important things to sort out. Ask your cooperative for help.',
+      },
+      needs_review: {
+        headline: 'Officer to review',
+        sub: (_n: number) => 'A cooperative officer will check your documents.',
+      },
+      pending: {
+        headline: 'Not started',
+        sub: (_n: number) => 'This land has not been checked yet.',
+      },
+      running: {
+        headline: 'Checking now',
+        sub: (_n: number) => 'The result will be ready shortly.',
+      },
+    },
+    todo: 'To do',
+    seeAll: (n: number) => `See all (${n})`,
+    seeLess: 'Show fewer',
+    passed: (n: number) => `${n} ${n === 1 ? 'check' : 'checks'} passed`,
+    ruleName: (code: string) =>
+      code === 'CC-01'
+        ? 'Area matches the title'
+        : code === 'CC-02'
+          ? 'Document is still valid'
+          : code === 'CC-03'
+            ? 'Owner name matches'
+            : 'Other check',
+    forest: {
+      low: 'Forest screening: no forest loss detected.',
+      loss: (ha: string | null) =>
+        `Forest screening: signs of forest loss after 2020${ha ? ` (${ha} ha)` : ''}. An officer will review.`,
+      unknown: 'Forest screening could not be checked yet. An officer will review.',
+      prelim: 'This is a preliminary screening only.',
+    },
+    docName: (type: string | null) =>
+      type === 'land_title'
+        ? 'Land title'
+        : type === 'mpob_licence'
+          ? 'MPOB licence'
+          : type === 'mspo_cert'
+            ? 'MSPO certificate'
+            : type === 'mspo_member_list'
+              ? 'MSPO member list'
+              : 'Document',
+    gapText: {
+      area_mismatch: {
+        title: () => "The areas don't match",
+        detail: ({ facts }: GapCtx) =>
+          facts.geran && facts.lukisan
+            ? `Title ${facts.geran} ha, your drawing ${facts.lukisan} ha`
+            : 'The area on the map differs from the title.',
+        cause:
+          "The drawn area may be too large, or may include someone else's land. Try drawing it again on the satellite map.",
+        advice: () =>
+          'Check your boundary. If you bought neighbouring land, prepare that land title too.',
+        button: 'See details',
+      },
+      expiring: {
+        title: ({ doc }: GapCtx) => `${doc} is about to expire`,
+        detail: ({ facts }: GapCtx) =>
+          facts.days !== null
+            ? `Expires in ${facts.days} ${facts.days === 1 ? 'day' : 'days'}.`
+            : 'It is about to expire.',
+        cause: 'The expiry date is close. Renewing early avoids problems and late fees.',
+        advice: ({ doc }: GapCtx) => `Apply to renew the ${doc} early, then take a new photo.`,
+        button: 'How to get it',
+      },
+      expired: {
+        title: ({ doc }: GapCtx) => `${doc} has expired`,
+        detail: ({ facts }: GapCtx) =>
+          facts.date ? `Expired on ${facts.date}.` : 'It has expired.',
+        cause: 'This document is past its expiry date.',
+        advice: ({ doc }: GapCtx) =>
+          `Renew the ${doc} first (late fees may apply), then take a new photo.`,
+        button: 'How to get it',
+      },
+      name_mismatch: {
+        title: ({ doc }: GapCtx) => `The name on the ${doc} doesn't match`,
+        detail: () =>
+          'The name on the document is different from the name of the person farming the land.',
+        cause:
+          "This often happens when the title is still in a family member's or a previous owner's name.",
+        advice: () =>
+          'Ask your cooperative for help. You may need inheritance papers or a letter of authority.',
+        button: 'See details',
+      },
+      not_in_mspo: {
+        title: () => 'Not on the MSPO member list',
+        detail: () => "Your name wasn't found on the group certification member list.",
+        cause: 'You may not be registered yet, or your name may be spelled differently.',
+        advice: () => 'Ask your cooperative whether you have joined the group MSPO certification.',
+        button: 'See details',
+      },
+      low_confidence: {
+        title: ({ doc }: GapCtx) => `The writing on the ${doc} is unclear`,
+        detail: () => 'The values in the photo need to be confirmed.',
+        cause: 'The photo may be blurry, dark or have glare.',
+        advice: () =>
+          'Take a clearer photo, or confirm the values once the review screen is ready.',
+        button: 'See details',
+      },
+      missing_doc: {
+        title: ({ doc }: GapCtx) => `${doc} is missing`,
+        detail: () => 'This document has not been submitted yet.',
+        cause: "You may not have it yet, or you haven't photographed it.",
+        advice: ({ docType }: GapCtx) =>
+          docType === 'mpob_licence'
+            ? 'Get it at the MPOB office. Bring your MyKad and your land title.'
+            : docType === 'land_title'
+              ? 'Get a copy of the title at your district Land and Mines Office. Bring your MyKad.'
+              : docType === 'mspo_cert' || docType === 'mspo_member_list'
+                ? 'Ask your cooperative or MSPO group manager.'
+                : 'Ask your cooperative for help getting this document.',
+        button: 'How to get it',
+      },
+    },
+    gapUnknown: {
+      title: () => 'Something needs checking',
+      detail: () => 'A cooperative officer needs to check this.',
+      cause: "We aren't sure what caused it.",
+      advice: () => 'Ask your cooperative for help.',
+      button: 'See details',
+    },
+  },
+  issue: {
+    inGeran: 'On the title',
+    yourDrawing: 'Your drawing',
+    causeTitle: 'Possible cause',
+    adviceTitle: 'What to do',
+    redraw: 'Draw again',
+    redrawSoon: 'Drawing the boundary again will be available soon.',
+    uploadSoon: 'Uploading a new document will be available soon.',
+    notFound: 'This item was not found or is already resolved.',
+    backToResult: 'Back to the result',
+    polygonAlt: 'The shape of your land (preview, no map)',
   },
 };

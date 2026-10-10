@@ -33,5 +33,18 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/new-plot/map-placeholder').then((m) => m.MapPlaceholder),
   },
+  // 屏 9 结果。必须排在 plots/new* 之后，'new' 才不会被当成地块 id
+  {
+    path: 'plots/:id',
+    pathMatch: 'full',
+    canActivate: [requireAuth],
+    loadComponent: () => import('./features/result/result-page').then((m) => m.ResultPage),
+  },
+  // 屏 10 问题详情：:key 是缺口的 gapCode（同码多个文件时带 docType）
+  {
+    path: 'plots/:id/issue/:key',
+    canActivate: [requireAuth],
+    loadComponent: () => import('./features/result/issue-page').then((m) => m.IssuePage),
+  },
   { path: '**', redirectTo: '' },
 ];

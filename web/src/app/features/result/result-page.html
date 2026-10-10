@@ -1,0 +1,144 @@
+<main class="screen">
+  <header class="topbar">
+    <button
+      type="button"
+      class="icon-btn"
+      id="back"
+      [attr.aria-label]="t().common.back"
+      (click)="back()"
+    >
+      ←
+    </button>
+    <h1 class="topbar__title">{{ t().result.title }}</h1>
+    <app-lang-button />
+  </header>
+
+  <section class="content content--tight">
+    @switch (state()) {
+      @case ('loading') {
+        <div id="loading" aria-live="polite">
+          <span class="skeleton skeleton--title" aria-hidden="true"></span>
+          <span class="skeleton skeleton-card" aria-hidden="true"></span>
+          <span class="skeleton skeleton-card" aria-hidden="true"></span>
+          <p class="hint">{{ t().common.loading }}</p>
+        </div>
+      }
+      @case ('offline') {
+        <p id="offline" class="error" role="alert">
+          <span aria-hidden="true">⚠</span> {{ t().plots.offline }}
+        </p>
+        <button type="button" class="btn" id="retry" (click)="retry()">
+          {{ t().common.retry }}
+        </button>
+      }
+      @case ('error') {
+        <p id="error" class="error" role="alert">
+          <span aria-hidden="true">⚠</span> {{ t().plots.error }}
+        </p>
+        <button type="button" class="btn" id="retry" (click)="retry()">
+          {{ t().common.retry }}
+        </button>
+      }
+      @case ('notfound') {
+        <p id="not-found" class="lead">{{ t().result.notFound }}</p>
+        <button type="button" class="btn" id="back-to-list" (click)="back()">
+          {{ t().result.backToList }}
+        </button>
+      }
+      @case ('ready') {
+        @if (view(); as v) {
+          <div class="plot-line">
+            @if (v.loadingHeading) {
+              <span class="skeleton skeleton--title" aria-hidden="true"></span>
+            } @else {
+              <p class="plot-line__title" id="plot-title">{{ v.heading }}</p>
+            }
+            <p class="plot-line__meta">{{ v.subtitle }}</p>
+          </div>
+
+          @if (v.fromCache) {
+            <p id="cached" class="hint">{{ t().plots.cached }}</p>
+          }
+
+          <section
+            id="banner"
+            class="banner tone-{{ v.look.tone }}"
+            [attr.data-banner]="v.bannerKey"
+            aria-live="polite"
+          >
+            <span class="banner__icon" aria-hidden="true">{{ v.look.icon }}</span>
+            <div class="banner__text">
+              <h2 class="banner__headline">{{ v.headline }}</h2>
+              <p class="banner__sub">{{ v.sub }}</p>
+              @if (v.checkedOn) {
+                <p id="checked-on" class="banner__date">{{ v.checkedOn }}</p>
+              }
+            </div>
+          </section>
+
+          @if (v.total > 0) {
+            <h2 class="section-title">{{ t().result.todo }}</h2>
+            <ol id="gap-list" class="gap-list">
+              @for (g of shown(); track g.key; let i = $index) {
+                <li class="gap-card">
+                  <h3 class="gap-card__title">
+                    <span class="gap-card__no">{{ i + 1 }}.</span> {{ g.title }}
+                  </h3>
+                  <p class="gap-card__detail">{{ g.detail }}</p>
+                  <button
+                    type="button"
+                    class="btn btn-quiet"
+                    [id]="'gap-' + i"
+                    (click)="openIssue(g.key)"
+                  >
+                    {{ g.button }}
+                  </button>
+                </li>
+              }
+            </ol>
+            @if (v.total > visibleLimit) {
+              <button
+                type="button"
+                class="btn-link"
+                id="toggle-gaps"
+                aria-controls="gap-list"
+                [attr.aria-expanded]="gapsExpanded()"
+                (click)="gapsExpanded.set(!gapsExpanded())"
+              >
+                {{ gapsExpanded() ? t().result.seeLess : t().result.seeAll(v.total) }}
+              </button>
+            }
+          }
+
+          @if (v.passed.length > 0) {
+            <button
+              type="button"
+              class="pass-row"
+              id="passed-toggle"
+              aria-controls="passed-list"
+              [attr.aria-expanded]="passedOpen()"
+              (click)="passedOpen.set(!passedOpen())"
+            >
+              <span aria-hidden="true">✓</span>
+              <span class="pass-row__text">{{ t().result.passed(v.passed.length) }}</span>
+              <span aria-hidden="true">{{ passedOpen() ? '⌄' : '›' }}</span>
+            </button>
+            @if (passedOpen()) {
+              <ul id="passed-list" class="pass-list">
+                @for (code of v.passed; track code) {
+                  <li><span aria-hidden="true">✓</span> {{ t().result.ruleName(code) }}</li>
+                }
+              </ul>
+            }
+          }
+
+          @if (v.forest) {
+            <p id="forest" class="hint forest-note">
+              {{ v.forest }} {{ t().result.forest.prelim }}
+            </p>
+          }
+        }
+      }
+    }
+  </section>
+</main>

@@ -1,0 +1,124 @@
+<main class="screen">
+  <header class="topbar">
+    <button
+      type="button"
+      class="icon-btn"
+      id="back"
+      [attr.aria-label]="t().common.back"
+      (click)="back()"
+    >
+      ←
+    </button>
+    <h1 class="topbar__title" id="issue-title">{{ heading() }}</h1>
+    <app-lang-button />
+  </header>
+
+  <section class="content content--tight">
+    @switch (state()) {
+      @case ('loading') {
+        <div id="loading" aria-live="polite">
+          <span class="skeleton skeleton-card" aria-hidden="true"></span>
+          <p class="hint">{{ t().common.loading }}</p>
+        </div>
+      }
+      @case ('offline') {
+        <p id="offline" class="error" role="alert">
+          <span aria-hidden="true">⚠</span> {{ t().plots.offline }}
+        </p>
+        <button type="button" class="btn" id="retry" (click)="retry()">
+          {{ t().common.retry }}
+        </button>
+      }
+      @case ('error') {
+        <p id="error" class="error" role="alert">
+          <span aria-hidden="true">⚠</span> {{ t().plots.error }}
+        </p>
+        <button type="button" class="btn" id="retry" (click)="retry()">
+          {{ t().common.retry }}
+        </button>
+      }
+      @case ('notfound') {
+        <p id="not-found" class="lead">{{ t().result.notFound }}</p>
+      }
+      @case ('ready') {
+        @if (view(); as v) {
+          @if (!v.found) {
+            <p id="issue-not-found" class="lead">{{ t().issue.notFound }}</p>
+          } @else {
+            @if (v.compare; as c) {
+              <div class="compare" id="compare">
+                <div class="compare__box">
+                  <span class="compare__label">{{ t().issue.inGeran }}</span>
+                  <strong class="compare__value">{{ t().plots.areaHa(c.geran) }}</strong>
+                </div>
+                <div class="compare__box compare__box--warn">
+                  <span class="compare__label">{{ t().issue.yourDrawing }}</span>
+                  <strong class="compare__value">{{ t().plots.areaHa(c.lukisan) }}</strong>
+                </div>
+              </div>
+              @if (c.diff) {
+                <p class="diff-wrap">
+                  <span id="diff" class="chip tone-warn">
+                    <span aria-hidden="true">⚠</span><span>{{ c.diff }}</span>
+                  </span>
+                </p>
+              }
+            } @else {
+              <p id="detail" class="lead">{{ v.detail }}</p>
+            }
+
+            @if (v.points) {
+              <svg
+                id="polygon-preview"
+                class="polygon-preview"
+                viewBox="0 0 240 140"
+                role="img"
+                [attr.aria-label]="t().issue.polygonAlt"
+              >
+                <polygon [attr.points]="v.points" />
+              </svg>
+            }
+
+            @if (v.checkedOn) {
+              <p id="checked-on" class="hint">{{ v.checkedOn }}</p>
+            }
+
+            <section class="issue-section">
+              <h2 class="section-title">{{ t().issue.causeTitle }}</h2>
+              <p id="cause">{{ v.cause }}</p>
+            </section>
+            <section class="issue-section">
+              <h2 class="section-title">{{ t().issue.adviceTitle }}</h2>
+              <p id="advice">{{ v.advice }}</p>
+            </section>
+          }
+        }
+      }
+    }
+  </section>
+
+  <footer class="bar">
+    @if (view(); as v) {
+      @if (v.found) {
+        @if (v.isArea) {
+          <button
+            type="button"
+            class="btn"
+            id="redraw"
+            disabled
+            aria-disabled="true"
+            aria-describedby="redraw-note"
+          >
+            <span aria-hidden="true">↻</span> {{ t().issue.redraw }}
+          </button>
+          <p id="redraw-note" class="hint hint--center">{{ t().issue.redrawSoon }}</p>
+        } @else {
+          <p id="upload-note" class="hint hint--center">{{ t().issue.uploadSoon }}</p>
+        }
+      }
+    }
+    <button type="button" class="btn btn-quiet" id="back-to-result" (click)="back()">
+      {{ t().issue.backToResult }}
+    </button>
+  </footer>
+</main>
