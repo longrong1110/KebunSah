@@ -49,6 +49,7 @@ curl http://127.0.0.1:9099/emulator/v1/projects/demo-kebunsah/verificationCodes
 | `/plots/new/camera/:doc` | 4 取景 | `:doc` 取 `land_title`／`mspo_cert`／`mpob_licence`；非法值回屏 3。拍完先预览，确认才算数 |
 | `/plots/new/map` | 5 占位 | 「Peta akan datang」；真正的地图屏由后续分支做 |
 | `/plots/:id` | 9 结果 | 屏 2 的卡片点进来。红黄绿横幅、最多先列 3 件「Perlu dibuat」（每件一个按钮，多于 3 件可展开）、通过的检查默认收起、森林初筛一句话（永远带「只是初筛」） |
+| `/coop` | 11 合作社看板（电脑宽屏） | 仅 `coop_admin`（屏 2 头部有「Papan pemuka」入口）。左栏筛选、中间统计卡＋表格（红色最前）、右栏选中地块的详情；筛选条件和选中的地块在查询参数里（`?status=red&issue=area,expiry&q=…&plot=…`），刷新和前进后退都保持。窄于 1024px 栈叠 |
 | `/plots/:id/issue/:key` | 10 问题详情 | `:key` 是缺口的 `gapCode`（同码多个文件时带 `~docType`，如 `low_confidence~land_title`；不用点号，带点的末段在 PWA 里不会被当成导航请求）。数字对照、可能原因、建议；面积问题还有形状预览 |
 
 ### 逐屏怎么试
@@ -61,6 +62,7 @@ curl http://127.0.0.1:9099/emulator/v1/projects/demo-kebunsah/verificationCodes
 - **屏 3**：点「Tambah tanah」进入。点卡片进取景；点「Langkau」跳过；用「Atau pilih dari galeri」选一张图直接给第一份待拍的文档；三份处理完「Seterusnya」才亮。
 - **屏 4**：浏览器会请求摄像头权限。点快门 → 预览 → 「Guna gambar」回屏 3；「Ambil semula」重拍；点「Galeri」选本地图片也先进预览。手电筒按钮只在设备支持时出现。
 - **屏 9／10**：三个演示园主刚好是绿、黄、红。`+60100000011`（Tan Ah Kow）：绿色「Semua lulus」，没有事项；`+60100000012`（Ahmad Zaki bin Rosli）：黄色「Hampir siap」，两件事（面积不符、MPOB 执照 58 天后到期），点「Lihat butiran」看屏 10：地契 3.04 ha 对量出的 3.49 ha、`+0.45 ha (15%)`、形状预览；`+60100000013`（Muthu a/l Raman）：红色，4 件事（先显示 3 件，「Lihat semua (4)」展开），森林初筛提示有损失 0.8 ha。外勤选成员 Krishnan a/l Marimuthu 能看到「Perlu semakan pegawai」。
+- **屏 11（看板，要用电脑宽屏看）**：用 `+60100000002`（管理员，档案语言 en，所以默认英语，点 🌐 切 BM）登录，屏 2 头部点「Dashboard」进入，或直接打开 `/coop`。统计卡 Green 110／Yellow 50／Red 24／Needs review 16；点左栏 Red 只看红色，勾「Issue type」里的类型（可多选），在 Member 里输入名字片段；点一行（或用 Tab 到行里的按钮按 Enter）看右栏详情；点「Export summary (CSV)」导出**当前筛选后**的表格。园主或外勤打开 `/coop` 只会看到「Halaman ini untuk pentadbir koperasi.」。
 - **没有摄像头的电脑**：取景页会显示「Tiada kamera…」并保留相册入口，屏 3／4 仍可用相册走完。
 - **离线**：停掉 Firestore 模拟器，屏 2 在 10 秒内转为离线提示并给「Cuba lagi」；模拟器恢复后点它即可重新订阅。
 
@@ -91,7 +93,7 @@ src/app/core/                 phone.ts（号码规范化）、plot-status.ts（�
                               load-state.ts（加载／离线／出错）、people-search.ts（成员搜索）
 src/app/core/i18n/            dict.ms.ts / dict.en.ts（词典）、i18n.service.ts（当前语言）
 src/app/shared/               跨屏共用的小组件（语言按钮）
-src/app/features/<屏>/        每屏一个目录，懒加载：login、plots（屏 2）、new-plot（屏 3、4 与占位）、result（屏 9、10）
+src/app/features/<屏>/        每屏一个目录，懒加载：login、plots（屏 2）、new-plot（屏 3、4 与占位）、result（屏 9、10）、coop（屏 11）
 src/testing/                  测试替身：fake-facade.ts（假 Firestore）、fake-image.ts（假的图像管线）
 scripts/                      emulators.mjs、check-readonly.mjs、check-prod-bundle.mjs
 ```
@@ -128,6 +130,10 @@ scripts/                      emulators.mjs、check-readonly.mjs、check-prod-bu
 - **真机相机行为没验证过**：电脑上的 Claude 内置浏览器没有真实摄像头。后置镜头选择、手电筒、iOS Safari 的 `playsinline` 自动播放、权限弹窗，都要在真机（HTTPS）上走一遍。取景流程在自动化里是用注入的假 `getUserMedia` 验证的。
 - **`firestore.rules` 过宽**：现在任何登录用户都能读全部集合，包括 `persons` 里的 `icHash`／`icLast4`。屏 2 的角色分流和成员列表只是界面行为，不是授权；规则收紧是队友的事（共管文件）。成员列表读的是 `persons` 的 `fullName`，不显示证件号。
 - 首次登录谁来创建 `users/{uid}`、`lastLoginAt` 谁写，合同还没定（见 `seed/README.md` 缺口 10），本次不创建。没有档案的账号，屏 2 显示「Profil anda belum dibuat.」并提供登出。
+- **看板（屏 11）用 collection group 读评估**：`collection$('assessments', { group: true })` 一次拿到所有地块的评估，在客户端按 `plotId` 与本合作社的地块（`plots` 按 `coopId` 等值过滤）对上。**代价**：它会把**所有合作社、所有历史评估**下载到浏览器（包括不渲染的字段，如 `ruleResults[].detail` 里的第三人姓名），`persons` 也是整个集合下载（含 `icHash`／`icLast4`，界面不用）。`infra/firestore.rules` 现在是「登录即可读全部」，任何登录用户用开发者工具都读得到别的合作社的数据；规则收紧时 collection group 要单独写规则，评估文档最好自带 `coopId`——请队友在合同里定。「只有管理员能看」只是界面行为。
+- **看板的状态以最新评估为准**（与屏 9 同一套规则），屏 2 的卡片用 `plots.status`；种子里两者一致，真实后端若不一致，同一块地在两处可能不同色。看板没有评估的地块是「Belum mula」。
+- **看板导出 CSV 是本轮的临时做法**：纯前端生成（当前筛选后的表格；列 Plot、District、Member、Status、Main issue、Updated；**含成员姓名**，不含证件信息、评估说明、地块 id；防公式注入、UTF-8 带 BOM）。合同里的 `GET /api/coop/export` 还是「待定」，定了再换。「Export dossier (PDF)」依赖档案页，现在禁用并写明「Akan datang」；虚线的「Override as pass」是待确认功能，没做。
+- **看板没有证件原图**（Storage 里没有照片），右栏只画形状预览（内联 SVG，不是卫星图）。表格 200 行一次渲染，保证 200 行；更多要分页／虚拟滚动。宽屏布局只在内置浏览器里看过，真实大屏未验证。
 - **评估文档的形状是种子的临时约定**（camelCase 的 `ruleResults`／`gaps`／`runStatus`，`gapCode` 取 `area_mismatch／expiring／expired／name_mismatch／not_in_mspo／low_confidence／missing_doc`，规则 `result` 取 `pass／warn／fail／needs_review`），`contract/` 里还没有示例。真实后端写入若不同，解析是防御式的：缺字段不崩，未知 `gapCode` 走通用文案；但要请队友把形状补进合同。
 - **屏 10 不放会失败的按钮**：「Lukis semula」需要屏 5 的重画和保存多边形的接口，现在**禁用**并写明原因（不能跳到 `/plots/new/map`，那是新建草稿）；上传新文件、确认字段（屏 8）也都还没有，其余事项只给说明。屏 9 上的「Cara mendapatkannya」是进屏 10 看步骤，不是真的去办。线框里虚线的「Hantar ke koperasi」是待确认功能，没做。
 - **数字对照取评估时的快照**（`CC-01` 的 `expectedValue`／`actualValue`），可能与 `plots.areaHaComputed` 的当前值不同，所以页面上标了「Disemak pada …」。形状预览是内联 SVG，没有地图底图。

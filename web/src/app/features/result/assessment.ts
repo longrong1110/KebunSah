@@ -25,6 +25,8 @@ export interface GapData {
 }
 
 export interface AssessmentData {
+  /** 评估哪块地（合同的 plot_id）；看板订阅所有评估时靠它对上地块 */
+  plotId?: string;
   /** queued → running → done／failed（contract/status.md） */
   runStatus?: string;
   /** green／yellow／red／needs_review */
@@ -41,6 +43,8 @@ export interface AssessmentData {
 export interface AssessmentItem {
   id: string;
   data: AssessmentData;
+  /** 文档路径 plots/{plotId}/assessments/{id}（collection group 订阅才有） */
+  path?: string;
 }
 
 const validTime = (d: unknown): number | null =>

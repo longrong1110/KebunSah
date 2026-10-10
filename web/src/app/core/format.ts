@@ -27,6 +27,14 @@ export function formatDay(value: unknown, lang: Lang): string | null {
   return `${local.getUTCDate()} ${MONTHS[lang][local.getUTCMonth()]}`;
 }
 
+/** 日期写成「2026-10-03」（UTC+8）：CSV 里的 Updated 和文件名用。空或无效返回 null。 */
+export function formatYmd(value: unknown): string | null {
+  if (!(value instanceof Date) || Number.isNaN(value.getTime())) return null;
+  const local = new Date(value.getTime() + MALAYSIA_OFFSET_MS);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${local.getUTCFullYear()}-${pad(local.getUTCMonth() + 1)}-${pad(local.getUTCDate())}`;
+}
+
 // 马来语姓名里的连接词不大写：AHMAD ZAKI BIN ROSLI → Ahmad Zaki bin Rosli
 const LOWER_WORDS = new Set(['bin', 'binti', 'a/l', 'a/p']);
 

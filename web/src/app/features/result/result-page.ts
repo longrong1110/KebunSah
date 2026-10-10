@@ -6,7 +6,6 @@ import { FirestoreReader, type DocState } from '../../core/firebase/firestore-re
 import { formatDay } from '../../core/format';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { docConfirmed, loadState$, type Load } from '../../core/load-state';
-import { statusOf } from '../../core/plot-status';
 import { LangButton } from '../../shared/lang-button';
 import { plotHeading, plotSubtitle } from '../plots/plot-title';
 import type { PlotData, TitleData } from '../plots/plot-types';
@@ -15,30 +14,16 @@ import {
   checkedAt,
   concludedAssessment,
   forestNote,
-  gapFacts,
   latestAssessment,
   openGaps,
   passedRules,
-  type BannerKey,
 } from './assessment';
+import { bannerLook } from './banner-look';
+import { forestLine, gapView } from './gap-view';
 import { pageState, watchPlotAssessment } from './result-data';
 
 /** 先列最多这么多件要做的事，其余收起（线框：先列最多 2–3 件） */
 const VISIBLE_GAPS = 3;
-
-// 横幅的图标与色调：四种结论沿用 statusOf（颜色＋图标＋文字三件套）；「还在检查」是线框外的状态，用中性色
-const BANNER_LOOK: Record<BannerKey, { icon: string; tone: string }> = {
-  green: pick('green'),
-  yellow: pick('yellow'),
-  red: pick('red'),
-  needs_review: pick('needs_review'),
-  pending: pick('pending'),
-  running: { icon: '…', tone: 'idle' },
-};
-function pick(value: string) {
-  const s = statusOf(value);
-  return { icon: s.icon, tone: s.tone };
-}
 
 // 屏 9「结果」（线框 docs/ui/screen-09.png）：先给结论，再列最多 2–3 件要做的事（每件一个按钮），
 // 通过的检查默认折叠，森林初筛写明「只是初筛」。只读：不写任何东西，也不调后端。
@@ -95,33 +80,19 @@ export class ResultPage {
     const gaps = done ? openGaps(done) : [];
 
     const items = gaps.map((g) => {
-      const text = g.known ? t.result.gapText[g.known] : t.result.gapUnknown;
-      const ctx = {
-        doc: t.result.docName(g.docType),
-        docType: g.docType,
-        facts: done
-          ? gapFacts(done, g, lang)
-          : { geran: null, lukisan: null, days: null, date: null },
-      };
-      return { key: g.key, title: text.title(ctx), detail: text.detail(ctx), button: text.button };
+      const v = gapView(t, lang, done!, g);
+      return { key: g.key, title: v.title, detail: v.detail, button: v.button };
     });
 
     const checked = done ? checkedAt(done) : null;
     const checkedDay = checked ? formatDay(checked, lang) : null;
     const note = done ? forestNote(done) : null;
-    const forest =
-      note === null
-        ? null
-        : note.kind === 'low'
-          ? t.result.forest.low
-          : note.kind === 'loss'
-            ? t.result.forest.loss(note.ha)
-            : t.result.forest.unknown;
+    const forest = note === null ? null : forestLine(t, note);
     const heading = plotHeading(t, plot, this.title());
 
     return {
       bannerKey: key,
-      look: BANNER_LOOK[key],
+      look: bannerLook(key),
       headline: t.result.banner[key].headline,
       sub: t.result.banner[key].sub(items.length),
       checkedOn: checkedDay ? t.result.checkedOn(checkedDay) : null,

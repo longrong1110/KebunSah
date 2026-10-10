@@ -10,10 +10,10 @@ import {
   checkedAt,
   concludedAssessment,
   formatDiff,
-  gapFacts,
   latestAssessment,
   openGaps,
 } from './assessment';
+import { gapView } from './gap-view';
 import { parseRing, toSvgPoints } from './polygon';
 import { pageState, watchPlotAssessment } from './result-data';
 
@@ -59,12 +59,7 @@ export class IssuePage {
     const gap = done ? openGaps(done).find((g) => g.key === this.issueKey()) : undefined;
     if (!done || !gap) return { found: false as const };
 
-    const text = gap.known ? t.result.gapText[gap.known] : t.result.gapUnknown;
-    const ctx = {
-      doc: t.result.docName(gap.docType),
-      docType: gap.docType,
-      facts: gapFacts(done, gap, lang),
-    };
+    const text = gapView(t, lang, done, gap);
 
     const isArea = gap.known === 'area_mismatch';
     const compare = isArea ? areaCompare(done) : null;
@@ -76,10 +71,10 @@ export class IssuePage {
 
     return {
       found: true as const,
-      title: text.title(ctx),
-      detail: text.detail(ctx),
+      title: text.title,
+      detail: text.detail,
       cause: text.cause,
-      advice: text.advice(ctx),
+      advice: text.advice,
       // 两格对照只在两个数都读得出来时显示，否则只剩文字说明（不出现 NaN、0 或空的「ha」）
       compare: compare && geran && lukisan ? { geran, lukisan, diff: formatDiff(compare) } : null,
       points: ring ? toSvgPoints(ring) : null,

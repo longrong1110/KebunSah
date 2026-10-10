@@ -38,6 +38,44 @@ describe('FirestoreReader', () => {
     expect(watchCollection).not.toHaveBeenCalled();
   });
 
+  it('group 选项：订阅所有同名子集合（collection group）；默认不是', () => {
+    const { reader, watchCollection } = setup();
+    reader.collection$('plots').subscribe().unsubscribe();
+    expect(watchCollection.mock.calls[0][4]).toBeUndefined();
+
+    reader.collection$('assessments', { group: true }).subscribe().unsubscribe();
+    expect(watchCollection.mock.calls[1][0]).toBe('assessments');
+    expect(watchCollection.mock.calls[1][4]).toBe(true);
+    expect(watchCollection.mock.calls[1][3]).toBeUndefined(); // 没带过滤
+  });
+
+  it('group 可以和等值过滤一起用', () => {
+    const { reader, watchCollection } = setup();
+    reader
+      .collection$('assessments', { group: true, where: [{ field: 'plotId', value: 'p1' }] })
+      .subscribe()
+      .unsubscribe();
+    expect(watchCollection.mock.calls[0][3]).toEqual([{ field: 'plotId', value: 'p1' }]);
+    expect(watchCollection.mock.calls[0][4]).toBe(true);
+  });
+
+  it('把文档的完整路径带出来（collection group 靠它认父文档）；没有路径的替身照常工作', () => {
+    const { reader, emitCollection } = setup();
+    const seen: unknown[] = [];
+    reader.collection$('assessments', { group: true }).subscribe((s) => seen.push(s.docs));
+    emitCollection({
+      docs: [
+        { id: 'a1', data: {}, path: 'plots/p1/assessments/a1' },
+        { id: 'a2', data: {} },
+      ],
+      fromCache: false,
+    });
+    expect(seen[0]).toEqual([
+      { id: 'a1', data: {}, path: 'plots/p1/assessments/a1' },
+      { id: 'a2', data: {}, path: undefined },
+    ]);
+  });
+
   it('取消订阅时关掉监听，且只关一次', () => {
     const { reader, watchCollection, unsubscribe } = setup();
     const sub = reader.collection$('plots').subscribe();

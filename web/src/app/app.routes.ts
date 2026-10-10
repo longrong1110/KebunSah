@@ -46,5 +46,11 @@ export const routes: Routes = [
     canActivate: [requireAuth],
     loadComponent: () => import('./features/result/issue-page').then((m) => m.IssuePage),
   },
+  // 屏 11 合作社看板（电脑宽屏）：筛选条件与选中的地块在查询参数里（?status=&issue=&q=&plot=）
+  {
+    path: 'coop',
+    canActivate: [requireAuth],
+    loadComponent: () => import('./features/coop/coop-page').then((m) => m.CoopPage),
+  },
   { path: '**', redirectTo: '' },
 ];

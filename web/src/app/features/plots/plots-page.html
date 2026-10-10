@@ -17,6 +17,11 @@
         </button>
       }
       <span class="spacer"></span>
+      @if (isCoopAdmin()) {
+        <button type="button" class="btn-link" id="coop-link" (click)="openDashboard()">
+          {{ t().coop.link }}
+        </button>
+      }
       <app-lang-button />
       <button type="button" class="btn-link" id="logout" (click)="logout()">
         {{ t().plots.logout }}

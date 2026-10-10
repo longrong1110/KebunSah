@@ -919,3 +919,348 @@ a.plot-card:hover {
 .issue-section p {
   margin: 0;
 }
+
+// ---- 屏 11：合作社看板（电脑宽屏三栏；窄于 1024px 栈叠）----
+// 看板专用类名都以 coop- 开头。与手机端不同：整页占满宽度，不套 .screen 的 480px。
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.coop {
+  min-height: 100dvh;
+}
+
+.coop-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+  border-bottom: 2px solid var(--line);
+  background: var(--surface);
+}
+
+.coop-brand {
+  font-family: 'Noto Serif', Georgia, 'Times New Roman', serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--palm);
+}
+
+.coop-name {
+  font-size: 1.125rem;
+}
+
+.coop-role {
+  color: var(--muted);
+}
+
+.coop-notice,
+.coop-center {
+  max-width: 560px;
+  margin: 32px auto;
+  padding: 0 20px;
+}
+
+.coop-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 320px;
+  align-items: stretch;
+  min-height: calc(100dvh - 72px);
+}
+
+.coop-filters,
+.coop-detail {
+  padding: 20px;
+  background: var(--surface);
+}
+
+.coop-filters {
+  border-right: 2px solid var(--line);
+}
+
+.coop-detail {
+  border-left: 2px solid var(--line);
+  overflow-wrap: anywhere;
+}
+
+.coop-main {
+  min-width: 0;
+  padding: 20px;
+}
+
+.coop-h {
+  margin: 20px 0 8px;
+  font-size: 1rem;
+}
+
+.coop-filters .coop-h:first-child {
+  margin-top: 0;
+}
+
+.coop-filter-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.coop-filter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 12px;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.coop-filter:hover {
+  background: color-mix(in srgb, var(--palm) 6%, transparent);
+}
+
+// 选中不只靠颜色：加粗＋左侧色条＋描边
+.coop-filter--on {
+  border-color: var(--palm);
+  background: color-mix(in srgb, var(--palm) 12%, var(--surface));
+  box-shadow: inset 4px 0 0 var(--palm);
+  font-weight: 700;
+}
+
+.coop-filter__count {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.coop-search {
+  width: 100%;
+  font-size: 1rem;
+}
+
+.coop-stats {
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.coop-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.coop-stat__label {
+  color: var(--tone, var(--muted));
+  font-weight: 700;
+}
+
+.coop-stat__count {
+  font-size: 2rem;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.coop-stat__bar {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.coop-stat__fill {
+  display: block;
+  height: 100%;
+  background: var(--tone, var(--muted));
+}
+
+.coop-tablebar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.coop-rowcount {
+  font-weight: 700;
+}
+
+// 导出按钮在桌面上不必有手机上那样大的底栏按钮
+.coop-export {
+  width: auto;
+  min-height: 40px;
+  padding: 6px 16px;
+}
+
+.coop-table-wrap {
+  max-height: calc(100dvh - 280px);
+  overflow: auto;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.coop-table {
+  width: 100%;
+  // 比中间栏窄时，表格在自己的框里横向滚动，行不会被挤得很高
+  min-width: 720px;
+  border-collapse: collapse;
+  font-size: 1rem;
+
+  th,
+  td {
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: middle;
+  }
+
+  th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: color-mix(in srgb, var(--palm) 8%, var(--surface));
+    color: var(--muted);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+
+  td {
+    border-top: 1px solid var(--line);
+  }
+
+  // 状态标签不换行；主问题是一句话，给它留够宽度
+  .chip {
+    white-space: nowrap;
+  }
+
+  td:nth-child(4) {
+    min-width: 200px;
+  }
+}
+
+.coop-row {
+  cursor: pointer;
+}
+
+.coop-row:hover {
+  background: color-mix(in srgb, var(--palm) 5%, var(--surface));
+}
+
+// 选中的行：底色＋左侧色条，按钮上还有 aria-current
+.coop-row--on {
+  background: color-mix(in srgb, var(--palm) 12%, var(--surface));
+  box-shadow: inset 4px 0 0 var(--palm);
+}
+
+.coop-plotbtn {
+  min-height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  cursor: pointer;
+}
+
+.coop-plotbtn:hover,
+.coop-plotbtn[aria-current='true'] {
+  text-decoration-color: currentcolor;
+}
+
+.coop-detail__title {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+}
+
+.coop-shape {
+  margin: 12px 0;
+}
+
+.coop-shape figcaption {
+  margin-top: 4px;
+}
+
+.coop-issues {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  li {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 12px;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+  }
+
+  li span {
+    color: var(--muted);
+  }
+}
+
+.coop-detail .btn {
+  width: 100%;
+  margin-top: 8px;
+}
+
+// 窄于 1024px：栈叠（筛选→统计→表格→详情），仍然不横向溢出
+@media (max-width: 1023px) {
+  .coop-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .coop-filters {
+    border-right: 0;
+    border-bottom: 2px solid var(--line);
+  }
+
+  .coop-detail {
+    border-left: 0;
+    border-top: 2px solid var(--line);
+  }
+
+  .coop-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .coop-table-wrap {
+    max-height: 60dvh; // 窄屏栈叠时表格也在自己的框里滚，别把详情推到几万像素之外
+  }
+
+  .coop-top {
+    flex-wrap: wrap;
+    padding: 12px 16px;
+  }
+}

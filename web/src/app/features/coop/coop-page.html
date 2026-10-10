@@ -1,0 +1,330 @@
+<main class="coop">
+  @if (loggingOut()) {
+    <p id="logging-out" class="hint coop-center">{{ t().plots.loggingOut }}</p>
+  } @else {
+    <h1 class="sr-only">{{ t().coop.title }}</h1>
+    <header class="coop-top">
+      <span class="coop-brand">KebunSah</span>
+      @if (coopName(); as name) {
+        <span id="coop-name" class="coop-name">{{ name }}</span>
+      }
+      <span class="spacer"></span>
+      <app-lang-button />
+      @if (isAdmin()) {
+        <span id="coop-role" class="coop-role">{{ t().coop.adminRole }}</span>
+      }
+      <button type="button" class="btn-link" id="logout" (click)="logout()">
+        {{ t().plots.logout }}
+      </button>
+    </header>
+
+    @if (logoutFailed()) {
+      <p id="logout-error" class="error coop-notice" role="alert">
+        <span aria-hidden="true">⚠</span> {{ t().plots.logoutFailed }}
+      </p>
+    }
+
+    @switch (state()) {
+      @case ('loading') {
+        <div id="coop-loading" class="coop-notice" aria-live="polite">
+          <p class="hint">{{ t().common.loading }}</p>
+          <div class="skeleton-card" aria-hidden="true"></div>
+          <div class="skeleton-card" aria-hidden="true"></div>
+        </div>
+      }
+      @case ('offline') {
+        <div class="coop-notice">
+          <p id="coop-offline" class="error" role="alert">
+            <span aria-hidden="true">⚠</span> {{ t().plots.offline }}
+          </p>
+          <button type="button" class="btn btn-quiet" id="coop-retry" (click)="retry()">
+            {{ t().common.retry }}
+          </button>
+        </div>
+      }
+      @case ('error') {
+        <div class="coop-notice">
+          <p id="coop-error" class="error" role="alert">
+            <span aria-hidden="true">⚠</span> {{ t().plots.error }}
+          </p>
+          <button type="button" class="btn btn-quiet" id="coop-retry" (click)="retry()">
+            {{ t().common.retry }}
+          </button>
+        </div>
+      }
+      @case ('forbidden') {
+        <div class="coop-notice">
+          <p id="coop-forbidden" class="lead">{{ t().coop.forbidden }}</p>
+          <button type="button" class="btn btn-quiet" id="coop-back" (click)="backToPlots()">
+            {{ t().coop.backToPlots }}
+          </button>
+        </div>
+      }
+      @case ('nocoop') {
+        <div class="coop-notice">
+          <p id="coop-nocoop" class="lead">{{ t().coop.noCoop }}</p>
+        </div>
+      }
+      @case ('ready') {
+        <div class="coop-layout">
+          <!-- 左栏：筛选 -->
+          <aside class="coop-filters" [attr.aria-label]="t().coop.filter">
+            <h2 class="coop-h">{{ t().coop.filter }}</h2>
+            <ul class="coop-filter-list">
+              <li>
+                <button
+                  type="button"
+                  class="coop-filter"
+                  id="filter-all"
+                  [class.coop-filter--on]="filter().status === null"
+                  [attr.aria-pressed]="filter().status === null"
+                  (click)="setStatus(null)"
+                >
+                  <span class="coop-filter__label">{{ t().coop.allPlots }}</span>
+                  <span class="coop-filter__count">{{ total() }}</span>
+                </button>
+              </li>
+              @for (f of statusFilters(); track f.key) {
+                <li>
+                  <button
+                    type="button"
+                    class="coop-filter"
+                    [id]="'filter-' + f.key"
+                    [class.coop-filter--on]="f.active"
+                    [attr.aria-pressed]="f.active"
+                    (click)="setStatus(f.key)"
+                  >
+                    <span class="coop-filter__label">
+                      <span aria-hidden="true">{{ f.look.icon }}</span> {{ f.label }}
+                    </span>
+                    <span class="coop-filter__count">{{ f.count }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+
+            @if (issueFilters().length > 0) {
+              <h2 class="coop-h">{{ t().coop.issueType }}</h2>
+              <ul class="coop-filter-list">
+                @for (f of issueFilters(); track f.key) {
+                  <li>
+                    <button
+                      type="button"
+                      class="coop-filter"
+                      [id]="'issue-' + f.key"
+                      [class.coop-filter--on]="f.active"
+                      [attr.aria-pressed]="f.active"
+                      (click)="toggleIssue(f.key)"
+                    >
+                      <span class="coop-filter__label">
+                        <span aria-hidden="true">{{ f.active ? '✓' : '' }}</span> {{ f.label }}
+                      </span>
+                      <span class="coop-filter__count">{{ f.count }}</span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+
+            <h2 class="coop-h">{{ t().coop.member }}</h2>
+            <label class="sr-only" for="coop-q">{{ t().members.searchLabel }}</label>
+            <input
+              id="coop-q"
+              type="search"
+              class="field coop-search"
+              autocomplete="off"
+              [placeholder]="t().coop.memberPlaceholder"
+              [value]="filter().q"
+              (input)="setQuery($any($event.target).value)"
+            />
+
+            @if (filterActive()) {
+              <button type="button" class="btn-link" id="clear-filters" (click)="clearFilters()">
+                {{ t().coop.clearFilter }}
+              </button>
+            }
+          </aside>
+
+          <!-- 中间：统计卡＋表格 -->
+          <section class="coop-main">
+            <ul class="coop-stats">
+              @for (c of cards(); track c.key) {
+                <li class="coop-stat tone-{{ c.look.tone }}" [id]="'stat-' + c.key">
+                  <span class="coop-stat__label">
+                    <span aria-hidden="true">{{ c.look.icon }}</span> {{ c.label }}
+                  </span>
+                  <strong class="coop-stat__count">{{ c.count }}</strong>
+                  <span class="coop-stat__bar" aria-hidden="true">
+                    <span class="coop-stat__fill" [style.width.%]="c.pct"></span>
+                  </span>
+                </li>
+              }
+            </ul>
+
+            @if (fromCache()) {
+              <p id="coop-cached" class="hint">{{ t().coop.cached }}</p>
+            }
+
+            <div class="coop-tablebar">
+              <span id="row-count" class="coop-rowcount">
+                {{ t().coop.rowCount(tableRows().length, total()) }}
+              </span>
+              <span class="spacer"></span>
+              <button
+                type="button"
+                class="btn btn-quiet coop-export"
+                id="export-csv"
+                [disabled]="tableRows().length === 0"
+                (click)="exportCsv()"
+              >
+                {{ t().coop.exportCsv }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-quiet coop-export"
+                id="export-pdf"
+                disabled
+                aria-disabled="true"
+                aria-describedby="export-pdf-note"
+              >
+                {{ t().coop.exportPdf }}
+              </button>
+              <span id="export-pdf-note" class="hint">{{ t().coop.soon }}</span>
+            </div>
+
+            @if (total() === 0) {
+              <p id="empty-coop" class="lead">{{ t().coop.emptyCoop }}</p>
+            } @else if (tableRows().length === 0) {
+              <div id="empty-filter">
+                <p class="lead">{{ t().coop.emptyFilter }}</p>
+                <button
+                  type="button"
+                  class="btn btn-quiet"
+                  id="empty-clear"
+                  (click)="clearFilters()"
+                >
+                  {{ t().coop.clearFilter }}
+                </button>
+              </div>
+            } @else {
+              <div class="coop-table-wrap">
+                <table id="coop-table" class="coop-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">{{ t().coop.table.plot }}</th>
+                      <th scope="col">{{ t().coop.table.member }}</th>
+                      <th scope="col">{{ t().coop.table.status }}</th>
+                      <th scope="col">{{ t().coop.table.mainIssue }}</th>
+                      <th scope="col">{{ t().coop.table.updated }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (r of tableRows(); track r.id) {
+                      <tr
+                        class="coop-row"
+                        [class.coop-row--on]="r.selected"
+                        [attr.data-plot-id]="r.id"
+                        (click)="select(r.id)"
+                      >
+                        <td>
+                          <button
+                            type="button"
+                            class="coop-plotbtn"
+                            [attr.aria-current]="r.selected ? 'true' : null"
+                            (click)="select(r.id); $event.stopPropagation()"
+                          >
+                            {{ r.text.plot }}
+                          </button>
+                        </td>
+                        <td>{{ r.text.member ?? '—' }}</td>
+                        <td>
+                          <span class="chip tone-{{ r.look.tone }}">
+                            <span aria-hidden="true">{{ r.look.icon }}</span>
+                            <span>{{ r.text.status }}</span>
+                          </span>
+                        </td>
+                        <td>{{ r.text.mainIssue ?? '—' }}</td>
+                        <td>{{ r.text.updated ?? '—' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </section>
+
+          <!-- 右栏：详情 -->
+          <aside id="detail" class="coop-detail" aria-live="polite">
+            @if (detail(); as d) {
+              @switch (d.kind) {
+                @case ('none') {
+                  <p id="detail-choose" class="hint">{{ t().coop.detail.choose }}</p>
+                }
+                @case ('notfound') {
+                  <p id="detail-notfound" class="lead">{{ t().coop.detail.notFound }}</p>
+                }
+                @case ('row') {
+                  <h2 id="detail-title" class="coop-detail__title">{{ d.title }}</h2>
+                  <p>
+                    <span class="chip tone-{{ d.look.tone }}">
+                      <span aria-hidden="true">{{ d.look.icon }}</span>
+                      <span>{{ d.status }}</span>
+                    </span>
+                  </p>
+                  @if (!d.inFilter) {
+                    <p id="detail-not-in-filter" class="hint">{{ t().coop.detail.notInFilter }}</p>
+                  }
+
+                  @if (d.points) {
+                    <figure class="coop-shape">
+                      <svg
+                        id="detail-shape"
+                        class="polygon-preview"
+                        viewBox="0 0 240 140"
+                        role="img"
+                        [attr.aria-label]="t().coop.detail.shape"
+                      >
+                        <polygon [attr.points]="d.points" />
+                      </svg>
+                      <figcaption class="hint">{{ t().coop.detail.shapeNote }}</figcaption>
+                    </figure>
+                  }
+
+                  @if (d.note; as note) {
+                    <p id="detail-note">{{ note }}</p>
+                  } @else {
+                    <h3 class="coop-h">{{ t().coop.detail.issues }}</h3>
+                    @if (d.issues.length === 0) {
+                      <p id="detail-no-issues">{{ t().coop.detail.noIssues }}</p>
+                    } @else {
+                      <ul id="detail-issues" class="coop-issues">
+                        @for (i of d.issues; track i.key) {
+                          <li>
+                            <strong>{{ i.title }}</strong>
+                            <span>{{ i.detail }}</span>
+                          </li>
+                        }
+                      </ul>
+                    }
+                    @if (d.forest) {
+                      <p id="detail-forest" class="hint">
+                        {{ d.forest }} {{ t().result.forest.prelim }}
+                      </p>
+                    }
+                    @if (d.checkedOn) {
+                      <p id="detail-checked" class="hint">{{ d.checkedOn }}</p>
+                    }
+                  }
+
+                  <button type="button" class="btn" id="open-result" (click)="openResult(d.id)">
+                    {{ t().coop.detail.openResult }}
+                  </button>
+                }
+              }
+            }
+          </aside>
+        </div>
+      }
+    }
+  }
+</main>
