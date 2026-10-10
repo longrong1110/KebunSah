@@ -15,6 +15,8 @@ interface Watcher<N> {
   error: (err: unknown) => void;
   active: boolean;
   filters?: readonly EqualityFilter[];
+  /** collection group 订阅（path 是集合名） */
+  group?: boolean;
 }
 
 const lastSegment = (path: string) => path.split('/').pop() ?? '';
@@ -30,8 +32,9 @@ export class FakeFacade implements FirestoreFacade {
     next: CollNext,
     error: (err: unknown) => void,
     filters?: readonly EqualityFilter[],
+    group?: boolean,
   ): () => void {
-    const w: Watcher<CollNext> = { path, next, error, filters, active: true };
+    const w: Watcher<CollNext> = { path, next, error, filters, group, active: true };
     this.collections.push(w);
     return () => (w.active = false);
   }
@@ -68,7 +71,7 @@ export class FakeFacade implements FirestoreFacade {
   /** 给某个集合的活跃监听发快照；传 where 就只发给过滤条件一致的那个监听 */
   emitCollection(
     path: string,
-    docs: { id: string; data: Record<string, unknown> }[],
+    docs: { id: string; data: Record<string, unknown>; path?: string }[],
     options: { fromCache?: boolean; where?: readonly EqualityFilter[] } = {},
   ): void {
     for (const w of this.activeCollections(path)) {

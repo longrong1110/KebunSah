@@ -1,4 +1,4 @@
-import { formatArea, formatDay, titleCaseName, formatIsoDay } from './format';
+import { formatArea, formatDay, formatIsoDay, formatYmd, titleCaseName } from './format';
 
 describe('formatArea', () => {
   it('取 areaHaComputed，最多 2 位小数、去掉尾零', () => {
@@ -105,5 +105,23 @@ describe('formatIsoDay', () => {
   it('闰年的 2 月 29 日合法，平年不合法', () => {
     expect(formatIsoDay('2028-02-29', 'en')).toBe('29 Feb 2028');
     expect(formatIsoDay('2026-02-29', 'en')).toBeNull();
+  });
+});
+
+describe('formatYmd', () => {
+  it('YYYY-MM-DD，按马来西亚时间（UTC+8）：UTC 傍晚已经是第二天', () => {
+    expect(formatYmd(new Date('2026-10-03T02:24:00Z'))).toBe('2026-10-03');
+    expect(formatYmd(new Date('2026-10-03T16:30:00Z'))).toBe('2026-10-04');
+    expect(formatYmd(new Date('2026-12-31T16:00:00Z'))).toBe('2027-01-01');
+  });
+
+  it('月和日补零', () => {
+    expect(formatYmd(new Date('2026-01-05T00:00:00Z'))).toBe('2026-01-05');
+  });
+
+  it('空、无效、不是 Date：null', () => {
+    for (const bad of [null, undefined, '2026-10-03', 0, new Date('x')]) {
+      expect(formatYmd(bad), String(bad)).toBeNull();
+    }
   });
 });

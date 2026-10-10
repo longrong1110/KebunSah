@@ -333,6 +333,33 @@ describe('PlotsPage · 外勤／管理员', () => {
     expect(t.facade.activeCollections('persons').length).toBe(1);
   });
 
+  it('合作社管理员头部有「Papan pemuka」入口，点它进 /coop；外勤没有，见下面几条', async () => {
+    const admin = await setup();
+    await admin.profile({ role: 'coop_admin', personId: null, language: 'ms' });
+    expect(admin.q('#coop-link')?.textContent?.trim()).toBe('Papan pemuka');
+    const nav = vi.spyOn(admin.router, 'navigate').mockResolvedValue(true);
+    admin.q('#coop-link')!.click();
+    expect(nav).toHaveBeenCalledWith(['/coop']);
+  });
+
+  it('园主没有进看板的入口；没有档案的账号也没有', async () => {
+    const owner = await setup();
+    await owner.profile(OWNER);
+    expect(owner.q('#coop-link')).toBeNull();
+  });
+
+  it('没有档案的账号没有进看板的入口', async () => {
+    const t = await setup();
+    await t.profile(null);
+    expect(t.q('#coop-link')).toBeNull();
+  });
+
+  it('外勤没有进看板的入口', async () => {
+    const t = await setup();
+    await t.profile(OFFICER);
+    expect(t.q('#coop-link')).toBeNull();
+  });
+
   it('外勤即使有 personId 也走成员列表（看 role，不看 personId）', async () => {
     const t = await setup();
     await t.profile({ role: 'field_officer', personId: 'p1' });

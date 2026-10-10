@@ -3,6 +3,8 @@
 
 export interface PlotData {
   operatorPersonId?: string;
+  /** 归哪个合作社（看板按它过滤） */
+  coopId?: string | null;
   landTitleId?: string | null;
   nickname?: string | null;
   /** plots 上复制的 titleNo / district（企划书 §8.9：为看板筛选而复制），title 读不到时的回退 */
@@ -35,6 +37,8 @@ export interface PersonData {
 export interface UserData {
   role?: string;
   personId?: string | null;
+  /** 所属合作社；看板用它决定读哪个合作社的地块 */
+  coopId?: string | null;
   language?: string;
 }
 

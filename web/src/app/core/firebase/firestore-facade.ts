@@ -1,5 +1,6 @@
 import {
   collection,
+  collectionGroup,
   connectFirestoreEmulator,
   doc,
   getFirestore,
@@ -19,6 +20,8 @@ import { convertTimestamps } from './timestamps';
 export interface RawDoc {
   id: string;
   data: Record<string, unknown> | undefined;
+  /** 文档的完整路径（集合订阅才带），如 plots/{id}/assessments/{aid}；collection group 查询靠它认父文档 */
+  path?: string;
 }
 
 /** 只读的等值过滤：field == value。别的运算符、orderBy 都不提供（见下） */
@@ -36,12 +39,14 @@ export interface FirestoreFacade {
   /**
    * filters 放在最后一个可选参数：已有的调用与测试里的假实现（path, next, error）不受影响。
    * 排序一律在客户端做：where + orderBy 另一个字段在生产环境需要复合索引，而模拟器不校验索引，等于埋雷。
+   * group 为 true 时，path 是**集合名**（如 'assessments'），订阅所有同名子集合（collection group 查询，只读）。
    */
   watchCollection(
     path: string,
     next: (snap: { docs: RawDoc[]; fromCache: boolean }) => void,
     error: (err: unknown) => void,
     filters?: readonly EqualityFilter[],
+    group?: boolean,
   ): () => void;
 }
 
@@ -73,8 +78,8 @@ export const realFirestoreFacade: FirestoreFacade = {
       error,
     );
   },
-  watchCollection(path, next, error, filters) {
-    const ref = collection(getDb(), path);
+  watchCollection(path, next, error, filters, group) {
+    const ref = group ? collectionGroup(getDb(), path) : collection(getDb(), path);
     const source = filters?.length
       ? query(ref, ...filters.map((f) => where(f.field, '==', f.value)))
       : ref;
@@ -83,7 +88,11 @@ export const realFirestoreFacade: FirestoreFacade = {
       { includeMetadataChanges: true },
       (snap) =>
         next({
-          docs: snap.docs.map((d) => ({ id: d.id, data: convertTimestamps(d.data()) })),
+          docs: snap.docs.map((d) => ({
+            id: d.id,
+            data: convertTimestamps(d.data()),
+            path: d.ref.path,
+          })),
           fromCache: snap.metadata.fromCache,
         }),
       error,

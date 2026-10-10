@@ -165,6 +165,9 @@ export class PlotsPage {
     return n === null ? name : this.t().plots.ownerHeader(name, n);
   });
 
+  /** 合作社管理员：头部多一个进入看板的入口（界面行为，不是授权） */
+  protected readonly isCoopAdmin = computed(() => this.user()?.role === 'coop_admin');
+
   /** 「Tambah tanah」：园主随时可见；外勤只在选了成员之后（新建要知道归属） */
   protected readonly showAdd = computed(
     () => this.mode() === 'owner' || (this.mode() === 'officer' && !!this.memberId()),
@@ -203,6 +206,10 @@ export class PlotsPage {
 
   protected selectMember(id: string): void {
     void this.router.navigate([], { relativeTo: this.route, queryParams: { member: id } });
+  }
+
+  protected openDashboard(): void {
+    void this.router.navigate(['/coop']);
   }
 
   protected backToMembers(): void {
