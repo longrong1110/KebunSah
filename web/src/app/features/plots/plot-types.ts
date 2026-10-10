@@ -16,6 +16,16 @@ export interface PlotData {
   lastAssessedAt?: Date | null;
   /** GeoJSON Polygon，存成 JSON 字符串（Firestore 不收嵌套数组）；屏 10 用它画形状预览 */
   polygonGeojson?: string | null;
+  // 以下是档案页（导出 PDF）用的字段
+  state?: string | null;
+  countryCode?: string | null;
+  centroidLat?: number | null;
+  centroidLng?: number | null;
+  oilPalmPlantedYear?: number | null;
+  geometryRecordedAt?: Date | null;
+  mpobLicenceId?: string | null;
+  mspoCertificateId?: string | null;
+  isSynthetic?: boolean;
 }
 
 export interface PlotItem {
@@ -27,6 +37,14 @@ export interface PlotItem {
 export interface TitleData {
   lotNo?: string;
   district?: string;
+  // 以下是档案页用的字段
+  titleNo?: string | null;
+  mukim?: string | null;
+  state?: string | null;
+  /** freehold／leasehold 等 */
+  tenure?: string | null;
+  /** agriculture 等 */
+  landUseCategory?: string | null;
 }
 
 /** persons/{id}：故意只声明姓名。icHash / icLast4 会随文档下载到客户端，但界面不用、不渲染、不进日志 */

@@ -1264,3 +1264,361 @@ a.plot-card:hover {
     padding: 12px 16px;
   }
 }
+
+// ---- 导出档案（A4 排版，浏览器打印成 PDF）----
+// 屏幕上是居中的白纸（≈ A4 宽），纸面颜色不随深色模式变（要印出来的东西）；窄屏纸面撑满、不横向溢出。
+.dossier-screen {
+  min-height: 100dvh;
+  padding-bottom: 32px;
+}
+
+.dossier-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: min(794px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 12px 0;
+}
+
+.dossier-print {
+  width: auto;
+  min-height: 48px;
+  padding: 6px 16px;
+  font-size: 1rem;
+}
+
+.dossier-notice {
+  width: min(480px, calc(100% - 32px));
+  margin: 24px auto;
+}
+
+// 工具栏里打印钮下面的一行提示（打印时随工具栏一起隐藏）
+.dossier-hint {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.dossier-sheet {
+  // 纸面固定用浅色令牌：深色模式下它仍是白纸黑字，警示色取更深一档保证印出来也看得清
+  --ink: #15231b;
+  --surface: #ffffff;
+  --line: #c9d2c7;
+  --muted: #4a5a50;
+  --palm: #1f5a3f;
+  --ok: #2e7d4f;
+  --warn: #86600f;
+  --bad: #b23a2e;
+  --fruit: #9a5509;
+  width: min(794px, calc(100% - 32px));
+  margin: 0 auto 24px;
+  padding: 40px 44px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 2px 12px rgb(0 0 0 / 0.12);
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+
+  p {
+    margin: 4px 0;
+  }
+}
+
+.dossier-brand {
+  margin: 0;
+  font-family: 'Noto Serif', Georgia, 'Times New Roman', serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--palm);
+}
+
+.dossier-title {
+  margin: 0;
+  font-family: 'Noto Serif', Georgia, 'Times New Roman', serif;
+  font-size: 1.625rem;
+  line-height: 1.2;
+}
+
+.dossier-heading {
+  font-size: 1.1875rem;
+  font-weight: 700;
+}
+
+.dossier-meta {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.dossier-synthetic {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 6px 10px;
+  border: 2px dashed var(--bad);
+  color: var(--bad);
+  font-weight: 700;
+}
+
+// 数据来自本机缓存、可能不是最新：写在纸面上（印出来的 PDF 也带），不只是屏幕提示
+.dossier-stale {
+  display: block;
+  width: fit-content;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border: 2px dashed var(--warn);
+  color: var(--warn);
+  font-weight: 700;
+}
+
+.dossier-section {
+  margin-top: 20px;
+}
+
+.dossier-h {
+  margin: 0 0 8px;
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--palm);
+  color: var(--palm);
+  font-size: 1rem;
+  break-after: avoid;
+}
+
+.dossier-summary {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border: 2px solid var(--tone, var(--line));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--tone, var(--muted)) 10%, #fff);
+}
+
+.dossier-summary__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--tone, var(--muted));
+  color: #fff;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.dossier-summary__headline {
+  font-size: 1.1875rem;
+  font-weight: 700;
+}
+
+.dossier-info {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 24px;
+  margin: 0;
+}
+
+.dossier-info__row {
+  display: flex;
+  gap: 8px;
+  break-inside: avoid;
+
+  dt {
+    flex: 0 0 8.5rem;
+    color: var(--muted);
+  }
+
+  dd {
+    min-width: 0;
+    margin: 0;
+    font-weight: 600;
+  }
+}
+
+.dossier-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th,
+  td {
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  tr {
+    break-inside: avoid;
+  }
+
+  .chip {
+    white-space: nowrap;
+  }
+}
+
+// 纸面设了 overflow-wrap: anywhere，表格自动布局会把短单元格的最小宽度算成 ~0（「Read」被拆成「Rea／d」）：
+// 页数、状态与坐标这些短格不换行，长的说明列才换行
+.dossier-docs td:nth-child(2),
+.dossier-docs td:nth-child(3),
+.dossier-vertices td {
+  white-space: nowrap;
+}
+
+.dossier-caption {
+  margin-bottom: 4px;
+  font-weight: 700;
+  text-align: left;
+}
+
+// 首列是行标题（th scope=row）：比表头列的灰色深，宽度占三成
+.dossier-table .dossier-checks__name {
+  width: 30%;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.dossier-location {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  margin-top: 8px;
+}
+
+.dossier-vertices {
+  flex: 1 1 55%;
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.dossier-shape {
+  flex: 0 0 240px;
+  margin: 0;
+  break-inside: avoid;
+
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--line);
+    background: #fafcf9;
+  }
+
+  polygon {
+    fill: color-mix(in srgb, var(--palm) 22%, transparent);
+    stroke: var(--palm);
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+
+  figcaption {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 0.8125rem;
+  }
+}
+
+.dossier-open {
+  margin: 0;
+  padding-left: 1.25rem;
+
+  li {
+    margin-bottom: 8px;
+    break-inside: avoid;
+  }
+}
+
+.dossier-open__title {
+  font-weight: 700;
+}
+
+.dossier-foot {
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+@media (max-width: 640px) {
+  .dossier-sheet {
+    padding: 20px 16px;
+  }
+
+  .dossier-info {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dossier-location {
+    flex-direction: column;
+  }
+
+  .dossier-shape {
+    flex: none;
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .dossier-checks tr {
+    display: grid;
+    gap: 2px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .dossier-checks td,
+  .dossier-checks th {
+    padding: 0 8px;
+    border: 0;
+  }
+
+  .dossier-table .dossier-checks__name {
+    width: auto;
+  }
+}
+
+// 打印：A4，页边 14mm；工具栏等屏幕元素不印，纸面白底黑字；行与卡片不被分页拦腰截断，节标题不孤悬页底
+@page {
+  size: A4;
+  margin: 14mm;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  .dossier-toolbar {
+    display: none;
+  }
+
+  .dossier-screen {
+    min-height: 0;
+    padding: 0;
+  }
+
+  .dossier-sheet {
+    width: auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    font-size: 10pt;
+  }
+
+  .dossier-summary,
+  .dossier-location,
+  .dossier-synthetic {
+    break-inside: avoid;
+  }
+}

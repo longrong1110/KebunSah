@@ -304,6 +304,12 @@ export class CoopPage {
     void this.router.navigate(['/plots', id]);
   }
 
+  /** 选中了地块才能导出档案：进 A4 版面的档案页，在那里用浏览器打印成 PDF */
+  protected openDossier(): void {
+    const d = this.detail();
+    if (d.kind === 'row') void this.router.navigate(['/plots', d.id, 'dossier']);
+  }
+
   protected backToPlots(): void {
     void this.router.navigate(['/']);
   }

@@ -157,6 +157,7 @@ async function setup(
         { path: 'login', component: Blank },
         { path: 'coop', component: CoopPage },
         { path: 'plots/:id', component: Blank },
+        { path: 'plots/:id/dossier', component: Blank },
       ]),
       { provide: AuthService, useValue: auth },
       { provide: FIRESTORE_FACADE, useValue: facade },
@@ -773,14 +774,39 @@ describe('CoopPage（屏 11）', () => {
       expect(blobs).toHaveLength(0);
     });
 
-    it('「Export dossier (PDF)」禁用并写明「Akan datang」；没有「Override as pass」', async () => {
+    it('「Export dossier (PDF)」没选中地块时禁用并写明「Pilih tanah dahulu」；没有「Override as pass」', async () => {
       const t = await setup();
       await t.ready();
       const pdf = t.q('#export-pdf') as HTMLButtonElement;
       expect(pdf.disabled).toBe(true);
       expect(pdf.getAttribute('aria-describedby')).toBe('export-pdf-note');
-      expect(t.q('#export-pdf-note')?.textContent).toContain('Akan datang');
+      expect(t.q('#export-pdf-note')?.textContent).toContain('Pilih tanah dahulu');
       expect(t.text()).not.toMatch(/override/i);
+      pdf.click();
+      await settle(t.fixture);
+      expect(t.router.url).toBe('/coop');
+    });
+
+    it('选中地块后「Export dossier (PDF)」可用，点击进入该地块的档案页', async () => {
+      const t = await setup();
+      await t.ready();
+      await t.click('[data-plot-id="p1"] .coop-plotbtn');
+      const pdf = t.q('#export-pdf') as HTMLButtonElement;
+      expect(pdf.disabled).toBe(false);
+      expect(pdf.getAttribute('aria-describedby')).toBeNull();
+      expect(t.q('#export-pdf-note')).toBeNull();
+
+      pdf.click();
+      await settle(t.fixture);
+      expect(t.router.url).toBe('/plots/p1/dossier');
+    });
+
+    it('?plot= 指向不在本合作社的地块：右栏说找不到，档案按钮仍禁用', async () => {
+      const t = await setup({ url: '/coop?plot=nobody' });
+      await t.ready();
+      const pdf = t.q('#export-pdf') as HTMLButtonElement;
+      expect(pdf.disabled).toBe(true);
+      expect(t.q('#export-pdf-note')?.textContent).toContain('Pilih tanah dahulu');
     });
   });
 

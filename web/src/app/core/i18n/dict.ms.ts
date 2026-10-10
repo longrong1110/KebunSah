@@ -331,7 +331,6 @@ export const ms = {
     },
     exportCsv: 'Eksport ringkasan (CSV)',
     exportPdf: 'Eksport dokumen (PDF)',
-    soon: 'Akan datang',
     csv: {
       plot: 'Tanah',
       district: 'Daerah',
@@ -340,6 +339,114 @@ export const ms = {
       mainIssue: 'Masalah utama',
       updated: 'Dikemas kini',
     },
+  },
+  dossier: {
+    title: 'Dossier pematuhan tanah',
+    generatedOn: (date: string) => `Dijana pada ${date}`,
+    synthetic: 'Data simulasi (CONTOH) — bukan data sebenar',
+    print: 'Cetak / Simpan sebagai PDF',
+    pickPlot: 'Pilih tanah dahulu',
+    cached: 'Data ini daripada simpanan peranti dan mungkin belum terkini.',
+    printHint:
+      'Dalam dialog cetak, matikan "Pengepala dan pengaki" supaya alamat laman tidak tercetak.',
+    sections: {
+      summary: 'Ringkasan',
+      land: 'Maklumat tanah',
+      location: 'Lokasi',
+      checks: 'Semakan',
+      open: 'Perkara belum selesai',
+      forest: 'Saringan hutan (awal)',
+      documents: 'Dokumen',
+      disclaimer: 'Penafian',
+    },
+    labels: {
+      lot: 'Lot',
+      titleNo: 'No. hak milik',
+      mukim: 'Mukim',
+      district: 'Daerah',
+      state: 'Negeri',
+      country: 'Negara',
+      operator: 'Pengusaha',
+      coop: 'Koperasi',
+      area: 'Keluasan',
+      planted: 'Tahun tanam',
+      tenure: 'Jenis hak milik',
+      landUse: 'Kegunaan tanah',
+      boundaryDate: 'Tarikh rekod sempadan',
+    },
+    country: (code: string): string => (code === 'MY' ? 'Malaysia' : code),
+    tenure: (value: string): string | null =>
+      value === 'freehold'
+        ? 'Hak milik kekal (freehold)'
+        : value === 'leasehold'
+          ? 'Pajakan (leasehold)'
+          : null,
+    landUse: (value: string): string | null =>
+      value === 'agriculture'
+        ? 'Pertanian'
+        : value === 'building'
+          ? 'Bangunan'
+          : value === 'industry'
+            ? 'Perindustrian'
+            : null,
+    notChecked: 'Tanah ini belum diperiksa.',
+    location: {
+      centroid: 'Titik tengah',
+      vertices: 'Titik sempadan',
+      no: 'No.',
+      lat: 'Latitud',
+      lng: 'Longitud',
+      more: (n: number) => `…dan ${n} lagi`,
+      none: 'Tiada data lokasi.',
+      shapeNote: 'Gambaran kasar, bukan peta satelit',
+    },
+    rules: {
+      name: (code: string): string =>
+        code === 'CC-01'
+          ? 'Keluasan: geran lawan lukisan'
+          : code === 'CC-02'
+            ? 'Tempoh sah dokumen'
+            : code === 'CC-03'
+              ? 'Nama pemilik'
+              : 'Semakan lain',
+      result: {
+        pass: 'Lulus',
+        warn: 'Perlu perhatian',
+        fail: 'Tidak lulus',
+        needs_review: 'Perlu semakan',
+      },
+      area: (geran: string, lukisan: string) => `Geran ${geran} ha, lukisan ${lukisan} ha`,
+      validityDays: (n: number) => `Baki ${n} hari`,
+      validityDate: (date: string) => `Tamat pada ${date}`,
+      nameResult: {
+        pass: 'Nama sepadan dengan pengusaha',
+        warn: 'Nama sebahagian sepadan',
+        fail: 'Nama tidak sepadan dengan pengusaha',
+        needs_review: 'Nama perlu disahkan',
+      },
+    },
+    noOpen: 'Tiada perkara yang belum selesai.',
+    forest: {
+      cover: (pct: string) => `Tutupan hutan pada 2020: ${pct}%`,
+      loss: (ha: string) => `Kehilangan hutan selepas 2020: ${ha} ha`,
+    },
+    docs: {
+      pages: (n: number) => `${n} halaman`,
+      status: {
+        extracted: 'Dibaca',
+        needs_review: 'Perlu semakan',
+        failed: 'Tidak dapat dibaca',
+      },
+      licence: (no: string | null, until: string | null): string =>
+        [no ? `No. ${no}` : null, until ? `sah sehingga ${until}` : null]
+          .filter(Boolean)
+          .join(' · '),
+      cert: (no: string | null, until: string | null): string =>
+        [no ? `No. ${no}` : null, until ? `tamat ${until}` : null].filter(Boolean).join(' · '),
+      none: 'Tiada dokumen.',
+    },
+    disclaimer:
+      'Dokumen ini dijana oleh KebunSah sebagai bahan sokongan. Ia bukan Pernyataan Usaha Wajar (DDS) rasmi dan bukan pengesahan pematuhan. Saringan hutan hanyalah saringan awal. Semua data dibaca oleh sistem dan perlu disemak oleh manusia sebelum digunakan.',
   },
 };
 
