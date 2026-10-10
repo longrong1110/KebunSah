@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { Router, provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { FIRESTORE_FACADE } from '../../core/firebase/firestore-reader';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -18,7 +19,9 @@ class Host {
 function setup(plot: PlotItem) {
   localStorage.clear();
   const facade = new FakeFacade();
-  TestBed.configureTestingModule({ providers: [{ provide: FIRESTORE_FACADE, useValue: facade }] });
+  TestBed.configureTestingModule({
+    providers: [provideRouter([]), { provide: FIRESTORE_FACADE, useValue: facade }],
+  });
   const fixture = TestBed.createComponent(Host);
   fixture.componentInstance.plot.set(plot);
   const el = fixture.nativeElement as HTMLElement;
@@ -32,6 +35,7 @@ function setup(plot: PlotItem) {
     chip: () => el.querySelector('.chip')?.textContent?.replace(/\s+/g, ' ').trim() ?? null,
     skeleton: () => el.querySelector('.skeleton--title') !== null,
     card: () => el.querySelector('.plot-card') as HTMLElement,
+    link: () => el.querySelector('a.plot-card') as HTMLAnchorElement | null,
   };
 }
 
@@ -212,5 +216,33 @@ describe('PlotCard', () => {
     await settle(fixture);
     expect(facade.activeDocs('titles/t1').length).toBe(0);
     expect(facade.activeDocs('titles/t9').length).toBe(1);
+  });
+
+  it('整张卡片是链接，指向 /plots/{id}（点进屏 9）；可聚焦，名称里有标题和状态文字', async () => {
+    const t = setup({ id: 'abc-1', data: { ...base, status: 'yellow' } });
+    t.fixture.detectChanges();
+    t.facade.emitDoc('titles/t1', { lotNo: '1052', district: 'Kampar' });
+    await settle(t.fixture);
+    const link = t.link()!;
+    expect(link.tagName).toBe('A');
+    expect(link.getAttribute('href')).toBe('/plots/abc-1');
+    expect(link.tabIndex).toBeGreaterThanOrEqual(0);
+    const name = (link.textContent ?? '').replace(/\s+/g, ' ');
+    expect(name).toContain('Lot 1052, Kampar');
+    expect(name).toContain('Perlu semakan');
+  });
+
+  it('外勤在 ?member 视图里：链接保留 ?member，点进屏 9 再返回仍停在该成员', async () => {
+    const t = setup({ id: 'abc-1', data: { ...base } });
+    await TestBed.inject(Router).navigateByUrl('/?member=m9');
+    t.fixture.detectChanges();
+    await settle(t.fixture);
+    expect(t.link()!.getAttribute('href')).toBe('/plots/abc-1?member=m9');
+  });
+
+  it('地块还没有评估（pending）的卡片也能点进去', () => {
+    const t = setup({ id: 'p9', data: { status: 'pending' } });
+    t.fixture.detectChanges();
+    expect(t.link()!.getAttribute('href')).toBe('/plots/p9');
   });
 });

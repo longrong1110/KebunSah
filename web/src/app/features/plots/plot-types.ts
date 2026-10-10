@@ -12,6 +12,8 @@ export interface PlotData {
   areaHaComputed?: number | null;
   areaHaDeclared?: number | null;
   lastAssessedAt?: Date | null;
+  /** GeoJSON Polygon，存成 JSON 字符串（Firestore 不收嵌套数组）；屏 10 用它画形状预览 */
+  polygonGeojson?: string | null;
 }
 
 export interface PlotItem {

@@ -1,5 +1,10 @@
 @let v = view();
-<article class="plot-card" [class.plot-card--warn]="v.status.key === 'yellow'">
+<a
+  class="plot-card"
+  [class.plot-card--warn]="v.status.key === 'yellow'"
+  [routerLink]="['/plots', plot().id]"
+  queryParamsHandling="preserve"
+>
   <span class="plot-card__pin" aria-hidden="true">📍</span>
   <div class="plot-card__body">
     @if (v.loading) {
@@ -15,4 +20,4 @@
       </span>
     </div>
   </div>
-</article>
+</a>

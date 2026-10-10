@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { en } from './dict.en';
 import { ms } from './dict.ms';
+import { GAP_CODES, type GapCtx } from './gap-text';
 import { I18nService, LANG_STORAGE_KEY, withFallback } from './i18n.service';
 
 // 词典里所有叶子的路径（函数与字符串都算叶子），用来比对两种语言的键是否一致
@@ -27,6 +28,8 @@ describe('词典', () => {
     const check = (v: unknown, path: string) => {
       if (typeof v === 'string') expect(v.trim().length, path).toBeGreaterThan(0);
       else if (typeof v === 'function') {
+        // 缺口文案的参数是一个上下文对象，在下面单独测；其余函数用 ('x', 2) 试
+        if (path.includes('.gapText.') || path.includes('.gapUnknown.')) return;
         expect(
           String((v as (...a: unknown[]) => string)('x', 2)).trim().length,
           path,
@@ -37,6 +40,68 @@ describe('词典', () => {
     };
     check(ms, 'ms');
     check(en, 'en');
+  });
+
+  describe('缺口文案（gapText）', () => {
+    const noFacts = { geran: null, lukisan: null, days: null, date: null };
+    const full = { geran: '3.04', lukisan: '3.49', days: 58, date: '30 Apr 2026' };
+    const docTypes = [
+      null,
+      'land_title',
+      'mpob_licence',
+      'mspo_cert',
+      'mspo_member_list',
+      'passport',
+    ];
+
+    for (const [name, d] of [
+      ['ms', ms],
+      ['en', en],
+    ] as const) {
+      it(`${name}：每种已知缺口 × 有／无数字 × 各种文件类型，标题、详情、建议都非空，没有 undefined／NaN`, () => {
+        const entries = [...GAP_CODES.map((c) => d.result.gapText[c]), d.result.gapUnknown];
+        expect(entries).toHaveLength(GAP_CODES.length + 1);
+        for (const text of entries) {
+          expect(text.cause.trim()).not.toBe('');
+          expect(text.button.trim()).not.toBe('');
+          for (const docType of docTypes) {
+            for (const facts of [noFacts, full]) {
+              const ctx: GapCtx = { doc: d.result.docName(docType), docType, facts };
+              for (const out of [text.title(ctx), text.detail(ctx), text.advice(ctx)]) {
+                expect(out.trim()).not.toBe('');
+                expect(out).not.toMatch(/undefined|NaN|null|\[object/);
+              }
+            }
+          }
+        }
+      });
+
+      it(`${name}：带数字的缺口在有数字时写出数字，没有数字时退回不带数字的句子`, () => {
+        const g = d.result.gapText;
+        const ctx = (facts: GapCtx['facts']): GapCtx => ({ doc: 'D', docType: null, facts });
+        expect(g.area_mismatch.detail(ctx(full))).toContain('3.04');
+        expect(g.area_mismatch.detail(ctx(full))).toContain('3.49');
+        expect(g.area_mismatch.detail(ctx(noFacts))).not.toMatch(/[0-9]/);
+        expect(g.expiring.detail(ctx(full))).toContain('58');
+        expect(g.expiring.detail(ctx(noFacts))).not.toMatch(/[0-9]/);
+        expect(g.expired.detail(ctx(full))).toContain('30 Apr 2026');
+        expect(g.expired.detail(ctx(noFacts))).not.toMatch(/[0-9]/);
+      });
+    }
+
+    it('missing_doc 的建议按文件类型给：MPOB 执照写去 MPOB 办事处（线框里的句子）', () => {
+      const advice = (docType: string | null) =>
+        ms.result.gapText.missing_doc.advice({ doc: 'x', docType, facts: noFacts });
+      expect(advice('mpob_licence')).toBe('Dapatkan di pejabat MPOB. Bawa MyKad dan geran.');
+      expect(new Set(docTypes.map(advice)).size).toBeGreaterThan(2);
+    });
+
+    it('文件名：已知类型有名字，未知或缺失给通用的「Dokumen」／「Document」', () => {
+      expect(ms.result.docName('mpob_licence')).toBe('Lesen MPOB');
+      expect(ms.result.docName(null)).toBe('Dokumen');
+      expect(ms.result.docName('passport')).toBe('Dokumen');
+      expect(en.result.docName(null)).toBe('Document');
+    });
   });
 
   it('两种语言的状态标签都覆盖合同的五个状态值', () => {

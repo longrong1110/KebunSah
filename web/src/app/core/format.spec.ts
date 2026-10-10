@@ -1,4 +1,4 @@
-import { formatArea, formatDay, titleCaseName } from './format';
+import { formatArea, formatDay, titleCaseName, formatIsoDay } from './format';
 
 describe('formatArea', () => {
   it('取 areaHaComputed，最多 2 位小数、去掉尾零', () => {
@@ -67,5 +67,43 @@ describe('titleCaseName', () => {
     expect(titleCaseName('LIM-TAN  MEI')).toBe('Lim-Tan Mei');
     expect(titleCaseName('  ZAKI ')).toBe('Zaki');
     expect(titleCaseName('')).toBe('');
+  });
+});
+
+describe('formatIsoDay', () => {
+  it('2026-04-30 → 30 Apr 2026；月份缩写按语言', () => {
+    expect(formatIsoDay('2026-04-30', 'ms')).toBe('30 Apr 2026');
+    expect(formatIsoDay('2026-05-09', 'ms')).toBe('9 Mei 2026');
+    expect(formatIsoDay('2026-05-09', 'en')).toBe('9 May 2026');
+    expect(formatIsoDay('2026-12-25', 'ms')).toBe('25 Dis 2026');
+  });
+
+  it('以日期开头的字符串也行（后端写的「2026-04-30 已过期」）', () => {
+    expect(formatIsoDay('2026-04-30 已过期', 'en')).toBe('30 Apr 2026');
+  });
+
+  it('不是合法日期：null（不显示 NaN）', () => {
+    for (const bad of [
+      '2026-13-01',
+      '2026-02-30',
+      '2026-00-10',
+      '2026-04-31',
+      '26-04-30',
+      '2026-4-30',
+      '2026-04-300',
+      '',
+      'x',
+      null,
+      undefined,
+      20260430,
+      new Date(),
+    ]) {
+      expect(formatIsoDay(bad, 'ms'), String(bad)).toBeNull();
+    }
+  });
+
+  it('闰年的 2 月 29 日合法，平年不合法', () => {
+    expect(formatIsoDay('2028-02-29', 'en')).toBe('29 Feb 2028');
+    expect(formatIsoDay('2026-02-29', 'en')).toBeNull();
   });
 });
