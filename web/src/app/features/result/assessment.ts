@@ -35,6 +35,7 @@ export interface AssessmentData {
   startedAt?: Date | null;
   finishedAt?: Date | null;
   forestRisk?: string | null;
+  forestCover2020Pct?: number | null;
   forestLossAfter2020Ha?: number | null;
   ruleResults?: RuleResultData[];
   gaps?: GapData[];

@@ -1,0 +1,251 @@
+<main class="dossier-screen">
+  <header class="dossier-toolbar">
+    <button
+      type="button"
+      class="icon-btn"
+      id="back"
+      [attr.aria-label]="t().common.back"
+      (click)="back()"
+    >
+      ←
+    </button>
+    <h1 class="topbar__title">{{ t().dossier.title }}</h1>
+    <app-lang-button />
+    <button
+      type="button"
+      class="btn dossier-print"
+      id="print"
+      [disabled]="!view()"
+      (click)="print()"
+    >
+      {{ t().dossier.print }}
+    </button>
+    @if (view()) {
+      <p class="hint dossier-hint" id="print-hint">{{ t().dossier.printHint }}</p>
+    }
+  </header>
+
+  @switch (state()) {
+    @case ('loading') {
+      <section class="dossier-notice" id="loading" aria-live="polite">
+        <span class="skeleton skeleton--title" aria-hidden="true"></span>
+        <span class="skeleton skeleton-card" aria-hidden="true"></span>
+        <span class="skeleton skeleton-card" aria-hidden="true"></span>
+        <p class="hint">{{ t().common.loading }}</p>
+      </section>
+    }
+    @case ('offline') {
+      <section class="dossier-notice">
+        <p id="offline" class="error" role="alert">
+          <span aria-hidden="true">⚠</span> {{ t().plots.offline }}
+        </p>
+        <button type="button" class="btn" id="retry" (click)="retry()">
+          {{ t().common.retry }}
+        </button>
+      </section>
+    }
+    @case ('error') {
+      <section class="dossier-notice">
+        <p id="error" class="error" role="alert">
+          <span aria-hidden="true">⚠</span> {{ t().plots.error }}
+        </p>
+        <button type="button" class="btn" id="retry" (click)="retry()">
+          {{ t().common.retry }}
+        </button>
+      </section>
+    }
+    @case ('notfound') {
+      <section class="dossier-notice">
+        <p id="not-found" class="lead">{{ t().result.notFound }}</p>
+        <button type="button" class="btn" id="back-to-list" (click)="back()">
+          {{ t().result.backToList }}
+        </button>
+      </section>
+    }
+    @case ('ready') {
+      @if (view(); as v) {
+        <article class="dossier-sheet" id="dossier">
+          <header class="dossier-head">
+            <p class="dossier-brand">KebunSah</p>
+            <h2 class="dossier-title" id="d-title">{{ v.header.title }}</h2>
+            <p class="dossier-heading" id="d-heading">{{ v.header.heading }}</p>
+            @if (v.header.coop) {
+              <p class="dossier-meta" id="d-coop">{{ v.header.coop }}</p>
+            }
+            @if (v.header.generatedOn) {
+              <p class="dossier-meta" id="d-generated">{{ v.header.generatedOn }}</p>
+            }
+            @if (v.header.synthetic) {
+              <p class="dossier-synthetic" id="d-synthetic">{{ v.header.synthetic }}</p>
+            }
+            @if (fromCache()) {
+              <p class="dossier-stale" id="cached">{{ t().dossier.cached }}</p>
+            }
+          </header>
+
+          <section class="dossier-section" aria-labelledby="d-h-summary">
+            <h3 class="dossier-h" id="d-h-summary">{{ t().dossier.sections.summary }}</h3>
+            <div
+              id="d-summary"
+              class="dossier-summary tone-{{ v.summary.tone }}"
+              [attr.data-banner]="v.summary.key"
+            >
+              <span class="dossier-summary__icon" aria-hidden="true">{{ v.summary.icon }}</span>
+              <div>
+                <p class="dossier-summary__headline">{{ v.summary.headline }}</p>
+                <p class="dossier-summary__sub">{{ v.summary.sub }}</p>
+                @if (v.summary.checkedOn) {
+                  <p class="dossier-meta" id="d-checked-on">{{ v.summary.checkedOn }}</p>
+                }
+              </div>
+            </div>
+          </section>
+
+          <section class="dossier-section" aria-labelledby="d-h-land">
+            <h3 class="dossier-h" id="d-h-land">{{ t().dossier.sections.land }}</h3>
+            <dl class="dossier-info" id="d-info">
+              @for (row of v.info; track row.key) {
+                <div class="dossier-info__row" [attr.data-key]="row.key">
+                  <dt>{{ row.label }}</dt>
+                  <dd>{{ row.value }}</dd>
+                </div>
+              }
+            </dl>
+          </section>
+
+          <section class="dossier-section" aria-labelledby="d-h-location">
+            <h3 class="dossier-h" id="d-h-location">{{ t().dossier.sections.location }}</h3>
+            @if (v.location.empty) {
+              <p id="d-no-location">{{ t().dossier.location.none }}</p>
+            } @else {
+              @if (v.location.centroid) {
+                <p id="d-centroid">
+                  <strong>{{ t().dossier.location.centroid }}:</strong>
+                  {{ v.location.centroid }}
+                </p>
+              }
+              @if (v.location.svgPoints) {
+                <div class="dossier-location">
+                  <table class="dossier-table dossier-vertices" id="d-vertices">
+                    <caption class="dossier-caption">
+                      {{
+                        t().dossier.location.vertices
+                      }}
+                    </caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">{{ t().dossier.location.no }}</th>
+                        <th scope="col">{{ t().dossier.location.lat }}</th>
+                        <th scope="col">{{ t().dossier.location.lng }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (p of v.location.vertices; track p.no) {
+                        <tr>
+                          <td>{{ p.no }}</td>
+                          <td>{{ p.lat }}</td>
+                          <td>{{ p.lng }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                  <figure class="dossier-shape">
+                    <svg
+                      id="d-shape"
+                      aria-hidden="true"
+                      [attr.viewBox]="'0 0 ' + svgWidth + ' ' + svgHeight"
+                    >
+                      <polygon [attr.points]="v.location.svgPoints" />
+                    </svg>
+                    <figcaption>{{ t().dossier.location.shapeNote }}</figcaption>
+                  </figure>
+                </div>
+                @if (v.location.more) {
+                  <p class="dossier-meta" id="d-more">{{ v.location.more }}</p>
+                }
+              }
+            }
+          </section>
+
+          @if (v.checks) {
+            <section class="dossier-section" aria-labelledby="d-h-checks">
+              <h3 class="dossier-h" id="d-h-checks">{{ t().dossier.sections.checks }}</h3>
+              <table class="dossier-table dossier-checks" id="d-checks">
+                <tbody>
+                  @for (r of v.checks; track r.code) {
+                    <tr [attr.data-rule]="r.code">
+                      <th scope="row" class="dossier-checks__name">{{ r.name }}</th>
+                      <td>
+                        <span class="chip tone-{{ r.tone }}">
+                          <span aria-hidden="true">{{ r.icon }}</span> {{ r.label }}
+                        </span>
+                      </td>
+                      <td>{{ r.sentence }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </section>
+          }
+
+          @if (v.open) {
+            <section class="dossier-section" aria-labelledby="d-h-open">
+              <h3 class="dossier-h" id="d-h-open">{{ t().dossier.sections.open }}</h3>
+              @if (v.open.length === 0) {
+                <p id="d-no-open">{{ t().dossier.noOpen }}</p>
+              } @else {
+                <ol class="dossier-open" id="d-open">
+                  @for (g of v.open; track $index) {
+                    <li>
+                      <p class="dossier-open__title">{{ g.title }}</p>
+                      <p>{{ g.detail }}</p>
+                      <p class="dossier-meta">{{ g.advice }}</p>
+                    </li>
+                  }
+                </ol>
+              }
+            </section>
+          }
+
+          @if (v.forest) {
+            <section class="dossier-section" aria-labelledby="d-h-forest">
+              <h3 class="dossier-h" id="d-h-forest">{{ t().dossier.sections.forest }}</h3>
+              <p id="d-forest">{{ v.forest.line }} {{ v.forest.prelim }}</p>
+              @if (v.forest.cover) {
+                <p id="d-forest-cover">{{ v.forest.cover }}</p>
+              }
+              @if (v.forest.loss) {
+                <p id="d-forest-loss">{{ v.forest.loss }}</p>
+              }
+            </section>
+          }
+
+          <section class="dossier-section" aria-labelledby="d-h-docs">
+            <h3 class="dossier-h" id="d-h-docs">{{ t().dossier.sections.documents }}</h3>
+            @if (v.documents.length === 0) {
+              <p id="d-no-docs">{{ t().dossier.docs.none }}</p>
+            } @else {
+              <table class="dossier-table dossier-docs" id="d-docs">
+                <tbody>
+                  @for (d of v.documents; track d.type) {
+                    <tr [attr.data-doc]="d.type">
+                      <th scope="row" class="dossier-checks__name">{{ d.name }}</th>
+                      <td>{{ d.pages }}</td>
+                      <td>{{ d.status }}</td>
+                      <td>{{ d.detail }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </section>
+
+          <section class="dossier-section dossier-foot" aria-labelledby="d-h-disclaimer">
+            <h3 class="dossier-h" id="d-h-disclaimer">{{ t().dossier.sections.disclaimer }}</h3>
+            <p id="d-disclaimer">{{ v.disclaimer }}</p>
+          </section>
+        </article>
+      }
+    }
+  }
+</main>

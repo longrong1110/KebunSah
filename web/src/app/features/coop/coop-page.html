@@ -183,13 +183,15 @@
                 type="button"
                 class="btn btn-quiet coop-export"
                 id="export-pdf"
-                disabled
-                aria-disabled="true"
-                aria-describedby="export-pdf-note"
+                [disabled]="detail().kind !== 'row'"
+                [attr.aria-describedby]="detail().kind === 'row' ? null : 'export-pdf-note'"
+                (click)="openDossier()"
               >
                 {{ t().coop.exportPdf }}
               </button>
-              <span id="export-pdf-note" class="hint">{{ t().coop.soon }}</span>
+              @if (detail().kind !== 'row') {
+                <span id="export-pdf-note" class="hint">{{ t().dossier.pickPlot }}</span>
+              }
             </div>
 
             @if (total() === 0) {
