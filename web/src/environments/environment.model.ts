@@ -21,4 +21,6 @@ export interface AppEnvironment {
   firebase: FirebaseWebConfig;
   // null = 不连模拟器（生产）
   emulators: EmulatorConfig | null;
+  // Google Maps JavaScript API 的浏览器 key（本来就公开，不是密钥）。空 = 没配置：屏 5 的地图显示「尚未配置」，不白屏
+  mapsApiKey: string;
 }

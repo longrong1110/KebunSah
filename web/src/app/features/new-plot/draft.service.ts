@@ -1,6 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core';
+import { GeometryDraft, LngLat, MapTab, Ring, evaluate } from './geometry';
 
-// 新建地块的"草稿"：屏 3 三份文档的状态与拍下的照片。
+// 新建地块的"草稿"：屏 3 三份文档的状态与拍下的照片，屏 5 圈出的地块（各页签的输入与当前页签的结果）。
 // **只存在本机内存里**：刷新就没了。照片上传和新建地块都要走后端 API，而 contract/api.md 的请求与响应
 // 还没定，前端对 Firestore 只读，所以这一轮不做上传、不写库，也不自己发明接口。
 
@@ -24,9 +25,18 @@ const fresh = (): Record<DocType, DraftDoc> => ({
   mpob_licence: { status: 'pending' },
 });
 
+const freshGeometry = (): GeometryDraft => ({
+  tab: 'map',
+  mapRing: [],
+  walkRing: [],
+  point: null,
+  declared: '',
+});
+
 @Injectable({ providedIn: 'root' })
 export class DraftService {
   private readonly docs = signal<Record<DocType, DraftDoc>>(fresh());
+  private readonly geo = signal<GeometryDraft>(freshGeometry());
 
   /** 外勤替成员新建时，草稿属于哪位成员（只用来返回时带回 ?member；本轮不写库） */
   readonly memberId = signal<string | null>(null);
@@ -48,6 +58,64 @@ export class DraftService {
     return this.docs()[type];
   }
 
+  // ---- 屏 5：圈地块。几何只存中性的 [经度, 纬度]，以后接 API 时再映射成合同字段 ----
+
+  /** 各页签的工作状态（页签切换不丢各自的输入） */
+  readonly geometryDraft = this.geo.asReadonly();
+
+  /** 当前页签能不能完成、为什么不能、面积是多少 */
+  readonly evaluation = computed(() => evaluate(this.geo()));
+
+  /** 当前页签可以完成时的结果（屏 5「Selesai」与占位页读它），否则 null */
+  readonly geometry = computed(() => this.evaluation().geometry);
+
+  setTab(tab: MapTab): void {
+    this.geo.update((g) => (g.tab === tab ? g : { ...g, tab }));
+  }
+
+  /** A 页签点一下、B 页签记一个角点：加到 ring 末尾 */
+  addVertex(tab: 'map' | 'walk', p: LngLat): void {
+    this.geo.update((g) =>
+      tab === 'map' ? { ...g, mapRing: [...g.mapRing, p] } : { ...g, walkRing: [...g.walkRing, p] },
+    );
+  }
+
+  /** 拖动 A 页签的把手：第 index 个顶点换位置；下标越界忽略 */
+  moveVertex(index: number, p: LngLat): void {
+    this.geo.update((g) => {
+      if (!Number.isInteger(index) || index < 0 || index >= g.mapRing.length) return g;
+      const ring: Ring = g.mapRing.map((v, i) => (i === index ? p : v));
+      return { ...g, mapRing: ring };
+    });
+  }
+
+  /** 「Padam titik」：撤销当前页签最后放的一个点（C 页签是清掉那个点，手填面积保留） */
+  removeLast(): void {
+    this.geo.update((g) => {
+      if (g.tab === 'map') return { ...g, mapRing: g.mapRing.slice(0, -1) };
+      if (g.tab === 'walk') return { ...g, walkRing: g.walkRing.slice(0, -1) };
+      return { ...g, point: null };
+    });
+  }
+
+  /** 当前页签有没有可以撤销的点 */
+  readonly canUndo = computed(() => {
+    const g = this.geo();
+    return g.tab === 'map'
+      ? g.mapRing.length > 0
+      : g.tab === 'walk'
+        ? g.walkRing.length > 0
+        : g.point !== null;
+  });
+
+  setPoint(p: LngLat | null): void {
+    this.geo.update((g) => ({ ...g, point: p }));
+  }
+
+  setDeclared(text: string): void {
+    this.geo.update((g) => (g.declared === text ? g : { ...g, declared: text }));
+  }
+
   /** 点「Tambah tanah」：得到一份全新的草稿 */
   begin(memberId: string | null): void {
     this.reset();
@@ -58,6 +126,7 @@ export class DraftService {
   reset(): void {
     for (const t of DOC_TYPES) this.release(this.docs()[t]);
     this.docs.set(fresh());
+    this.geo.set(freshGeometry());
     this.memberId.set(null);
   }
 

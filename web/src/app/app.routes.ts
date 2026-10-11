@@ -3,7 +3,7 @@ import { redirectIfAuthed, requireAuth } from './core/auth/auth.guard';
 
 // 页面一律懒加载，初始包只带路由与登录状态。
 // 角色分流（园主／外勤）放在懒加载的页面里，不放守卫：守卫不能注入 FirestoreReader（会把 Firestore 拖进初始包）。
-// 新建地块的三个页面（屏 3、屏 4、屏 5 占位）都要登录；未知路径回 ''：已登录就是屏 2，未登录再被守卫转到 /login。
+// 新建地块的页面（屏 3、屏 4、屏 5、屏 6 的壳）都要登录；未知路径回 ''：已登录就是屏 2，未登录再被守卫转到 /login。
 export const routes: Routes = [
   {
     path: 'login',
@@ -30,8 +30,14 @@ export const routes: Routes = [
   {
     path: 'plots/new/map',
     canActivate: [requireAuth],
+    loadComponent: () => import('./features/new-plot/map-page').then((m) => m.MapPage),
+  },
+  // 屏 6 的壳：屏 5「Selesai」之后进来；本体要等建地块、上传、评估的接口合同
+  {
+    path: 'plots/new/review',
+    canActivate: [requireAuth],
     loadComponent: () =>
-      import('./features/new-plot/map-placeholder').then((m) => m.MapPlaceholder),
+      import('./features/new-plot/review-placeholder').then((m) => m.ReviewPlaceholder),
   },
   // 屏 9 结果。必须排在 plots/new* 之后，'new' 才不会被当成地块 id
   {

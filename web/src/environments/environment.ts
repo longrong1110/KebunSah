@@ -6,4 +6,6 @@ export const environment: AppEnvironment = {
   production: true,
   firebase: { apiKey: '', authDomain: '', projectId: '', appId: '' },
   emulators: null,
+  // 正式 key 要限制 HTTP 来源（Hosting 网址）；还没有，先留空，屏 5 的地图会显示「尚未配置」
+  mapsApiKey: '',
 };
