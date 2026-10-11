@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { afterEach, beforeEach, vi } from 'vitest';
+import { stubHistory } from '../../../testing/back';
 import { settle } from '../../../testing/fake-facade';
 import {
   imageFile,
@@ -133,6 +134,14 @@ describe('DocumentsPage（屏 3）', () => {
     const p = await setup('/plots/new?member=p9');
     await p.click('#back');
     expect(p.router.url).toBe('/?member=p9');
+  });
+
+  it('返回键：有历史就后退（历史条数不增加），不再导航', async () => {
+    const p = await setup('/plots/new?member=p9');
+    const back = stubHistory(true);
+    await p.click('#back');
+    expect(back).toHaveBeenCalledTimes(1);
+    expect(p.router.url).toBe('/plots/new?member=p9');
   });
 
   it('切到英文：标题、卡片、按钮文案都换', async () => {

@@ -1,4 +1,5 @@
 import type { Dict } from '../../core/i18n/dict.ms';
+import { inlineDocName } from '../../core/i18n/gap-text';
 import type { Lang } from '../../core/i18n/i18n.service';
 import { gapFacts, type AssessmentData, type ForestNote, type GapItem } from './assessment';
 
@@ -18,8 +19,10 @@ export function forestLine(t: Dict, note: ForestNote): string {
  */
 export function gapView(t: Dict, lang: Lang, assessment: AssessmentData, gap: GapItem) {
   const text = gap.known ? t.result.gapText[gap.known] : t.result.gapUnknown;
+  const doc = t.result.docName(gap.docType);
   const ctx = {
-    doc: t.result.docName(gap.docType),
+    doc,
+    docInline: inlineDocName(doc),
     docType: gap.docType,
     facts: gapFacts(assessment, gap, lang),
   };

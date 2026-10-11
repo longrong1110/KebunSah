@@ -33,9 +33,12 @@ export function fitWithin(width: number, height: number, maxLong = MAX_LONG_SIDE
   };
 }
 
-/** 选来的文件是否能处理：必须是图片，且不能太大。通过返回 null，否则返回问题键 */
+/**
+ * 选来的文件是否能处理：必须是图片，且不能太大。通过返回 null，否则返回问题键。
+ * type 明确不是 image/* 才直接拒绝；**type 为空放行**（部分 Windows 上的 HEIC 没有 MIME），交给解码去判断。
+ */
 export function checkFile(file: { type: string; size: number }): ImageProblemKey | null {
-  if (!file.type.startsWith('image/')) return 'notImage';
+  if (file.type !== '' && !file.type.startsWith('image/')) return 'notImage';
   if (file.size > MAX_FILE_BYTES) return 'tooBig';
   return null;
 }
@@ -45,6 +48,8 @@ export interface CanvasLike {
   width: number;
   height: number;
   getContext(type: '2d'): {
+    fillStyle: string | CanvasGradient | CanvasPattern;
+    fillRect(x: number, y: number, w: number, h: number): void;
     drawImage(source: CanvasImageSource, x: number, y: number, w: number, h: number): void;
   } | null;
   toBlob(callback: (blob: Blob | null) => void, type: string, quality: number): void;
@@ -67,6 +72,9 @@ export async function renderJpeg(
   try {
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new ImageProblem('unreadable');
+    // 先铺白底：JPEG 没有透明通道，透明的 PNG 不铺就会变黑底
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
     ctx.drawImage(source, 0, 0, width, height);
     const blob = await new Promise<Blob | null>((resolve) =>
       canvas.toBlob(resolve, 'image/jpeg', JPEG_QUALITY),
@@ -126,7 +134,14 @@ export async function compressFile(
 ): Promise<Blob> {
   const problem = checkFile(file);
   if (problem) throw new ImageProblem(problem);
-  const decoded = await (deps.decode ?? decodeFile)(file);
+  let decoded: DecodedImage;
+  try {
+    decoded = await (deps.decode ?? decodeFile)(file);
+  } catch (error) {
+    // type 为空的文件解不出来，多半根本不是图片：说「不是图片」比「图片读不出」更对
+    if (file.type === '' && error instanceof ImageProblem) throw new ImageProblem('notImage');
+    throw error;
+  }
   try {
     return await renderJpeg(decoded.source, decoded.width, decoded.height, deps.makeCanvas);
   } finally {

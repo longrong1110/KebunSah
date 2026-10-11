@@ -13,6 +13,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { fromEvent } from 'rxjs';
+import { BackNavigator } from '../../core/back-navigator';
 import { I18nService } from '../../core/i18n/i18n.service';
 import {
   CameraError,
@@ -36,6 +37,7 @@ type View = 'opening' | 'live' | 'error' | 'processing' | 'preview';
 })
 export class CameraPage {
   private readonly router = inject(Router);
+  private readonly backNav = inject(BackNavigator);
   private readonly route = inject(ActivatedRoute);
   private readonly draft = inject(DraftService);
   private readonly camera = inject(CameraService);
@@ -189,15 +191,12 @@ export class CameraPage {
     }
   }
 
-  /** 「Guna gambar」：这份文档变已拍，回屏 3；用替换历史，后退不会再回到相机 */
+  /** 「Guna gambar」：这份文档变已拍，回屏 3；走后退，历史里不留相邻两条 /plots/new，浏览器「返回」也不会又回到相机 */
   protected use(): void {
     const type = this.docType();
     if (!type || !this.previewBlob) return;
     this.draft.capture(type, this.previewBlob, this.previewSource);
-    void this.router.navigate(['/plots/new'], {
-      replaceUrl: true,
-      queryParamsHandling: 'preserve',
-    });
+    this.backNav.back(['/plots/new'], { queryParamsHandling: 'preserve' });
   }
 
   /** 「Ambil semula」：回到取景，旧预览释放 */
@@ -206,12 +205,9 @@ export class CameraPage {
     void this.start();
   }
 
-  /** 「✕」：回屏 3，卡片状态不变；用替换历史，浏览器「返回」不会又回到相机、再弹一次授权 */
+  /** 「✕」：回屏 3，卡片状态不变；走后退，浏览器「返回」不会又回到相机、再弹一次授权 */
   protected close(): void {
-    void this.router.navigate(['/plots/new'], {
-      replaceUrl: true,
-      queryParamsHandling: 'preserve',
-    });
+    this.backNav.back(['/plots/new'], { queryParamsHandling: 'preserve' });
   }
 
   protected openGallery(input: HTMLInputElement): void {

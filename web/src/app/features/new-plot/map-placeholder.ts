@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { BackNavigator } from '../../core/back-navigator';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { LangButton } from '../../shared/lang-button';
 
@@ -32,10 +32,10 @@ import { LangButton } from '../../shared/lang-button';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MapPlaceholder {
-  private readonly router = inject(Router);
+  private readonly backNav = inject(BackNavigator);
   protected readonly t = inject(I18nService).t;
 
   protected back(): void {
-    void this.router.navigate(['/plots/new'], { queryParamsHandling: 'preserve' });
+    this.backNav.back(['/plots/new'], { queryParamsHandling: 'preserve' });
   }
 }

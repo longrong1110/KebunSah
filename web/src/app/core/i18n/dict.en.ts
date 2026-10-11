@@ -207,8 +207,9 @@ export const en: Dict = {
           facts.days !== null
             ? `Expires in ${facts.days} ${facts.days === 1 ? 'day' : 'days'}.`
             : 'It is about to expire.',
-        cause: 'The expiry date is close. Renewing early avoids problems and late fees.',
-        advice: ({ doc }: GapCtx) => `Apply to renew the ${doc} early, then take a new photo.`,
+        cause: 'The expiry date is close. Renewing early avoids problems.',
+        advice: ({ docInline }: GapCtx) =>
+          `Apply to renew the ${docInline} early, then take a new photo.`,
         button: 'How to get it',
       },
       expired: {
@@ -216,12 +217,12 @@ export const en: Dict = {
         detail: ({ facts }: GapCtx) =>
           facts.date ? `Expired on ${facts.date}.` : 'It has expired.',
         cause: 'This document is past its expiry date.',
-        advice: ({ doc }: GapCtx) =>
-          `Renew the ${doc} first (late fees may apply), then take a new photo.`,
+        advice: ({ docInline, docType }: GapCtx) =>
+          `Renew the ${docInline} first${docType === 'mpob_licence' ? ' (late fees may apply)' : ''}, then take a new photo.`,
         button: 'How to get it',
       },
       name_mismatch: {
-        title: ({ doc }: GapCtx) => `The name on the ${doc} doesn't match`,
+        title: ({ docInline }: GapCtx) => `The name on the ${docInline} doesn't match`,
         detail: () =>
           'The name on the document is different from the name of the person farming the land.',
         cause:
@@ -238,7 +239,7 @@ export const en: Dict = {
         button: 'See details',
       },
       low_confidence: {
-        title: ({ doc }: GapCtx) => `The writing on the ${doc} is unclear`,
+        title: ({ docInline }: GapCtx) => `The writing on the ${docInline} is unclear`,
         detail: () => 'The values in the photo need to be confirmed.',
         cause: 'The photo may be blurry, dark or have glare.',
         advice: () =>

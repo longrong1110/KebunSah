@@ -4,6 +4,7 @@ import { en } from './dict.en';
 import { ms } from './dict.ms';
 import { GAP_CODES, type GapCtx } from './gap-text';
 import { I18nService, LANG_STORAGE_KEY, withFallback } from './i18n.service';
+import { inlineDocName } from './gap-text';
 
 // 词典里所有叶子的路径（函数与字符串都算叶子），用来比对两种语言的键是否一致
 function leafPaths(value: unknown, prefix = ''): string[] {
@@ -66,7 +67,8 @@ describe('词典', () => {
           expect(text.button.trim()).not.toBe('');
           for (const docType of docTypes) {
             for (const facts of [noFacts, full]) {
-              const ctx: GapCtx = { doc: d.result.docName(docType), docType, facts };
+              const doc = d.result.docName(docType);
+              const ctx: GapCtx = { doc, docInline: inlineDocName(doc), docType, facts };
               for (const out of [text.title(ctx), text.detail(ctx), text.advice(ctx)]) {
                 expect(out.trim()).not.toBe('');
                 expect(out).not.toMatch(/undefined|NaN|null|\[object/);
@@ -78,7 +80,12 @@ describe('词典', () => {
 
       it(`${name}：带数字的缺口在有数字时写出数字，没有数字时退回不带数字的句子`, () => {
         const g = d.result.gapText;
-        const ctx = (facts: GapCtx['facts']): GapCtx => ({ doc: 'D', docType: null, facts });
+        const ctx = (facts: GapCtx['facts']): GapCtx => ({
+          doc: 'D',
+          docInline: 'd',
+          docType: null,
+          facts,
+        });
         expect(g.area_mismatch.detail(ctx(full))).toContain('3.04');
         expect(g.area_mismatch.detail(ctx(full))).toContain('3.49');
         expect(g.area_mismatch.detail(ctx(noFacts))).not.toMatch(/[0-9]/);
@@ -91,7 +98,7 @@ describe('词典', () => {
 
     it('missing_doc 的建议按文件类型给：MPOB 执照写去 MPOB 办事处（线框里的句子）', () => {
       const advice = (docType: string | null) =>
-        ms.result.gapText.missing_doc.advice({ doc: 'x', docType, facts: noFacts });
+        ms.result.gapText.missing_doc.advice({ doc: 'x', docInline: 'x', docType, facts: noFacts });
       expect(advice('mpob_licence')).toBe('Dapatkan di pejabat MPOB. Bawa MyKad dan geran.');
       expect(new Set(docTypes.map(advice)).size).toBeGreaterThan(2);
     });

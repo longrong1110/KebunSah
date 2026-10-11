@@ -179,7 +179,7 @@ describe('PlotCard', () => {
   it('另外三个状态的图标与文字：红、需人工复核、待开始', async () => {
     for (const [status, label] of [
       ['red', '✕Perlu tindakan'],
-      ['needs_review', '?Perlu semakan pegawai'],
+      ['needs_review', '?Menunggu pegawai'],
       ['pending', '○Belum mula'],
     ] as const) {
       const c = setup({ id: 'p1', data: { ...base, status } });

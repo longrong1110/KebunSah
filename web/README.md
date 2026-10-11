@@ -49,7 +49,7 @@ curl http://127.0.0.1:9099/emulator/v1/projects/demo-kebunsah/verificationCodes
 | `/plots/new/camera/:doc` | 4 取景 | `:doc` 取 `land_title`／`mspo_cert`／`mpob_licence`；非法值回屏 3。拍完先预览，确认才算数 |
 | `/plots/new/map` | 5 占位 | 「Peta akan datang」；真正的地图屏由后续分支做 |
 | `/plots/:id` | 9 结果 | 屏 2 的卡片点进来。红黄绿横幅、最多先列 3 件「Perlu dibuat」（每件一个按钮，多于 3 件可展开）、通过的检查默认收起、森林初筛一句话（永远带「只是初筛」） |
-| `/plots/:id/checking` | 7 评估中 | 屏 9 的横幅在「检查中」时多一个「Lihat kemajuan」进入（屏 6「开始检查」做好后由它跳转）。转圈＋四步清单（Membaca dokumen／Menyemak maklumat／Menyemak imej satelit hutan／Menyediakan senarai tindakan），「Kira-kira 2 minit. Anda boleh keluar.」和「Kembali ke Tanah saya」。评估是实时订阅，queued → running → done 页面自己变，完成后出现「Lihat keputusan」；失败不显示错误信息，当前那一步标「Perlu semakan pegawai」；没有评估写「belum diperiksa」 |
+| `/plots/:id/checking` | 7 评估中 | 屏 9 的横幅在「检查中」时多一个「Lihat kemajuan」进入（屏 6「开始检查」做好后由它跳转）。转圈＋四步清单（Membaca dokumen／Menyemak maklumat／Menyemak imej satelit hutan／Menyediakan senarai tindakan），「Kira-kira 2 minit. Anda boleh keluar.」和「Kembali ke Tanah saya」。评估是实时订阅，queued → running → done 页面自己变，完成后出现「Lihat keputusan」；失败不显示错误信息，当前那一步标「Menunggu pegawai」；没有评估写「belum diperiksa」 |
 | `/plots/:id/dossier` | 导出档案 | 看板里选中地块后点「Export dossier (PDF)」进入，点页面上的「Print / Save as PDF」用浏览器的打印功能存成 PDF（页面标题「KebunSah dossier — {lot}」当文件名）。A4 排版的资料底稿：地块与地契信息、中心点与顶点坐标、形状预览、结论与规则核对、未解决事项、森林初筛、文档页数与读取状态、免责声明。工具栏打印时隐藏；没有评估的地块只写「belum diperiksa」，不写任何结论 |
 | `/coop` | 11 合作社看板（电脑宽屏） | 仅 `coop_admin`（屏 2 头部有「Papan pemuka」入口）。左栏筛选、中间统计卡＋表格（红色最前）、右栏选中地块的详情；筛选条件和选中的地块在查询参数里（`?status=red&issue=area,expiry&q=…&plot=…`），刷新和前进后退都保持。窄于 1024px 栈叠 |
 | `/plots/:id/issue/:key` | 10 问题详情 | `:key` 是缺口的 `gapCode`（同码多个文件时带 `~docType`，如 `low_confidence~land_title`；不用点号，带点的末段在 PWA 里不会被当成导航请求）。数字对照、可能原因、建议；面积问题还有形状预览 |
@@ -63,7 +63,7 @@ curl http://127.0.0.1:9099/emulator/v1/projects/demo-kebunsah/verificationCodes
 - **屏 2（外勤）**：用 `+60100000001` 登录，先看到成员列表；输入名字片段（如 `Ahmad`，不分大小写、忽略标点）过滤；点一个成员进入其地块，浏览器「返回」回到列表。
 - **屏 3**：点「Tambah tanah」进入。点卡片进取景；点「Langkau」跳过；用「Atau pilih dari galeri」选一张图直接给第一份待拍的文档；三份处理完「Seterusnya」才亮。
 - **屏 4**：浏览器会请求摄像头权限。点快门 → 预览 → 「Guna gambar」回屏 3；「Ambil semula」重拍；点「Galeri」选本地图片也先进预览。手电筒按钮只在设备支持时出现。
-- **屏 9／10**：三个演示园主刚好是绿、黄、红。`+60100000011`（Tan Ah Kow）：绿色「Semua lulus」，没有事项；`+60100000012`（Ahmad Zaki bin Rosli）：黄色「Hampir siap」，两件事（面积不符、MPOB 执照 58 天后到期），点「Lihat butiran」看屏 10：地契 3.04 ha 对量出的 3.49 ha、`+0.45 ha (15%)`、形状预览；`+60100000013`（Muthu a/l Raman）：红色，4 件事（先显示 3 件，「Lihat semua (4)」展开），森林初筛提示有损失 0.8 ha。外勤选成员 Krishnan a/l Marimuthu 能看到「Perlu semakan pegawai」。
+- **屏 9／10**：三个演示园主刚好是绿、黄、红。`+60100000011`（Tan Ah Kow）：绿色「Semua lulus」，没有事项；`+60100000012`（Ahmad Zaki bin Rosli）：黄色「Hampir siap」，两件事（面积不符、MPOB 执照 58 天后到期），点「Lihat butiran」看屏 10：地契 3.04 ha 对量出的 3.49 ha、`+0.45 ha (15%)`、形状预览；`+60100000013`（Muthu a/l Raman）：红色，4 件事（先显示 3 件，「Lihat semua (4)」展开），森林初筛提示有损失 0.8 ha。外勤选成员 Krishnan a/l Marimuthu 能看到「Menunggu semakan pegawai」。
 - **屏 11（看板，要用电脑宽屏看）**：用 `+60100000002`（管理员，档案语言 en，所以默认英语，点 🌐 切 BM）登录，屏 2 头部点「Dashboard」进入，或直接打开 `/coop`。统计卡 Green 110／Yellow 50／Red 24／Needs review 16；点左栏 Red 只看红色，勾「Issue type」里的类型（可多选），在 Member 里输入名字片段；点一行（或用 Tab 到行里的按钮按 Enter）看右栏详情；点「Export summary (CSV)」导出**当前筛选后**的表格。园主或外勤打开 `/coop` 只会看到「Halaman ini untuk pentadbir koperasi.」。
 - **屏 7（评估中）**：种子里的评估都是 `done`，要把一条改成 `running` 才看得到转圈：用模拟器 REST 改（`curl.exe -X PATCH -H "Authorization: Bearer owner" -H "Content-Type: application/json" -d "{\"fields\":{\"runStatus\":{\"stringValue\":\"running\"}}}" "http://127.0.0.1:8080/v1/projects/demo-kebunsah/databases/(default)/documents/plots/<plotId>/assessments/<评估id>?updateMask.fieldPaths=runStatus"`；黄色演示地块的 plotId 是 `90000000-0000-4000-8000-000000000002`，评估 id 见该地块的 `assessments` 子集合）。登录 `+60100000012` 打开该地块（屏 9），横幅变成「Sedang disemak」，点「Lihat kemajuan」进屏 7；再把 `runStatus` 改回 `done`，页面自己变成「Semakan siap」＋「Lihat keputusan」；改成 `failed` 看「需人工复核」的样子（不显示错误信息）。
 - **导出档案**：管理员登录后进 `/coop`。没选地块时「Export dossier (PDF)」禁用并写「Choose a plot first」；点一行（如 Lot 2217，黄色）后按钮可用，点击进入档案页，再点「Print / Save as PDF」，在浏览器的打印对话框里目标选「另存为 PDF」。点 🌐 切 BM／EN，档案跟着变（标签、结论、规则、文件行都换）；「←」回到看板，选中的地块还在。
@@ -94,7 +94,7 @@ src/app/core/firebase/        firebase.ts（App + Auth 惰性幂等初始化）�
                               auth.service.ts（手机号 OTP）、firestore-reader.ts（只有 doc$ / collection$）
 src/app/core/auth/            路由守卫
 src/app/core/                 phone.ts（号码规范化）、plot-status.ts（状态值、图标、色调）、format.ts（面积、日期）、
-                              load-state.ts（加载／离线／出错）、people-search.ts（成员搜索）
+                              load-state.ts（加载／离线／出错）、people-search.ts（成员搜索）、back-navigator.ts（返回键）
 src/app/core/i18n/            dict.ms.ts / dict.en.ts（词典）、i18n.service.ts（当前语言）
 src/app/shared/               跨屏共用的小组件（语言按钮）
 src/app/features/<屏>/        每屏一个目录，懒加载：login、plots（屏 2）、new-plot（屏 3、4 与占位）、result（屏 9、10）、coop（屏 11）、checking（屏 7）、dossier（导出档案）
@@ -108,8 +108,9 @@ scripts/                      emulators.mjs、check-readonly.mjs、check-prod-bu
 - **只读过滤**：`collection$(path, { where: [{ field, value }] })` 只支持「等于」。这是为了少下载，**不是权限**——`infra/firestore.rules` 现在是「任何登录用户可读全部」，园主改地址栏也能读到别人的数据。规则收紧由队友做（见下方已知限制）。
 - **多语言**：词典是两个带类型的对象，`dict.ms.ts` 是基准，`dict.en.ts` 声明为同一个 `Dict` 类型，漏一个键编译就报错。组件用 `inject(I18nService).t`（signal）取词，模板写 `{{ t().plots.title }}`；带参数的文案是函数。新增文案两个文件都要加。语言的取值优先级：本机上次的选择（`localStorage` `kebunsah.lang`）> `users.language`（只认 `ms`／`en`）> 马来语。`<html lang>` 随之同步。
 - **草稿只在内存里**：`features/new-plot/draft.service.ts` 保存屏 3 三份文档的状态和照片 Blob，刷新就没了。回到 `/` 会清空并撤销所有预览 URL。
-- **图片管线**：`features/new-plot/image.ts`。相册和相机的图都统一重画到 canvas 再编码成 JPEG（质量 0.85，长边 ≤1600px，小图不放大，按 EXIF 方向摆正，输出不含 EXIF／GPS），相册文件 >20 MB 直接拒绝。1600px 对地契上的小字做 OCR 可能偏小，屏 8 读字段前很可能要调大（改 `MAX_LONG_SIDE` 一处即可）。
+- **图片管线**：`features/new-plot/image.ts`。相册和相机的图都统一重画到 canvas 再编码成 JPEG（质量 0.85，长边 ≤1600px，小图不放大，按 EXIF 方向摆正，输出不含 EXIF／GPS），相册文件 >20 MB 直接拒绝；`type` 为空的文件（部分 Windows 上的 HEIC 没有 MIME）先尝试解码，解不出才报「不是图片」；重画前先铺白底（透明 PNG 不会变黑底）。1600px 对地契上的小字做 OCR 可能偏小，屏 8 读字段前很可能要调大（改 `MAX_LONG_SIDE` 一处即可）。
 - **摄像头一定要关**：`camera-page` 在点 ✕、浏览器返回、路由切走、切到后台、授权等待中就离开、轨道被系统结束时，都会停掉所有轨道并撤销预览 URL。
+- **返回键**：统一走 `core/back-navigator.ts`：有上一条同源历史记录（优先用 Navigation API 的 `canGoBack`；不支持的浏览器退回 `history.length > 1`）就 `Location.back()`（不新增历史记录，管理员从看板进屏 9 再返回就回到看板，筛选和选中的地块都在），否则 `navigate(兜底路径, { replaceUrl: true })` 并保留 `?member`。不要在页面里自己 `navigate(['/'])` 当返回键（会产生 `[/plots/new, /, /plots/new]` 这样的历史回环）。屏 4 的「✕」「Guna gambar」也走它。测试里用 `src/testing/back.ts` 的 `stubHistory(true／false)` 控制分支。屏 7 的 ← 与「Kembali ke Tanah saya」是明确去处，固定去屏 2，不走它。
 - **环境隔离**：模拟器地址只写在 `environment.development.ts`。`ng build` 默认走生产配置，用 `environment.ts` 换掉开发文件，所以生产产物里没有 `demo-kebunsah`、`127.0.0.1`、端口号；`check:prod-bundle` 把关。线上 Firebase 项目建好后，把 Web 配置填进 `environment.ts`（这些值是公开的，不是密钥）。生产配置为空时 App 不白屏，登录页提示「Perkhidmatan belum disediakan.」。
 - **模拟器地址用 `127.0.0.1`，不用 `localhost`**：Windows 优先解析成 `::1`，模拟器绑在 `127.0.0.1`。
 - **状态永远是「颜色 + 图标 + 文字」**，状态值只用 `contract/status.md` 的字符串，见 `core/plot-status.ts`。
@@ -131,7 +132,7 @@ scripts/                      emulators.mjs、check-readonly.mjs、check-prod-bu
 
 - **照片不上传、地块不创建**：`contract/api.md` 还没有上传照片和新建地块的请求／响应，前端对 Firestore 只读也不能自己写。屏 3、4 拍的照片只留在本机内存；「Seterusnya」进的是占位页。合同定了再接。
 - **没有模糊检测**：屏 4 目前不判断照片糊不糊（原型阶段由后端评估）；`unreadable` 提示只在「图片解码或编码失败」时出现。
-- **只有马来语和英文**：企划书里的中文界面不做。词典里的 `needs_review` 标签（「Perlu semakan pegawai」）线框里没有，是临时文案，10/15 的 `fe/polish` 统一。
+- **只有马来语和英文**：企划书里的中文界面不做。词典里的 `needs_review` 标签（BM「Menunggu pegawai」、屏 9 横幅「Menunggu semakan pegawai」）线框里没有，是文案取舍：原来的「Perlu semakan pegawai」与黄色的「Perlu semakan」（线框里的标签）在 BM 里太像，所以换了；英文（「Officer to review」）不动。
 - **真机相机行为没验证过**：电脑上的 Claude 内置浏览器没有真实摄像头。后置镜头选择、手电筒、iOS Safari 的 `playsinline` 自动播放、权限弹窗，都要在真机（HTTPS）上走一遍。取景流程在自动化里是用注入的假 `getUserMedia` 验证的。
 - **`firestore.rules` 过宽**：现在任何登录用户都能读全部集合，包括 `persons` 里的 `icHash`／`icLast4`。屏 2 的角色分流和成员列表只是界面行为，不是授权；规则收紧是队友的事（共管文件）。成员列表读的是 `persons` 的 `fullName`，不显示证件号。
 - 首次登录谁来创建 `users/{uid}`、`lastLoginAt` 谁写，合同还没定（见 `seed/README.md` 缺口 10），本次不创建。没有档案的账号，屏 2 显示「Profil anda belum dibuat.」并提供登出。
@@ -144,5 +145,6 @@ scripts/                      emulators.mjs、check-readonly.mjs、check-prod-bu
 - **数字对照取评估时的快照**（`CC-01` 的 `expectedValue`／`actualValue`），可能与 `plots.areaHaComputed` 的当前值不同，所以页面上标了「Disemak pada …」。形状预览是内联 SVG，没有地图底图。
 - **屏 7 的步骤进度是推导的，不是后端报的**：合同里 `assessments` 只有 `run_status`，没有逐步进度字段。第 1 步看 `documents` 里还有没有 `uploaded`／`extracting` 的当前页文件；第 2 步在评估 `running` 且文件读完后是当前步；第 3、4 步（森林、行动清单）在评估结束前保持「未开始」，`done` 时一起变「完成」——**不按时间假装前进**，所以它们不会单独亮起。后端以后若写逐步进度字段，换成读它。「大约 2 分钟」是固定文案，不倒计时。入口目前只有屏 9 的「Lihat kemajuan」：屏 6「开始检查」和 `POST /api/plots/{id}/assess` 还没有，所以真实的「提交 → 转圈」要等它们。
 - **档案页不是官方 DDS，也没有服务端 PDF**：靠浏览器的打印功能存 PDF（合同里的 `GET /api/plots/{id}/report` 还是「待定」，本轮不做服务端）。内容是「资料底稿」：**含成员姓名、中心点与多边形顶点坐标**（DDS 要地理位置），不含证件信息、评估说明文字、文档原图与存储路径；形状预览是内联 SVG，没有地图底图；DDS 官方格式（HS 编码、数量、运营商声明）、多块地合并导出、签名与二维码没做。路由 `/plots/:id/dossier` 只要登录就能打开（界面行为，不是授权，与 `firestore.rules` 过宽是同一个问题）。**浏览器打印对话框默认勾选「页眉和页脚」**，会把网址（含地块 id）和日期印进 PDF，页面上打印钮下面有提示，但要人手动取消勾选，页面控制不了。数据若来自本机缓存（可能不是最新），会在纸面页头写明，印出来的 PDF 也带。**分页位置与真实 PDF 外观没看过**：自动化里只验证了 `@media print` 规则生效（工具栏隐藏、纸面白底无阴影）和窄屏版式，真实打印预览要在浏览器里人工看一眼。
+- **返回键的边界**：有 Navigation API 的浏览器（Chromium 系）只数同源、当前位置之前的条目，所以从别的网站直接跳进来的深链接点返回会走兜底路径，不会离开应用，当前页后面有「前进」条目也不会误判；不支持它的浏览器退回 `history.length > 1`，那时从外站深链接进来点返回会回到那个网站（与浏览器自己的后退一致），当前页后面有「前进」条目时返回键可能没反应。连点返回只生效一次（一次后退没生效前忽略重复点击，最多 800 ms；不然连点两次会各退一步，从屏 4 退过屏 3 到屏 2，把草稿清掉）。
 - CI：`infra/cloudbuild/pr.yaml`、`deploy.yaml` 里原来的 `node:20` 满足不了 Angular 22 的 Node 要求，已由 #8 改成 `node:24` 并合并。
 - Service worker 只在生产构建注册（`ng serve` 下不注册）；Claude 内置浏览器窗格不允许注册 service worker，实际的离线行为还没在真实浏览器里验证过。

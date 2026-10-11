@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { afterEach, beforeEach, vi } from 'vitest';
+import { stubHistory } from '../../../testing/back';
 import { settle } from '../../../testing/fake-facade';
 import {
   imageFile,
@@ -192,6 +193,16 @@ describe('CameraPage（屏 4）', () => {
       expect(p.shutter().disabled).toBe(false);
     });
 
+    it('「Guna gambar」：有历史就后退到屏 3（不在历史里留下相邻重复的 /plots/new），这份文档仍记为已拍', async () => {
+      const p = await setup({ open: () => Promise.reject(new CameraError('denied')) });
+      await p.pick(imageFile());
+      const back = stubHistory(true);
+      await p.click('#use');
+      expect(back).toHaveBeenCalledTimes(1);
+      expect(p.draft.doc('land_title').status).toBe('captured');
+      expect(p.router.url).toBe('/plots/new/camera/land_title');
+    });
+
     it('摄像头被拒时仍能用相册：选图进入预览，「Guna gambar」后记为 gallery', async () => {
       const p = await setup({ open: () => Promise.reject(new CameraError('denied')) });
       await p.pick(imageFile());
@@ -366,6 +377,20 @@ describe('CameraPage（屏 4）', () => {
   });
 
   describe('关闭与释放', () => {
+    it('点 ✕：有历史就后退（摄像头由页面销毁时关闭，见下一条），草稿不变', async () => {
+      const f = fakeHandle();
+      const p = await setup({
+        url: '/plots/new/camera/land_title?member=p9',
+        open: () => Promise.resolve(f.handle),
+      });
+      await p.frame();
+      const back = stubHistory(true);
+      await p.click('#close');
+      expect(back).toHaveBeenCalledTimes(1);
+      expect(p.router.url).toBe('/plots/new/camera/land_title?member=p9');
+      expect(p.draft.doc('land_title').status).toBe('pending');
+    });
+
     it('点 ✕：回屏 3，保留 ?member，草稿不变，摄像头关闭', async () => {
       const f = fakeHandle();
       const p = await setup({

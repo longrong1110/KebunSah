@@ -249,7 +249,7 @@ describe('buildDossier：摘要', () => {
     expect(m.forest).toBeNull();
   });
 
-  it('最新一次还在检查：Sedang disemak，不写结论；失败：Perlu semakan pegawai，不写结论', () => {
+  it('最新一次还在检查：Sedang disemak，不写结论；失败：Menunggu semakan pegawai，不写结论', () => {
     const running = build({
       assessments: [
         item('old', asData({ createdAt: new Date('2026-10-01T00:00:00Z') })),
@@ -263,6 +263,7 @@ describe('buildDossier：摘要', () => {
 
     const failed = build({ assessments: [item('f', asData({ runStatus: 'failed' }))] });
     expect(failed.summary.key).toBe('needs_review');
+    expect(failed.summary.headline).toBe('Menunggu semakan pegawai');
     expect(failed.summary.checkedOn).toBeNull();
     expect(failed.checks).toBeNull();
     expect(failed.forest).toBeNull();

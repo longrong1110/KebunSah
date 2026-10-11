@@ -9,6 +9,7 @@ import {
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BehaviorSubject, combineLatest, map, of, switchMap } from 'rxjs';
+import { BackNavigator } from '../../core/back-navigator';
 import { AuthService } from '../../core/firebase/auth.service';
 import {
   FirestoreReader,
@@ -40,6 +41,7 @@ export class PlotsPage {
   private readonly auth = inject(AuthService);
   private readonly reader = inject(FirestoreReader);
   private readonly router = inject(Router);
+  private readonly backNav = inject(BackNavigator);
   private readonly route = inject(ActivatedRoute);
   private readonly draft = inject(DraftService);
   private readonly i18n = inject(I18nService);
@@ -212,8 +214,9 @@ export class PlotsPage {
     void this.router.navigate(['/coop']);
   }
 
+  /** 有历史就后退（回到没带 ?member 的成员列表）；没有历史（直接打开带 ?member 的链接）就去掉 ?member */
   protected backToMembers(): void {
-    void this.router.navigate([], { relativeTo: this.route, queryParams: { member: null } });
+    this.backNav.back([], { relativeTo: this.route, queryParams: { member: null } });
   }
 
   protected add(): void {
