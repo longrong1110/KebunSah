@@ -73,7 +73,7 @@ FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:909
 ## 已知取舍
 
 - 没有 `pending`、`queued`／`running`／`failed` 的样本：屏 2 的「Belum mula」和屏 7 要靠现场新建地块来演示。
-- 生成地块的 `summaryText`／缺口文案用马来语；3 个演示地块的 `detail`／`description` 沿用 `schema.sql` 里的中文。
+- 生成地块的 `summaryText`／缺口文案用马来语；3 个演示地块的 `detail`／`description`／`suggestedAction` 和数值字符串（`58 hari`、`2026-04-30 telah tamat`）原是 `schema.sql` 里的中文，2026-10-11 起也换成马来语（数值与结论不变，格式与生成的地块一致）。虚构机构名后缀由「(虚构)」改成「(rekaan)」。数据里已没有中文。前端只解析天数、日期、公顷这几个数，不显示这些说明文字。
 - 演示 3 块的多边形与它声明的 `areaHaComputed` 相差最多约 0.03 公顷（原值与球面实算有约 0.7% 的差），原样保留；生成地块的误差都在 0.01 公顷内。
 - 坐标是把虚构地块撒在各县县城附近，卫星图上可能是森林、水域或市区；森林初筛的数值（`forestCover2020Pct` 等）是演示占位，`forestDataset` 为空。mukim／kampung 名称是示意，没有逐一核对。
 - 身份证号只存 SHA-256 哈希（沿用 `schema.sql` 的做法）。上线前必须加服务端秘密值（pepper）；seed 全是虚构数据，不受影响。
