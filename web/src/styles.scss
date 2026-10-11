@@ -1773,3 +1773,153 @@ a.plot-card:hover {
   width: 100%;
   margin-top: 12px;
 }
+
+// ---- 屏 5：圈地块（三个页签、地图框、面积徽标）----
+.map-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 12px;
+}
+
+// 三选一的分段控件（线框里的「Lukis di peta／Jalan sudut／Satu titik」）
+.seg {
+  display: flex;
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.seg__btn {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 48px;
+  padding: 8px 6px;
+  border: 0;
+  border-right: 2px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.seg__btn:last-child {
+  border-right: 0;
+}
+
+.seg__btn--on {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.map-frame {
+  position: relative;
+  flex: 1 1 320px;
+  min-height: 300px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #1d2b22;
+}
+
+.map-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+// 面积徽标：「≈ 2.1 ha」。不挡点按（pointer-events: none），数字再大也不撑破
+.area-badge {
+  position: absolute;
+  z-index: 2;
+  top: 12px;
+  left: 12px;
+  max-width: calc(100% - 156px);
+  padding: 6px 14px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 1.25rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+
+.map-locate {
+  position: absolute;
+  z-index: 2;
+  top: 12px;
+  right: 12px;
+  min-height: 48px;
+  padding: 6px 14px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.map-locate:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+// 地图加载中／加载失败：盖住整个地图框（不留一块灰底让人去点）
+.map-state {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 16px;
+  text-align: center;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.map-state--failed p {
+  margin: 0;
+}
+
+.map-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.map-panel > .hint,
+.map-panel > .error {
+  margin: 0;
+}
+
+.bar--row {
+  flex-direction: row;
+}
+
+.bar--row .btn {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+// ---- 屏 6 的壳：屏 5 的结果摘要 ----
+.review-title {
+  margin: 0 0 12px;
+  font-size: 1.25rem;
+}
+
+.review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}

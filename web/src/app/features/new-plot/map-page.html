@@ -1,0 +1,178 @@
+<main class="screen">
+  <header class="topbar">
+    <button
+      type="button"
+      class="icon-btn"
+      id="back"
+      [attr.aria-label]="t().common.back"
+      (click)="back()"
+    >
+      ←
+    </button>
+    <h1 class="topbar__title">{{ t().newPlot.title }}</h1>
+    <app-lang-button />
+  </header>
+
+  <div
+    class="progress"
+    role="progressbar"
+    aria-valuemin="1"
+    aria-valuemax="3"
+    aria-valuenow="2"
+    [attr.aria-label]="t().newPlot.map.step"
+  >
+    <span class="progress__seg progress__seg--on"></span>
+    <span class="progress__seg progress__seg--on"></span>
+    <span class="progress__seg"></span>
+  </div>
+  <p class="step-label">{{ t().newPlot.map.step }}</p>
+
+  <section class="content content--tight map-content">
+    <div class="seg" role="tablist" [attr.aria-label]="t().newPlot.map.tabsLabel">
+      @for (tab of tabs; track tab) {
+        <button
+          type="button"
+          role="tab"
+          class="seg__btn"
+          [id]="'tab-' + tab"
+          [class.seg__btn--on]="tab === current()"
+          [attr.aria-selected]="tab === current()"
+          aria-controls="panel"
+          [attr.tabindex]="tab === current() ? 0 : -1"
+          (click)="select(tab)"
+          (keydown)="onTab($event, tab)"
+        >
+          {{ t().newPlot.map.tabs[tab] }}
+        </button>
+      }
+    </div>
+
+    <div class="map-frame" role="group" [attr.aria-label]="t().newPlot.map.mapLabel">
+      <div #mapEl class="map-canvas"></div>
+
+      @if (badge(); as b) {
+        <div class="area-badge" id="area-badge">{{ b }}</div>
+      }
+
+      @if (current() === 'map' && view() === 'ready') {
+        <button
+          type="button"
+          class="map-locate"
+          id="locate-me"
+          [disabled]="locating()"
+          (click)="locateMe()"
+        >
+          <span aria-hidden="true">📍</span>
+          {{ locating() ? t().newPlot.map.locating : t().newPlot.map.myLocation }}
+        </button>
+      }
+
+      @switch (view()) {
+        @case ('loading') {
+          <div class="map-state" id="map-loading" role="status">
+            {{ t().newPlot.map.state.loading }}
+          </div>
+        }
+        @case ('failed') {
+          <div class="map-state map-state--failed" id="map-failed" role="alert">
+            <p><span aria-hidden="true">⚠</span> {{ t().newPlot.map.state[failKey()] }}</p>
+            @if (canRetryMap()) {
+              <button type="button" class="btn-link" id="map-retry" (click)="start()">
+                {{ t().common.retry }}
+              </button>
+            }
+            <p class="hint">{{ t().newPlot.map.state.fallback }}</p>
+          </div>
+        }
+      }
+    </div>
+
+    <div id="panel" role="tabpanel" class="map-panel" [attr.aria-labelledby]="'tab-' + current()">
+      <p class="hint" id="map-hint">{{ t().newPlot.map.hint[current()] }}</p>
+
+      @switch (current()) {
+        @case ('walk') {
+          <button
+            type="button"
+            class="btn"
+            id="mark-here"
+            [disabled]="locating()"
+            (click)="markHere()"
+          >
+            {{ locating() ? t().newPlot.map.locating : t().newPlot.map.markHere }}
+          </button>
+          @if (accuracyText(); as a) {
+            <p class="hint" id="accuracy">{{ a }}</p>
+          }
+          @if (weakGps(); as m) {
+            <p class="error" id="weak-gps" role="alert">
+              <span aria-hidden="true">⚠</span> {{ t().newPlot.map.weakGps(m) }}
+              <button type="button" class="btn-link" id="switch-map" (click)="select('map')">
+                {{ t().newPlot.map.switchToMap }}
+              </button>
+            </p>
+          }
+        }
+        @case ('point') {
+          <label for="declared">{{ t().newPlot.map.declaredLabel }}</label>
+          <input
+            id="declared"
+            class="field"
+            type="text"
+            inputmode="decimal"
+            autocomplete="off"
+            aria-describedby="declared-help"
+            [value]="declared()"
+            [attr.aria-invalid]="notice()?.tone === 'error' ? 'true' : null"
+            (input)="onDeclared($event)"
+          />
+          <p class="hint" id="declared-help">{{ t().newPlot.map.declaredHelp }}</p>
+          <button
+            type="button"
+            class="btn btn-quiet"
+            id="use-location"
+            [disabled]="locating()"
+            (click)="useMyLocation()"
+          >
+            {{ locating() ? t().newPlot.map.locating : t().newPlot.map.useMyLocation }}
+          </button>
+          @if (bigDeclared()) {
+            <button type="button" class="btn-link" id="draw-instead" (click)="select('map')">
+              {{ t().newPlot.map.drawInstead }}
+            </button>
+          }
+        }
+      }
+
+      @if (notice(); as n) {
+        @if (n.tone === 'error') {
+          <p id="notice" class="error"><span aria-hidden="true">⚠</span> {{ n.text }}</p>
+        } @else {
+          <p id="notice" class="hint">{{ n.text }}</p>
+        }
+      }
+
+      @if (geoError(); as g) {
+        <p id="geo-error" class="error" role="alert">
+          <span aria-hidden="true">⚠</span> {{ t().newPlot.map.geo[g] }}
+          @if (g !== 'unsupported') {
+            <button type="button" class="btn-link" id="geo-retry" (click)="retryGeo()">
+              {{ t().common.retry }}
+            </button>
+          }
+        </p>
+      }
+    </div>
+
+    <p class="sr-only" id="live" role="status" aria-live="polite">{{ live() }}</p>
+  </section>
+
+  <footer class="bar bar--row">
+    <button type="button" class="btn btn-quiet" id="undo" [disabled]="!canUndo()" (click)="undo()">
+      {{ t().newPlot.map.undo }}
+    </button>
+    <button type="button" class="btn" id="done" [disabled]="!canFinish()" (click)="done()">
+      {{ t().newPlot.map.done }}
+    </button>
+  </footer>
+</main>

@@ -47,7 +47,8 @@ curl http://127.0.0.1:9099/emulator/v1/projects/demo-kebunsah/verificationCodes
 | `/` | 2 我的地块 | 园主：自己的地块卡片。外勤／管理员：先选成员（可搜名字），选中后看该成员的地块，URL 带 `?member=<personId>`，刷新和返回都不丢 |
 | `/plots/new` | 3 拍文件 | 地契、MSPO、MPOB 三张卡片，每份可「拍」或「跳过」，三份都处理完才能「Seterusnya」 |
 | `/plots/new/camera/:doc` | 4 取景 | `:doc` 取 `land_title`／`mspo_cert`／`mpob_licence`；非法值回屏 3。拍完先预览，确认才算数 |
-| `/plots/new/map` | 5 占位 | 「Peta akan datang」；真正的地图屏由后续分支做 |
+| `/plots/new/map` | 5 圈地块 | 三个页签：「Lukis di peta」（Google 卫星图上点出每个角、拖动调整，实时「≈ N ha」）、「Jalan sudut」（走到角点用 GPS 一次记一个）、「Satu titik」（只记一个点 + 手填面积，须 < 4 ha）。结果存在内存草稿里（`DraftService`），不调接口；「Selesai」进下一行的占位页 |
+| `/plots/new/review` | 6 占位 | 屏 6 的壳：只显示屏 5 的结果（方式、面积）和三份文档的状态。屏 6 本体（总览、开始检查）要等建地块／上传／评估的接口合同 |
 | `/plots/:id` | 9 结果 | 屏 2 的卡片点进来。红黄绿横幅、最多先列 3 件「Perlu dibuat」（每件一个按钮，多于 3 件可展开）、通过的检查默认收起、森林初筛一句话（永远带「只是初筛」） |
 | `/plots/:id/checking` | 7 评估中 | 屏 9 的横幅在「检查中」时多一个「Lihat kemajuan」进入（屏 6「开始检查」做好后由它跳转）。转圈＋四步清单（Membaca dokumen／Menyemak maklumat／Menyemak imej satelit hutan／Menyediakan senarai tindakan），「Kira-kira 2 minit. Anda boleh keluar.」和「Kembali ke Tanah saya」。评估是实时订阅，queued → running → done 页面自己变，完成后出现「Lihat keputusan」；失败不显示错误信息，当前那一步标「Menunggu pegawai」；没有评估写「belum diperiksa」 |
 | `/plots/:id/dossier` | 导出档案 | 看板里选中地块后点「Export dossier (PDF)」进入，点页面上的「Print / Save as PDF」用浏览器的打印功能存成 PDF（页面标题「KebunSah dossier — {lot}」当文件名）。A4 排版的资料底稿：地块与地契信息、中心点与顶点坐标、形状预览、结论与规则核对、未解决事项、森林初筛、文档页数与读取状态、免责声明。工具栏打印时隐藏；没有评估的地块只写「belum diperiksa」，不写任何结论 |
@@ -62,6 +63,7 @@ curl http://127.0.0.1:9099/emulator/v1/projects/demo-kebunsah/verificationCodes
 - **屏 2（园主）**：用 `+60100000011` 登录，看到自己的地块卡片（状态 = 颜色 + 图标 + 文字）。顶部「Log keluar」登出。
 - **屏 2（外勤）**：用 `+60100000001` 登录，先看到成员列表；输入名字片段（如 `Ahmad`，不分大小写、忽略标点）过滤；点一个成员进入其地块，浏览器「返回」回到列表。
 - **屏 3**：点「Tambah tanah」进入。点卡片进取景；点「Langkau」跳过；用「Atau pilih dari galeri」选一张图直接给第一份待拍的文档；三份处理完「Seterusnya」才亮。
+- **屏 5（圈地块）**：屏 3 三份处理完点「Seterusnya」进入（或直接打开 `/plots/new/map`）。**要联网**（加载 Google 地图，用 `environment.development.ts` 里的 Demo key）。默认视野是半岛全景，用右下角 ＋／－ 或双指缩放到有地块的地方（例：`4.325, 101.162` 附近的 Kampar，Perak）。「Lukis di peta」：点按地图放角点（连点也不丢）、拖圆形把手调整，3 个点起出多边形和「≈ N ha」徽标；「Padam titik」撤销最后一点；边与边交叉时给红色提示且不能「Selesai」。「Jalan sudut」：点「Tandakan sudut di sini」才请求定位，精度 > 10 m 提示改用卫星图（电脑浏览器给的是 IP 定位，精度几百米，所以会提示）。「Satu titik」：点地图放点，填「Keluasan (ha)」，≥ 4 会提示改画边界。「Selesai」后进占位页，「←」回来时点、页签、手填数都还在。地图加载失败（断网、key 为空或被拒）会显示原因，B、C 页签仍可用。
 - **屏 4**：浏览器会请求摄像头权限。点快门 → 预览 → 「Guna gambar」回屏 3；「Ambil semula」重拍；点「Galeri」选本地图片也先进预览。手电筒按钮只在设备支持时出现。
 - **屏 9／10**：三个演示园主刚好是绿、黄、红。`+60100000011`（Tan Ah Kow）：绿色「Semua lulus」，没有事项；`+60100000012`（Ahmad Zaki bin Rosli）：黄色「Hampir siap」，两件事（面积不符、MPOB 执照 58 天后到期），点「Lihat butiran」看屏 10：地契 3.04 ha 对量出的 3.49 ha、`+0.45 ha (15%)`、形状预览；`+60100000013`（Muthu a/l Raman）：红色，4 件事（先显示 3 件，「Lihat semua (4)」展开），森林初筛提示有损失 0.8 ha。外勤选成员 Krishnan a/l Marimuthu 能看到「Menunggu semakan pegawai」。
 - **屏 11（看板，要用电脑宽屏看）**：用 `+60100000002`（管理员，档案语言 en，所以默认英语，点 🌐 切 BM）登录，屏 2 头部点「Dashboard」进入，或直接打开 `/coop`。统计卡 Green 110／Yellow 50／Red 24／Needs review 16；点左栏 Red 只看红色，勾「Issue type」里的类型（可多选），在 Member 里输入名字片段；点一行（或用 Tab 到行里的按钮按 Enter）看右栏详情；点「Export summary (CSV)」导出**当前筛选后**的表格。园主或外勤打开 `/coop` 只会看到「Halaman ini untuk pentadbir koperasi.」。
@@ -97,8 +99,8 @@ src/app/core/                 phone.ts（号码规范化）、plot-status.ts（�
                               load-state.ts（加载／离线／出错）、people-search.ts（成员搜索）、back-navigator.ts（返回键）
 src/app/core/i18n/            dict.ms.ts / dict.en.ts（词典）、i18n.service.ts（当前语言）
 src/app/shared/               跨屏共用的小组件（语言按钮）
-src/app/features/<屏>/        每屏一个目录，懒加载：login、plots（屏 2）、new-plot（屏 3、4 与占位）、result（屏 9、10）、coop（屏 11）、checking（屏 7）、dossier（导出档案）
-src/testing/                  测试替身：fake-facade.ts（假 Firestore）、fake-image.ts（假的图像管线）
+src/app/features/<屏>/        每屏一个目录，懒加载：login、plots（屏 2）、new-plot（屏 3、4、5 与屏 6 的占位）、result（屏 9、10）、coop（屏 11）、checking（屏 7）、dossier（导出档案）
+src/testing/                  测试替身：fake-facade.ts（假 Firestore）、fake-image.ts（假的图像管线）、fake-maps.ts（假地图与假定位，屏 5 的页面测试用）
 scripts/                      emulators.mjs、check-readonly.mjs、check-prod-bundle.mjs
 ```
 
@@ -129,6 +131,12 @@ scripts/                      emulators.mjs、check-readonly.mjs、check-prod-bu
 以后 `firebase.json` 加上 `emulators` 设置，这个脚本就可以退休。
 
 ## 已知限制
+
+- **屏 5 的地图是 Google 官方 Demo key**：只适合原型、不支持正式上线，用量上限不明，能否限制 HTTP 来源没测（`specs/_facts.md` F-043）。演示当天撞上上限地图会停：C、B 页签不依赖地图，仍可用。上线前要换成限制了来源的正式 key（`TODO.md`）。key 放 `environment.development.ts`，生产文件是空串，地图显示「Peta belum dikonfigurasi」。
+- **屏 5 不用 Google 的 Drawing Library（已下线）也不用 Terra Draw**：自持顶点数组 + `google.maps.Polygon` + 可拖动 `Marker`（`google-surface.ts`），点按自己用 `pointerdown／pointerup` 判断（Google 的 `click` 会吞快速的第二下，F-045）。`google.maps.Marker` 被 Google 标为弃用但仍可用、没有下线日期，Google 以后动它要换成 `AdvancedMarkerElement`（要 mapId）。
+- **屏 5 没在真机上验证**：手指点按、拖把手、双指缩放、定位权限弹窗、iOS Safari 的表现都只在电脑浏览器的手机视口里用鼠标试过；`google-surface.ts` 无法在 jsdom 里测，靠浏览器实跑（点按判定与把手命中的纯函数在 `tap.ts` 里有单测）。**Claude 内置浏览器的面板被隐藏时 Google 地图不会完成初始化**（只显示静态图、没有控件和 Google 标志），测地图前要保证面板可见。
+- **屏 5 的结果不上传、不创建地块**：草稿只在内存，刷新就没了；几何用中性的 `[经度, 纬度]` 数组，以后接 `PATCH /api/plots/{id}`（面积由后端按多边形重算，所以前端不传 `area_ha_computed`）时再映射。预览面积是球面算法（`@turf/area`）的「≈」值，后端重算后屏 6／屏 9 上的数字可能略有出入。
+- **屏 5 的「走角点」精度靠设备**：电脑浏览器的 IP 定位精度很差，只能验证流程；室内、树冠下手机 GPS 也可能 > 10 m。每次只读一次，不持续跟踪。
 
 - **照片不上传、地块不创建**：`contract/api.md` 还没有上传照片和新建地块的请求／响应，前端对 Firestore 只读也不能自己写。屏 3、4 拍的照片只留在本机内存；「Seterusnya」进的是占位页。合同定了再接。
 - **没有模糊检测**：屏 4 目前不判断照片糊不糊（原型阶段由后端评估）；`unreadable` 提示只在「图片解码或编码失败」时出现。

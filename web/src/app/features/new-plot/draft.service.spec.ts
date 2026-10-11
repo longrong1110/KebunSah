@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { DOC_TYPES, DraftService, isDocType } from './draft.service';
+import type { LngLat } from './geometry';
 
 let counter = 0;
 
@@ -117,5 +118,105 @@ describe('DraftService', () => {
     expect(isDocType('mspo_member_list')).toBe(false); // 合同里有，但屏 3 不拍
     expect(isDocType('passport')).toBe(false);
     expect(isDocType(undefined)).toBe(false);
+  });
+});
+
+describe('DraftService 几何（屏 5）', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const SQUARE: LngLat[] = [
+    [101.16106, 4.326776],
+    [101.162991, 4.326776],
+    [101.162991, 4.325064],
+    [101.16106, 4.325064],
+  ];
+
+  it('初始：A 页签、没有点，不能完成，没有结果', () => {
+    const { draft } = setup();
+    expect(draft.geometryDraft().tab).toBe('map');
+    expect(draft.geometry()).toBeNull();
+    expect(draft.evaluation().problem).toBe('few');
+    expect(draft.canUndo()).toBe(false);
+  });
+
+  it('A 页签加点：满 3 个出多边形结果与面积', () => {
+    const { draft } = setup();
+    for (const p of SQUARE.slice(0, 2)) draft.addVertex('map', p);
+    expect(draft.geometry()).toBeNull();
+    draft.addVertex('map', SQUARE[2]);
+    draft.addVertex('map', SQUARE[3]);
+    const g = draft.geometry();
+    expect(g?.kind).toBe('polygon');
+    expect(g && g.kind === 'polygon' && g.areaHa).toBeCloseTo(4.0756, 2);
+  });
+
+  it('移动一个顶点：面积随之变；下标越界、非整数被忽略', () => {
+    const { draft } = setup();
+    for (const p of SQUARE) draft.addVertex('map', p);
+    const before = draft.evaluation().areaHa;
+    draft.moveVertex(1, [101.163592, 4.327204]);
+    expect(draft.evaluation().areaHa).not.toBe(before);
+    const snapshot = draft.geometryDraft().mapRing;
+    draft.moveVertex(9, [0, 0]);
+    draft.moveVertex(-1, [0, 0]);
+    draft.moveVertex(1.5, [0, 0]);
+    expect(draft.geometryDraft().mapRing).toBe(snapshot);
+  });
+
+  it('removeLast 撤销当前页签最后一个点：A、B 删最后一个顶点，C 清掉那个点（手填面积保留）', () => {
+    const { draft } = setup();
+    for (const p of SQUARE) draft.addVertex('map', p);
+    draft.removeLast();
+    expect(draft.geometryDraft().mapRing).toEqual(SQUARE.slice(0, 3));
+    draft.setTab('walk');
+    draft.addVertex('walk', SQUARE[0]);
+    draft.addVertex('walk', SQUARE[1]);
+    draft.removeLast();
+    expect(draft.geometryDraft().walkRing).toEqual([SQUARE[0]]);
+    draft.setTab('point');
+    draft.setPoint([101.1, 4.3]);
+    draft.setDeclared('2.5');
+    expect(draft.canUndo()).toBe(true);
+    draft.removeLast();
+    expect(draft.geometryDraft().point).toBeNull();
+    expect(draft.geometryDraft().declared).toBe('2.5');
+    expect(draft.canUndo()).toBe(false);
+    // 没有点时再撤销不报错
+    draft.removeLast();
+    expect(draft.geometryDraft().point).toBeNull();
+  });
+
+  it('切页签不丢各自的输入，结果只看当前页签', () => {
+    const { draft } = setup();
+    for (const p of SQUARE) draft.addVertex('map', p);
+    draft.setTab('point');
+    draft.setPoint([101.1, 4.3]);
+    draft.setDeclared('1.2');
+    expect(draft.geometry()).toEqual({ kind: 'point', point: [101.1, 4.3], declaredHa: 1.2 });
+    draft.setTab('walk');
+    expect(draft.geometry()).toBeNull();
+    draft.setTab('map');
+    expect(draft.geometry()?.kind).toBe('polygon');
+    expect(draft.geometryDraft().point).toEqual([101.1, 4.3]);
+    expect(draft.geometryDraft().declared).toBe('1.2');
+  });
+
+  it('begin 与 reset 清空几何草稿，页签回到 A', () => {
+    const { draft } = setup();
+    for (const p of SQUARE) draft.addVertex('map', p);
+    draft.setTab('point');
+    draft.setPoint([101.1, 4.3]);
+    draft.setDeclared('1');
+    draft.reset();
+    expect(draft.geometryDraft()).toEqual({
+      tab: 'map',
+      mapRing: [],
+      walkRing: [],
+      point: null,
+      declared: '',
+    });
+    draft.addVertex('map', SQUARE[0]);
+    draft.begin(null);
+    expect(draft.geometryDraft().mapRing).toEqual([]);
   });
 });
