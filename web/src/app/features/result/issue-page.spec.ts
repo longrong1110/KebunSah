@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { afterEach, beforeEach, vi } from 'vitest';
+import { stubHistory } from '../../../testing/back';
 import { FIRESTORE_FACADE } from '../../core/firebase/firestore-reader';
 import { I18nService } from '../../core/i18n/i18n.service';
 import {
@@ -188,7 +189,7 @@ describe('IssuePage（屏 10）', () => {
       expect(t.q('#polygon-preview')).toBeNull();
       expect(t.q('#redraw')).toBeNull();
       expect(t.q('#upload-note')?.textContent).toContain('Muat naik dokumen baharu akan tersedia');
-      expect(t.q('#advice')?.textContent).toContain('Mohon pembaharuan Lesen MPOB');
+      expect(t.q('#advice')?.textContent).toContain('Mohon pembaharuan lesen MPOB');
     });
 
     it('expired：到期日按语言写出来（"2026-04-30 已过期" → 30 Apr 2026）', async () => {
@@ -218,14 +219,14 @@ describe('IssuePage（屏 10）', () => {
     });
 
     it.each([
-      ['name_mismatch', 'land_title', 'Nama pada Geran tanah tidak sepadan', 'dokumen pusaka'],
+      ['name_mismatch', 'land_title', 'Nama pada geran tanah tidak sepadan', 'dokumen pusaka'],
       [
         'not_in_mspo',
         'mspo_member_list',
         'Tiada dalam senarai ahli MSPO',
         'pensijilan MSPO berkumpulan',
       ],
-      ['low_confidence', 'land_title', 'Tulisan pada Geran tanah kurang jelas', 'gambar semula'],
+      ['low_confidence', 'land_title', 'Tulisan pada geran tanah kurang jelas', 'gambar semula'],
       [
         'missing_doc',
         'mpob_licence',
@@ -251,11 +252,11 @@ describe('IssuePage（屏 10）', () => {
       });
       const t = await setup('/plots/p1/issue/low_confidence~mpob_licence');
       await t.ready(a);
-      expect(t.q('#issue-title')?.textContent).toBe('Tulisan pada Lesen MPOB kurang jelas');
+      expect(t.q('#issue-title')?.textContent).toBe('Tulisan pada lesen MPOB kurang jelas');
 
       await t.router.navigateByUrl('/plots/p1/issue/low_confidence~land_title');
       await settle(t.fixture);
-      expect(t.q('#issue-title')?.textContent).toBe('Tulisan pada Geran tanah kurang jelas');
+      expect(t.q('#issue-title')?.textContent).toBe('Tulisan pada geran tanah kurang jelas');
     });
 
     it('未知 gapCode：通用说明，不显示缺口自带的文字', async () => {
@@ -359,6 +360,15 @@ describe('IssuePage（屏 10）', () => {
       expect(t.q('#redraw')?.textContent).toContain('Draw again');
       expect(t.q('#redraw-note')?.textContent).toContain('will be available soon');
       expect(t.text()).not.toContain('Keluasan');
+    });
+
+    it('返回箭头：有历史就后退（回到屏 9），不再导航', async () => {
+      const t = await setup('/plots/p1/issue/area_mismatch?member=m9');
+      await t.ready();
+      const back = stubHistory(true);
+      await t.click('#back');
+      expect(back).toHaveBeenCalledTimes(1);
+      expect(t.router.url).toBe('/plots/p1/issue/area_mismatch?member=m9');
     });
 
     it('返回箭头与「Kembali ke keputusan」都回屏 9，保留 ?member', async () => {

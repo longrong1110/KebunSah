@@ -316,7 +316,7 @@ describe('CheckingPage（屏 7 评估中）', () => {
       ]);
       const review = t.q('[data-step="check"]')!;
       expect(review.querySelector('.checking__icon')?.textContent).toBe('?');
-      expect(review.querySelector('.checking__state')?.textContent).toBe('Perlu semakan pegawai');
+      expect(review.querySelector('.checking__state')?.textContent).toBe('Menunggu pegawai');
       expect(review.querySelector('.checking__state')?.className).not.toContain('sr-only');
       expect(t.q('#back-to-plots')).not.toBeNull();
     });

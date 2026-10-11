@@ -61,7 +61,8 @@ export class CheckingPage {
 
   protected seeResult(): void {
     const id = this.plotId();
-    if (id) void this.router.navigate(['/plots', id], this.keep);
+    // 进度页只是过渡页：替换历史，屏 9 的 ← 不会退回已经完成的进度页
+    if (id) void this.router.navigate(['/plots', id], { ...this.keep, replaceUrl: true });
   }
 
   protected retry(): void {

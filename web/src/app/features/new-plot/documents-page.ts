@@ -7,6 +7,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { BackNavigator } from '../../core/back-navigator';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { LangButton } from '../../shared/lang-button';
 import { DraftService, type DocType } from './draft.service';
@@ -24,6 +25,7 @@ import { ImageProblem, compressFile, type ImageProblemKey } from './image';
 export class DocumentsPage {
   private readonly draft = inject(DraftService);
   private readonly router = inject(Router);
+  private readonly backNav = inject(BackNavigator);
   private readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('file');
   protected readonly t = inject(I18nService).t;
 
@@ -37,8 +39,9 @@ export class DocumentsPage {
   // 返回／进入相邻页面时保留当前的查询参数（外勤替成员新建时带着 ?member）
   private readonly keep = { queryParamsHandling: 'preserve' } as const;
 
+  /** 有历史就后退，没有就回屏 2（保留 ?member） */
   protected back(): void {
-    void this.router.navigate(['/'], this.keep);
+    this.backNav.back(['/'], this.keep);
   }
 
   protected open(type: DocType): void {

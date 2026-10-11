@@ -45,6 +45,8 @@ export function stubImagePipeline(size = { width: 3000, height: 4000 }): ImagePi
   let encodes = 0;
   let failNext = false;
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation((() => ({
+    fillStyle: '',
+    fillRect: vi.fn(),
     drawImage: draw,
   })) as never);
   vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation(((cb: BlobCallback) => {

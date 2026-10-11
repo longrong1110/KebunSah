@@ -4,6 +4,7 @@ import { vi } from 'vitest';
 import { AuthService } from '../../core/firebase/auth.service';
 import { FIRESTORE_FACADE } from '../../core/firebase/firestore-reader';
 import { I18nService, LANG_STORAGE_KEY } from '../../core/i18n/i18n.service';
+import { stubHistory } from '../../../testing/back';
 import { FakeFacade, settle } from '../../../testing/fake-facade';
 import { DraftService } from '../new-plot/draft.service';
 import { PlotsPage } from './plots-page';
@@ -390,6 +391,18 @@ describe('PlotsPage · 外勤／管理员', () => {
     await t.profile(OFFICER);
     expect(t.facade.activeCollections('plots')[0].filters).toEqual(where('p4'));
     expect(t.facade.activeCollections('persons').length).toBe(0);
+  });
+
+  it('返回成员：有历史就后退，不再导航（URL 由浏览器历史决定）', async () => {
+    const t = await setup({ url: '/?member=p4' });
+    await t.profile(OFFICER);
+    t.facade.emitCollection('persons', people);
+    await settle(t.fixture);
+    const back = stubHistory(true);
+    t.q('#back-to-members')!.click();
+    await settle(t.fixture);
+    expect(back).toHaveBeenCalledTimes(1);
+    expect(t.router.url).toContain('member=p4');
   });
 
   it('返回箭头回到成员列表，搜索词保留；成员的地块监听取消', async () => {

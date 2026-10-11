@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map, of, switchMap } from 'rxjs';
+import { BackNavigator } from '../../core/back-navigator';
 import { FirestoreReader, type DocState } from '../../core/firebase/firestore-reader';
 import { formatDay } from '../../core/format';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -37,6 +38,7 @@ const VISIBLE_GAPS = 3;
 export class ResultPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly backNav = inject(BackNavigator);
   private readonly reader = inject(FirestoreReader);
   private readonly i18n = inject(I18nService);
   protected readonly t = this.i18n.t;
@@ -125,8 +127,9 @@ export class ResultPage {
   // 返回屏 2 与进入屏 10 都保留当前的查询参数（外勤的 ?member）
   private readonly keep = { queryParamsHandling: 'preserve' } as const;
 
+  /** 有历史就后退（管理员从看板进来就回看板，筛选与选中的地块都在）；没有就回屏 2（保留 ?member） */
   protected back(): void {
-    void this.router.navigate(['/'], this.keep);
+    this.backNav.back(['/'], this.keep);
   }
 
   /** 评估还在跑：去屏 7 看分步进度 */

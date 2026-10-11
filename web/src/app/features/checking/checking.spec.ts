@@ -147,7 +147,7 @@ describe('buildChecking', () => {
       ['pending', '○'],
       ['pending', '○'],
     ]);
-    expect(m.steps?.[1].stateText).toBe('Perlu semakan pegawai');
+    expect(m.steps?.[1].stateText).toBe('Menunggu pegawai');
     expect(JSON.stringify(m)).not.toContain('SECRET');
   });
 

@@ -29,9 +29,17 @@ export interface GapFacts {
   date: string | null;
 }
 
+/** 句中的文件名：首字母小写；首词是全大写缩写（MPOB、MSPO）的不动。「Geran tanah」→「geran tanah」，「MPOB licence」不变 */
+export function inlineDocName(name: string): string {
+  const first = name.split(' ')[0];
+  return /^[A-Z]{2,}$/.test(first) ? name : name.charAt(0).toLowerCase() + name.slice(1);
+}
+
 export interface GapCtx {
-  /** 文件名（已按语言翻译），缺口没有 docType 时为空串 */
+  /** 文件名（已按语言翻译，句首用）；缺口没有 docType 时是通用的「Dokumen」 */
   doc: string;
+  /** 句中用的文件名：首字母小写（「geran tanah」），首词是缩写（MPOB、MSPO）的不动 */
+  docInline: string;
   docType: string | null;
   facts: GapFacts;
 }

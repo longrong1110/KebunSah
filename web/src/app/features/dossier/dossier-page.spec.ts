@@ -1,4 +1,3 @@
-import { Location } from '@angular/common';
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Title } from '@angular/platform-browser';
@@ -8,6 +7,7 @@ import { afterEach, beforeEach, vi } from 'vitest';
 import { FIRESTORE_FACADE } from '../../core/firebase/firestore-reader';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { CJK, assessment, polygonGeojson } from '../../../testing/assessment-fixtures';
+import { stubHistory } from '../../../testing/back';
 import { FakeFacade, settle } from '../../../testing/fake-facade';
 import { DossierPage } from './dossier-page';
 
@@ -620,34 +620,27 @@ describe('DossierPage（导出档案）', () => {
       expect(title.getTitle()).toBe('KebunSah');
     });
 
-    it('返回：有历史就 Location.back()；没有历史回屏 2', async () => {
+    it('返回：有历史就后退，不再导航', async () => {
       const t = await setup();
       await t.ready();
-      const back = vi.spyOn(TestBed.inject(Location), 'back').mockImplementation(() => undefined);
-      Object.defineProperty(window.history, 'length', { value: 3, configurable: true });
-      try {
-        await t.click('#back');
-        expect(back).toHaveBeenCalledTimes(1);
-
-        Object.defineProperty(window.history, 'length', { value: 1, configurable: true });
-        await t.click('#back');
-        expect(back).toHaveBeenCalledTimes(1);
-        expect(t.router.url).toBe('/');
-      } finally {
-        delete (window.history as unknown as Record<string, unknown>)['length'];
-      }
+      const back = stubHistory(true);
+      await t.click('#back');
+      expect(back).toHaveBeenCalledTimes(1);
+      expect(t.router.url).toBe('/plots/p1/dossier');
     });
 
-    it('地块不存在时，「Kembali ke senarai tanah」同样返回', async () => {
+    it('返回：没有历史回屏 2', async () => {
+      const t = await setup();
+      await t.ready();
+      await t.click('#back');
+      expect(t.router.url).toBe('/');
+    });
+
+    it('地块不存在时，「Kembali ke senarai tanah」同样返回（没有历史回屏 2）', async () => {
       const t = await setup();
       await t.plot(null, false);
-      Object.defineProperty(window.history, 'length', { value: 1, configurable: true });
-      try {
-        await t.click('#back-to-list');
-        expect(t.router.url).toBe('/');
-      } finally {
-        delete (window.history as unknown as Record<string, unknown>)['length'];
-      }
+      await t.click('#back-to-list');
+      expect(t.router.url).toBe('/');
     });
   });
 

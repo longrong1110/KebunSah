@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
+import { BackNavigator } from '../../core/back-navigator';
 import { formatArea, formatDay } from '../../core/format';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { LangButton } from '../../shared/lang-button';
@@ -30,6 +31,7 @@ import { pageState, watchPlotAssessment } from './result-data';
 export class IssuePage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly backNav = inject(BackNavigator);
   private readonly i18n = inject(I18nService);
   protected readonly t = this.i18n.t;
 
@@ -88,10 +90,10 @@ export class IssuePage {
     return v?.found ? v.title : this.t().result.title;
   });
 
-  // 返回屏 9 保留当前的查询参数（外勤的 ?member）
+  // 有历史就后退（回到屏 9）；没有就去 /plots/{id}，保留当前的查询参数（外勤的 ?member）
   protected back(): void {
     const id = this.plotId();
-    if (id) void this.router.navigate(['/plots', id], { queryParamsHandling: 'preserve' });
+    if (id) this.backNav.back(['/plots', id], { queryParamsHandling: 'preserve' });
   }
 
   protected retry(): void {

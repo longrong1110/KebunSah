@@ -1,4 +1,4 @@
-import { DOCUMENT, Location } from '@angular/common';
+import { DOCUMENT } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -9,9 +9,10 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 import type { DocState } from '../../core/firebase/firestore-reader';
+import { BackNavigator } from '../../core/back-navigator';
 import { I18nService } from '../../core/i18n/i18n.service';
 import type { Load } from '../../core/load-state';
 import { LangButton } from '../../shared/lang-button';
@@ -31,8 +32,7 @@ const docOf = <T>(l: Load<DocState<T>> | null): T | null =>
 })
 export class DossierPage {
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  private readonly location = inject(Location);
+  private readonly backNav = inject(BackNavigator);
   private readonly document = inject(DOCUMENT);
   private readonly titleService = inject(Title);
   private readonly i18n = inject(I18nService);
@@ -105,9 +105,7 @@ export class DossierPage {
 
   /** 从看板点进来就回看板（选中的地块还在查询参数里）；直接打开的链接没有历史，回屏 2 */
   protected back(): void {
-    const history = this.document.defaultView?.history;
-    if (history && history.length > 1) this.location.back();
-    else void this.router.navigate(['/']);
+    this.backNav.back(['/']);
   }
 
   protected retry(): void {

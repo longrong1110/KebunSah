@@ -187,7 +187,7 @@ describe('Login：语言', () => {
   it('右上角有语言按钮：默认显示 BM，标题等文案是马来语', () => {
     const { fixture, text } = setup();
     expect(button(fixture).textContent).toContain('BM');
-    expect(button(fixture).getAttribute('aria-label')).toBe(ms.lang.switchLabel);
+    expect(button(fixture).getAttribute('aria-label')).toBe(`BM — ${ms.lang.switchLabel}`);
     expect(text()).toContain(ms.login.title);
     expect(text()).toContain(ms.login.send);
   });
@@ -197,7 +197,7 @@ describe('Login：语言', () => {
     button(fixture).click();
     fixture.detectChanges();
     expect(button(fixture).textContent).toContain('EN');
-    expect(button(fixture).getAttribute('aria-label')).toBe(en.lang.switchLabel);
+    expect(button(fixture).getAttribute('aria-label')).toBe(`EN — ${en.lang.switchLabel}`);
     expect(text()).toContain(en.login.title);
     expect(text()).toContain(en.login.lead);
     expect(text()).toContain(en.login.send);

@@ -406,6 +406,16 @@ describe('CoopPage（屏 11）', () => {
   });
 
   describe('统计与表格', () => {
+    it('需复核的统计卡与过滤器用 BM 新词「Menunggu pegawai」，不与黄色的「Perlu semakan」混淆', async () => {
+      const t = await setup();
+      await t.ready();
+      expect(t.q('#stat-needs_review .coop-stat__label')?.textContent).toContain(
+        'Menunggu pegawai',
+      );
+      expect(t.q('#filter-needs_review')?.textContent).toContain('Menunggu pegawai');
+      expect(t.q('#stat-yellow .coop-stat__label')?.textContent).toContain('Perlu semakan');
+    });
+
     it('四张统计卡＋左栏状态计数：恒为全合作社，各桶之和＝总数；评估是别的合作社的不算', async () => {
       const t = await setup();
       await t.ready();
@@ -587,7 +597,7 @@ describe('CoopPage（屏 11）', () => {
       const issues = t
         .all('#detail-issues li')
         .map((li) => li.querySelector('strong')?.textContent);
-      expect(issues).toEqual(['Lesen MPOB sudah tamat', 'Nama pada Geran tanah tidak sepadan']);
+      expect(issues).toEqual(['Lesen MPOB sudah tamat', 'Nama pada geran tanah tidak sepadan']);
       expect(t.q('#detail-issues li span')?.textContent).toBe('Tamat pada 30 Apr 2026.');
       expect(t.q('#detail-forest')?.textContent).toContain(
         'ada tanda kehilangan hutan selepas 2020 (0.8 ha)',

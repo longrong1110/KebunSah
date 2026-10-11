@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { afterEach, beforeEach, vi } from 'vitest';
+import { stubHistory } from '../../../testing/back';
 import { FIRESTORE_FACADE } from '../../core/firebase/firestore-reader';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { assessment, CJK, gap, plot } from '../../../testing/assessment-fixtures';
@@ -202,10 +203,10 @@ describe('ResultPage（屏 9）', () => {
       expect(t.text()).not.toMatch(/gagal/i);
     });
 
-    it('needs_review：Perlu semakan pegawai；失败的评估也按它处理，且不显示 errorMessage', async () => {
+    it('needs_review：Menunggu semakan pegawai；失败的评估也按它处理，且不显示 errorMessage', async () => {
       const t = await setup();
       await t.ready(assessment({ result: 'needs_review', gaps: [] }));
-      expect(t.q('#banner h2')?.textContent).toBe('Perlu semakan pegawai');
+      expect(t.q('#banner h2')?.textContent).toBe('Menunggu semakan pegawai');
 
       await t.assessments([
         {
@@ -416,8 +417,8 @@ describe('ResultPage（屏 9）', () => {
       );
       const titles = t.all('.gap-card h3').map((h) => h.textContent);
       expect(titles).toHaveLength(2);
-      expect(titles[0]).toContain('Geran tanah');
-      expect(titles[1]).toContain('Lesen MPOB');
+      expect(titles[0]).toContain('geran tanah');
+      expect(titles[1]).toContain('lesen MPOB');
     });
 
     it('已解决（status 不是 open）的缺口不列', async () => {
@@ -563,6 +564,15 @@ describe('ResultPage（屏 9）', () => {
       await t.ready();
       await t.click('#back');
       expect(t.router.url).toBe('/?member=m9');
+    });
+
+    it('返回箭头：有历史就后退（管理员从看板进来回到看板，筛选与选中的地块都在），不再导航', async () => {
+      const t = await setup('/plots/p1?member=m9');
+      await t.ready();
+      const back = stubHistory(true);
+      await t.click('#back');
+      expect(back).toHaveBeenCalledTimes(1);
+      expect(t.router.url).toBe('/plots/p1?member=m9');
     });
 
     it('离开页面后三个监听（地块、评估、地契）全部取消', async () => {

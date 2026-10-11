@@ -19,8 +19,8 @@ export const ms = {
     green: 'Lengkap',
     yellow: 'Perlu semakan',
     red: 'Perlu tindakan',
-    // 线框里没有这个状态，临时标签；10/15 fe/polish 统一
-    needs_review: 'Perlu semakan pegawai',
+    // 线框里没有这个状态：文案取舍，与黄色的「Perlu semakan」分开（见 README）
+    needs_review: 'Menunggu pegawai',
     pending: 'Belum mula',
     unknown: 'Tidak diketahui',
   },
@@ -147,7 +147,7 @@ export const ms = {
           'Ada perkara penting yang perlu diselesaikan. Minta bantuan koperasi anda.',
       },
       needs_review: {
-        headline: 'Perlu semakan pegawai',
+        headline: 'Menunggu semakan pegawai',
         sub: (_n: number) => 'Pegawai koperasi akan menyemak dokumen anda.',
       },
       pending: { headline: 'Belum mula', sub: (_n: number) => 'Tanah ini belum diperiksa.' },
@@ -206,9 +206,9 @@ export const ms = {
         title: ({ doc }: GapCtx) => `${doc} hampir tamat`,
         detail: ({ facts }: GapCtx) =>
           facts.days !== null ? `Tamat dalam ${facts.days} hari.` : 'Tempoh sahnya hampir tamat.',
-        cause: 'Tarikh tamat sudah dekat. Memperbaharui lebih awal mengelakkan masalah dan denda.',
-        advice: ({ doc }: GapCtx) =>
-          `Mohon pembaharuan ${doc} lebih awal, kemudian ambil gambar yang baharu.`,
+        cause: 'Tarikh tamat sudah dekat. Memperbaharui lebih awal mengelakkan masalah.',
+        advice: ({ docInline }: GapCtx) =>
+          `Mohon pembaharuan ${docInline} lebih awal, kemudian ambil gambar yang baharu.`,
         button: 'Cara mendapatkannya',
       },
       expired: {
@@ -216,12 +216,12 @@ export const ms = {
         detail: ({ facts }: GapCtx) =>
           facts.date ? `Tamat pada ${facts.date}.` : 'Tempoh sahnya sudah tamat.',
         cause: 'Dokumen ini sudah melepasi tarikh tamat.',
-        advice: ({ doc }: GapCtx) =>
-          `Perbaharui ${doc} dahulu (mungkin ada fi lewat), kemudian ambil gambar yang baharu.`,
+        advice: ({ docInline, docType }: GapCtx) =>
+          `Perbaharui ${docInline} dahulu${docType === 'mpob_licence' ? ' (mungkin ada fi lewat)' : ''}, kemudian ambil gambar yang baharu.`,
         button: 'Cara mendapatkannya',
       },
       name_mismatch: {
-        title: ({ doc }: GapCtx) => `Nama pada ${doc} tidak sepadan`,
+        title: ({ docInline }: GapCtx) => `Nama pada ${docInline} tidak sepadan`,
         detail: () => 'Nama pada dokumen berbeza daripada nama pengusaha tanah.',
         cause: 'Ini biasa berlaku jika geran masih atas nama ahli keluarga atau pemilik lama.',
         advice: () =>
@@ -237,7 +237,7 @@ export const ms = {
         button: 'Lihat butiran',
       },
       low_confidence: {
-        title: ({ doc }: GapCtx) => `Tulisan pada ${doc} kurang jelas`,
+        title: ({ docInline }: GapCtx) => `Tulisan pada ${docInline} kurang jelas`,
         detail: () => 'Nilai pada gambar perlu disahkan.',
         cause: 'Gambar mungkin kabur, gelap atau ada pantulan cahaya.',
         advice: () =>
