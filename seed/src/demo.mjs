@@ -1,7 +1,8 @@
 // 3 个演示地块（绿 / 黄 / 红），照 contract/schema.sql 末尾的 INSERT 逐字段搬过来，只做命名转换与类型转换：
 //   列名 snake_case → camelCase；timestamptz → ISO 字符串；polygon_geojson → 紧凑 JSON 字符串。
 // schema.sql 里 created_at 取 now()，不可重现，这里统一固定为 DEMO_CREATED。
-// 演示数据的 detail / description / suggested_action 是中文，原样保留（生成的地块用马来语）。
+// 演示评估里的 detail / description / suggested_action 与数值字符串，schema.sql 里原是中文，这里换成马来语（与生成的地块一致，格式见 rules.mjs）；
+// 数值和结论不变。前端只解析天数、日期、公顷这几个数，不显示这些说明文字。
 import { camelKeys } from './shape.mjs';
 import { identityFromIc } from './people.mjs';
 import { myt } from './dates.mjs';
@@ -47,7 +48,7 @@ export function buildDemo() {
   const cooperative = {
     path: `cooperatives/${DEMO_COOP_ID}`,
     data: {
-      ...camelKeys({ name: 'Koperasi Pekebun Kecil Contoh (虚构)', registration_body: 'SKM', registration_no: null, state: 'Perak' }),
+      ...camelKeys({ name: 'Koperasi Pekebun Kecil Contoh (rekaan)', registration_body: 'SKM', registration_no: null, state: 'Perak' }),
       ...base, createdAt: DEMO_CREATED,
     },
   };
@@ -116,7 +117,7 @@ export function buildDemo() {
   const mspoCertificate = {
     path: `mspoCertificates/${DEMO_IDS.cert}`,
     data: {
-      certNo: 'MSPO 900001', certificateHolder: 'Contoh Sawit Sdn. Bhd. (虚构)',
+      certNo: 'MSPO 900001', certificateHolder: 'Contoh Sawit Sdn. Bhd. (rekaan)',
       certificationUnit: 'Contoh Group Scheme - Perak Smallholders (2 members)',
       standard: 'MS 2530-2:2013 General Principles for Independent Smallholders', scope: 'estate',
       startDate: '2024-03-01', firstCertifiedDate: '2019-03-01', expiryDate: '2029-02-28', membersCount: 2,
@@ -172,9 +173,9 @@ export function buildDemo() {
     {
       run: [['2026-10-02', '09:12'], ['2026-10-02', '09:14']], forest: [0, 0, 'low'], text: 'Semua semakan lulus.',
       rules: [
-        cc('CC-01', 'pass', '4.2000 ha', '4.2300 ha', { tol_pct: 10, tol_min_ha: 0.1 }, '差 0.03 公顷，在允许范围内'),
-        cc('CC-02', 'pass', '>= 90 天', '174 天', { warn_days: 90 }, 'MPOB 执照 2027-03-31 到期'),
-        cc('CC-03', 'pass', '>= 0.85', '1.00', { min_similarity: 0.85 }, '地契、执照、名单上的姓名一致'),
+        cc('CC-01', 'pass', '4.2000 ha', '4.2300 ha', { tol_pct: 10, tol_min_ha: 0.1 }, 'Beza 0.03 ha, dalam had yang dibenarkan'),
+        cc('CC-02', 'pass', '>= 90 hari', '174 hari', { warn_days: 90 }, 'Lesen MPOB tamat pada 2027-03-31'),
+        cc('CC-03', 'pass', '>= 0.85', '1.00', { min_similarity: 0.85 }, 'Nama pada geran, lesen dan senarai adalah sama'),
       ],
       gaps: [],
     },
@@ -182,28 +183,28 @@ export function buildDemo() {
       run: [['2026-10-03', '10:22'], ['2026-10-03', '10:24']], forest: [0, 0, 'low'],
       text: 'Luas pada peta lebih besar daripada geran, dan lesen MPOB hampir tamat.',
       rules: [
-        cc('CC-01', 'warn', '3.0400 ha', '3.4900 ha', { tol_pct: 10, tol_min_ha: 0.1 }, '多出 0.45 公顷（+14.8%），超过允许的 0.304 公顷'),
-        cc('CC-02', 'warn', '>= 90 天', '58 天', { warn_days: 90 }, 'MPOB 执照 2026-12-05 到期'),
-        cc('CC-03', 'pass', '>= 0.85', '1.00', { min_similarity: 0.85 }, '姓名一致'),
+        cc('CC-01', 'warn', '3.0400 ha', '3.4900 ha', { tol_pct: 10, tol_min_ha: 0.1 }, 'Lebih 0.45 ha (+14.8%), melebihi had 0.304 ha'),
+        cc('CC-02', 'warn', '>= 90 hari', '58 hari', { warn_days: 90 }, 'Lesen MPOB tamat pada 2026-12-05'),
+        cc('CC-03', 'pass', '>= 0.85', '1.00', { min_similarity: 0.85 }, 'Nama sepadan'),
       ],
       gaps: [
-        gap('area_mismatch', 'medium', null, '地图量出的面积比地契多 0.45 公顷', '重新圈一次边界，或确认地契面积是否已有分割'),
-        gap('expiring', 'medium', 'mpob_licence', 'MPOB 执照 58 天后到期', '提前向 MPOB 申请续期，续期后重新拍照上传'),
+        gap('area_mismatch', 'medium', null, 'Luas pada peta lebih besar 0.45 ha daripada geran', 'Lukis semula sempadan, atau semak sama ada tanah telah dipecahkan atau ada geran bersebelahan.'),
+        gap('expiring', 'medium', 'mpob_licence', 'Lesen MPOB tamat dalam 58 hari', 'Mohon pembaharuan lebih awal, kemudian muat naik lesen baharu.'),
       ],
     },
     {
       run: [['2026-10-04', '15:05'], ['2026-10-04', '15:07']], forest: [12.5, 0.8, 'high'],
       text: 'Lesen MPOB telah tamat, geran atas nama arwah ayah, dan luas jauh berbeza.',
       rules: [
-        cc('CC-01', 'fail', '2.0000 ha', '3.4000 ha', { tol_pct: 10, tol_min_ha: 0.1, fail_over_pct: 50 }, '多出 70%，超过 50% 红线'),
-        cc('CC-02', 'fail', '未过期', '2026-04-30 已过期', { warn_days: 90 }, 'MPOB 执照已过期'),
-        cc('CC-03', 'fail', '>= 0.85', '0.21', { min_similarity: 0.85 }, '地契持有人是 RAMAN A/L SUBRAMANIAM，与种地的人不同'),
+        cc('CC-01', 'fail', '2.0000 ha', '3.4000 ha', { tol_pct: 10, tol_min_ha: 0.1, fail_over_pct: 50 }, 'Lebih 70%, melebihi had merah 50%'),
+        cc('CC-02', 'fail', '>= 90 hari', '2026-04-30 telah tamat', { warn_days: 90 }, 'Lesen MPOB telah tamat tempoh'),
+        cc('CC-03', 'fail', '>= 0.85', '0.21', { min_similarity: 0.85 }, 'Pemegang geran ialah RAMAN A/L SUBRAMANIAM, berbeza daripada pengusaha'),
       ],
       gaps: [
-        gap('expired', 'high', 'mpob_licence', 'MPOB 执照已过期', '先续期（逾期要付 fi lewat / fi tamat tempoh），再上传新执照'),
-        gap('name_mismatch', 'high', 'land_title', '地契仍在已故父亲名下', '准备继承（pusaka）文件或授权书 / 授权委托书，再上传'),
-        gap('area_mismatch', 'high', null, '地图面积比地契多 70%', '核对地界；如已买入相邻土地，补上相邻地契'),
-        gap('not_in_mspo', 'medium', 'mspo_member_list', '园主不在 MSPO 团体成员名单上', '向合作社确认是否已加入团体认证'),
+        gap('expired', 'high', 'mpob_licence', 'Lesen MPOB telah tamat tempoh', 'Perbaharui lesen dahulu (fi lewat dikenakan), kemudian muat naik lesen baharu.'),
+        gap('name_mismatch', 'high', 'land_title', 'Geran masih atas nama arwah ayah', 'Sediakan dokumen pusaka atau surat kuasa wakil daripada semua waris, kemudian muat naik salinan yang jelas.'),
+        gap('area_mismatch', 'high', null, 'Luas pada peta lebih besar 70% daripada geran', 'Semak sempadan tanah; jika membeli tanah bersebelahan, sediakan geran tanah itu juga.'),
+        gap('not_in_mspo', 'medium', 'mspo_member_list', 'Pengusaha tiada dalam senarai ahli skim kumpulan MSPO', 'Sahkan dengan koperasi sama ada sudah menyertai skim kumpulan MSPO.'),
       ],
     },
   ];

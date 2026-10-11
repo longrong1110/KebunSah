@@ -33,13 +33,13 @@
               "fieldKey": "land_title.area_value"
             }
           ],
-          "detail": "差 0.03 公顷，在允许范围内"
+          "detail": "Beza 0.03 ha, dalam had yang dibenarkan"
         },
         {
           "ruleCode": "CC-02",
           "result": "pass",
-          "expectedValue": ">= 90 天",
-          "actualValue": "174 天",
+          "expectedValue": ">= 90 hari",
+          "actualValue": "174 hari",
           "paramsUsed": {
             "warn_days": 90
           },
@@ -49,7 +49,7 @@
               "fieldKey": "mpob_licence.valid_until"
             }
           ],
-          "detail": "MPOB 执照 2027-03-31 到期"
+          "detail": "Lesen MPOB tamat pada 2027-03-31"
         },
         {
           "ruleCode": "CC-03",
@@ -65,7 +65,7 @@
               "fieldKey": "land_title.proprietor_1_name"
             }
           ],
-          "detail": "地契、执照、名单上的姓名一致"
+          "detail": "Nama pada geran, lesen dan senarai adalah sama"
         }
       ],
       "gaps": [],
@@ -107,13 +107,13 @@
               "fieldKey": "land_title.area_value"
             }
           ],
-          "detail": "多出 0.45 公顷（+14.8%），超过允许的 0.304 公顷"
+          "detail": "Lebih 0.45 ha (+14.8%), melebihi had 0.304 ha"
         },
         {
           "ruleCode": "CC-02",
           "result": "warn",
-          "expectedValue": ">= 90 天",
-          "actualValue": "58 天",
+          "expectedValue": ">= 90 hari",
+          "actualValue": "58 hari",
           "paramsUsed": {
             "warn_days": 90
           },
@@ -123,7 +123,7 @@
               "fieldKey": "mpob_licence.valid_until"
             }
           ],
-          "detail": "MPOB 执照 2026-12-05 到期"
+          "detail": "Lesen MPOB tamat pada 2026-12-05"
         },
         {
           "ruleCode": "CC-03",
@@ -139,7 +139,7 @@
               "fieldKey": "land_title.proprietor_1_name"
             }
           ],
-          "detail": "姓名一致"
+          "detail": "Nama sepadan"
         }
       ],
       "gaps": [
@@ -147,8 +147,8 @@
           "gapCode": "area_mismatch",
           "severity": "medium",
           "docType": null,
-          "description": "地图量出的面积比地契多 0.45 公顷",
-          "suggestedAction": "重新圈一次边界，或确认地契面积是否已有分割",
+          "description": "Luas pada peta lebih besar 0.45 ha daripada geran",
+          "suggestedAction": "Lukis semula sempadan, atau semak sama ada tanah telah dipecahkan atau ada geran bersebelahan.",
           "citation": null,
           "status": "open"
         },
@@ -156,8 +156,8 @@
           "gapCode": "expiring",
           "severity": "medium",
           "docType": "mpob_licence",
-          "description": "MPOB 执照 58 天后到期",
-          "suggestedAction": "提前向 MPOB 申请续期，续期后重新拍照上传",
+          "description": "Lesen MPOB tamat dalam 58 hari",
+          "suggestedAction": "Mohon pembaharuan lebih awal, kemudian muat naik lesen baharu.",
           "citation": null,
           "status": "open"
         }
@@ -201,13 +201,13 @@
               "fieldKey": "land_title.area_value"
             }
           ],
-          "detail": "多出 70%，超过 50% 红线"
+          "detail": "Lebih 70%, melebihi had merah 50%"
         },
         {
           "ruleCode": "CC-02",
           "result": "fail",
-          "expectedValue": "未过期",
-          "actualValue": "2026-04-30 已过期",
+          "expectedValue": ">= 90 hari",
+          "actualValue": "2026-04-30 telah tamat",
           "paramsUsed": {
             "warn_days": 90
           },
@@ -217,7 +217,7 @@
               "fieldKey": "mpob_licence.valid_until"
             }
           ],
-          "detail": "MPOB 执照已过期"
+          "detail": "Lesen MPOB telah tamat tempoh"
         },
         {
           "ruleCode": "CC-03",
@@ -233,7 +233,7 @@
               "fieldKey": "land_title.proprietor_1_name"
             }
           ],
-          "detail": "地契持有人是 RAMAN A/L SUBRAMANIAM，与种地的人不同"
+          "detail": "Pemegang geran ialah RAMAN A/L SUBRAMANIAM, berbeza daripada pengusaha"
         }
       ],
       "gaps": [
@@ -241,8 +241,8 @@
           "gapCode": "expired",
           "severity": "high",
           "docType": "mpob_licence",
-          "description": "MPOB 执照已过期",
-          "suggestedAction": "先续期（逾期要付 fi lewat / fi tamat tempoh），再上传新执照",
+          "description": "Lesen MPOB telah tamat tempoh",
+          "suggestedAction": "Perbaharui lesen dahulu (fi lewat dikenakan), kemudian muat naik lesen baharu.",
           "citation": null,
           "status": "open"
         },
@@ -250,8 +250,8 @@
           "gapCode": "name_mismatch",
           "severity": "high",
           "docType": "land_title",
-          "description": "地契仍在已故父亲名下",
-          "suggestedAction": "准备继承（pusaka）文件或授权书 / 授权委托书，再上传",
+          "description": "Geran masih atas nama arwah ayah",
+          "suggestedAction": "Sediakan dokumen pusaka atau surat kuasa wakil daripada semua waris, kemudian muat naik salinan yang jelas.",
           "citation": null,
           "status": "open"
         },
@@ -259,8 +259,8 @@
           "gapCode": "area_mismatch",
           "severity": "high",
           "docType": null,
-          "description": "地图面积比地契多 70%",
-          "suggestedAction": "核对地界；如已买入相邻土地，补上相邻地契",
+          "description": "Luas pada peta lebih besar 70% daripada geran",
+          "suggestedAction": "Semak sempadan tanah; jika membeli tanah bersebelahan, sediakan geran tanah itu juga.",
           "citation": null,
           "status": "open"
         },
@@ -268,8 +268,8 @@
           "gapCode": "not_in_mspo",
           "severity": "medium",
           "docType": "mspo_member_list",
-          "description": "园主不在 MSPO 团体成员名单上",
-          "suggestedAction": "向合作社确认是否已加入团体认证",
+          "description": "Pengusaha tiada dalam senarai ahli skim kumpulan MSPO",
+          "suggestedAction": "Sahkan dengan koperasi sama ada sudah menyertai skim kumpulan MSPO.",
           "citation": null,
           "status": "open"
         }

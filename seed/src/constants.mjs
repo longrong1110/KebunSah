@@ -144,14 +144,14 @@ export const NAME_BLOCKLIST = [
 
 export const ETHNIC_WEIGHTS = [['malay', 58], ['chinese', 20], ['indian', 22]];
 
-// MSPO 团体证书：名称都带"(虚构)"，不使用真实机构
+// MSPO 团体证书：名称都带"(rekaan)"（马来语「虚构」），不使用真实机构
 export const MSPO_SCHEMES = [
-  { holder: 'Kebun Makmur Sdn. Bhd. (虚构)', unit: 'Kebun Makmur Group Scheme - Perak Smallholders', start: '2024-06-15', first: '2019-06-15', weight: 36 },
-  { holder: 'Sawit Bersatu Berhad (虚构)', unit: 'Sawit Bersatu Group Scheme - Lembah Perak', start: '2025-02-01', first: '2020-02-01', weight: 34 },
-  { holder: 'Ladang Harapan Sdn. Bhd. (虚构)', unit: 'Ladang Harapan Group Scheme - Perak Tengah', start: '2024-11-20', first: '2019-11-20', weight: 30 },
+  { holder: 'Kebun Makmur Sdn. Bhd. (rekaan)', unit: 'Kebun Makmur Group Scheme - Perak Smallholders', start: '2024-06-15', first: '2019-06-15', weight: 36 },
+  { holder: 'Sawit Bersatu Berhad (rekaan)', unit: 'Sawit Bersatu Group Scheme - Lembah Perak', start: '2025-02-01', first: '2020-02-01', weight: 34 },
+  { holder: 'Ladang Harapan Sdn. Bhd. (rekaan)', unit: 'Ladang Harapan Group Scheme - Perak Tengah', start: '2024-11-20', first: '2019-11-20', weight: 30 },
 ];
 export const MSPO_STANDARD = 'MS 2530-2:2013 General Principles for Independent Smallholders';
-export const MSPO_CERT_BODY = 'Badan Pensijilan Contoh (虚构)';
+export const MSPO_CERT_BODY = 'Badan Pensijilan Contoh (rekaan)';
 
 export const MODEL_VERSION = 'demo';
 export const RULES_VERSION = 'rules-0.1';
