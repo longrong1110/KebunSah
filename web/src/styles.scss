@@ -1622,3 +1622,129 @@ a.plot-card:hover {
     break-inside: avoid;
   }
 }
+
+// ---- 屏 7 评估中：转圈＋分步进度（线框 docs/ui/screen-07.png）----
+.checking {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.checking__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding-top: 24px;
+  text-align: center;
+}
+
+.checking__spinner {
+  width: 112px;
+  height: 112px;
+  border: 12px solid color-mix(in srgb, var(--palm) 18%, var(--surface));
+  border-top-color: var(--palm);
+  border-radius: 50%;
+  animation: checking-spin 1.2s linear infinite;
+}
+
+@keyframes checking-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// 不喜欢动画的人：圈不转（仍是一段弧，不是整圈，看得出是「进行中」）
+@media (prefers-reduced-motion: reduce) {
+  .checking__spinner {
+    animation: none;
+  }
+}
+
+.checking__headline {
+  margin: 8px 0 0;
+  font-size: 1.5rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.checking__help {
+  margin: 0;
+  color: var(--muted);
+}
+
+.checking__steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.checking__step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  font-size: 1.125rem;
+  color: var(--muted);
+}
+
+.checking__icon {
+  flex: none;
+  width: 28px;
+  text-align: center;
+  font-size: 1.25rem;
+}
+
+.checking__label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.checking__state {
+  margin-left: auto;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+// 完成：绿；当前：加粗、正文色；未开始：灰；需人工复核：橙（取深一档，保证对比度），状态词可见
+.checking__step--done {
+  color: var(--ok);
+}
+
+.checking__step--current {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.checking__step--review {
+  color: color-mix(in srgb, var(--fruit) 70%, var(--ink));
+  font-weight: 700;
+
+  // 失败时唯一的文字说明，不用小号字
+  .checking__state {
+    font-size: 1rem;
+  }
+}
+
+.checking__foot {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+
+  .hint {
+    margin: 0;
+  }
+}
+
+// 屏 9 横幅下面的「Lihat kemajuan」
+.progress-link {
+  width: 100%;
+  margin-top: 12px;
+}
