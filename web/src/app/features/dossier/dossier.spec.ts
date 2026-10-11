@@ -299,7 +299,7 @@ describe('buildDossier：规则', () => {
     });
   });
 
-  it('CC-02 只有到期日：写「Tamat pada 30 Apr 2026」', () => {
+  it('CC-02 只有到期日：写「Tarikh tamat: 30 Apr 2026」（不带时态：已过期的也是这一句）', () => {
     const r = [
       {
         ruleCode: 'CC-02',
@@ -313,7 +313,7 @@ describe('buildDossier：规则', () => {
         item('a', asData({ ruleResults: r, gaps: [gap('expired', 'high', 'mpob_licence')] })),
       ],
     });
-    expect(m.checks?.[0].sentence).toBe('Tamat pada 30 Apr 2026');
+    expect(m.checks?.[0].sentence).toBe('Tarikh tamat: 30 Apr 2026');
     expect(m.checks?.[0].label).toBe('Tidak lulus');
     expect(m.checks?.[0].icon).toBe('✕');
   });

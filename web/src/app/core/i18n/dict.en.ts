@@ -414,7 +414,7 @@ export const en: Dict = {
       },
       area: (geran: string, lukisan: string) => `Title ${geran} ha, drawing ${lukisan} ha`,
       validityDays: (n: number) => `${n} ${n === 1 ? 'day' : 'days'} left`,
-      validityDate: (date: string) => `Expires on ${date}`,
+      validityDate: (date: string) => `Expiry date: ${date}`,
       nameResult: {
         pass: 'Name matches the operator',
         warn: 'Name partly matches',
