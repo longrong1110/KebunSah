@@ -11,6 +11,7 @@
     "validate": "node validate.mjs",
     "all": "node generate.mjs && node validate.mjs",
     "load": "node load-emulator.mjs",
-    "test": "node --test"
+    "test": "node --test",
+    "photos": "node photos/render.mjs"
   }
 }
