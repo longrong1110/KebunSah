@@ -12,6 +12,11 @@
     "all": "node generate.mjs && node validate.mjs",
     "load": "node load-emulator.mjs",
     "test": "node --test",
-    "photos": "node photos/render.mjs"
+    "photos": "node photos/render.mjs",
+    "db:up": "docker compose -f db/docker-compose.yml up -d --wait",
+    "db:down": "docker compose -f db/docker-compose.yml down",
+    "db:reset": "docker compose -f db/docker-compose.yml down -v && docker compose -f db/docker-compose.yml up -d --wait",
+    "db:psql": "docker exec -it kebunsah-pg psql -U kebunsah -d kebunsah",
+    "db:check": "docker exec -i kebunsah-pg psql -U kebunsah -d kebunsah -v ON_ERROR_STOP=1 < db/check.sql"
   }
 }

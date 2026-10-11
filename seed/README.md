@@ -86,4 +86,6 @@ generate.mjs  validate.mjs  load-emulator.mjs   命令行入口
 src/          rng · dates · units · geo · people · similarity · rules · scenarios · demo · entities · documents · build · shape · constants
 test/         node --test
 data/         生成物（已入库；改了 src/ 要重新生成）
+photos/       仿真证件照（见 photos/README.md）
+db/           本地 PostgreSQL（把 contract/schema.sql 建成真的数据库，见 db/README.md）
 ```
