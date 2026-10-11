@@ -310,6 +310,7 @@ export const en: Dict = {
       updated: 'Updated',
     },
     rowCount: (shown: number, total: number) => `${shown} / ${total} plots`,
+    showMore: (n: number) => `Show more (${n})`,
     emptyFilter: 'No plots match the filter.',
     clearFilter: 'Clear filters',
     emptyCoop: 'There are no plots in this cooperative yet.',

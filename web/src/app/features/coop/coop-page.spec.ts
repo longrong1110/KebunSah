@@ -694,6 +694,89 @@ describe('CoopPage（屏 11）', () => {
     });
   });
 
+  describe('行数多时分页渲染（一次 100 行，其余「Tunjuk lagi」）', () => {
+    // 250 块地，全是「还没评估」；只测分页，不关心排序
+    const MANY = Array.from({ length: 250 }, (_, i) => ({
+      id: `m${String(i).padStart(3, '0')}`,
+      data: plotDoc({ landTitleId: null, operatorPersonId: `x${i}`, status: 'pending' }),
+    }));
+    const many = async () => {
+      const t = await setup();
+      await t.profile(ADMIN);
+      await t.data({ plots: MANY, assessments: [], persons: [], titles: [] });
+      return t;
+    };
+
+    it('只渲染前 100 行；「N / 总数」按筛选后的总数，不是渲染了几行；按钮写还有多少没展开', async () => {
+      const t = await many();
+      expect(t.all('.coop-row')).toHaveLength(100);
+      expect(t.q('#row-count')?.textContent?.trim()).toBe('250 / 250 tanah');
+      expect(t.q('#show-more')?.textContent?.trim()).toBe('Tunjuk lagi (150)');
+    });
+
+    it('点「Tunjuk lagi」逐页展开，展开完按钮消失', async () => {
+      const t = await many();
+      await t.click('#show-more');
+      expect(t.all('.coop-row')).toHaveLength(200);
+      expect(t.q('#show-more')?.textContent?.trim()).toBe('Tunjuk lagi (50)');
+      await t.click('#show-more');
+      expect(t.all('.coop-row')).toHaveLength(250);
+      expect(t.q('#show-more')).toBeNull();
+      expect(t.q('#row-count')?.textContent?.trim()).toBe('250 / 250 tanah');
+    });
+
+    it('筛选条件变了就回到第一页；选中一块地不会让已展开的行收回去', async () => {
+      const t = await many();
+      await t.click('#show-more');
+      expect(t.all('.coop-row')).toHaveLength(200);
+
+      await t.click('.coop-row .coop-plotbtn');
+      expect(t.router.url).toMatch(/^\/coop\?plot=m\d{3}$/);
+      expect(t.all('.coop-row')).toHaveLength(200);
+
+      await t.click('#filter-pending');
+      expect(t.router.url).toContain('status=pending');
+      expect(t.all('.coop-row')).toHaveLength(100);
+      expect(t.q('#show-more')?.textContent?.trim()).toBe('Tunjuk lagi (150)');
+    });
+
+    it('英文：「Show more (150)」', async () => {
+      const t = await many();
+      t.i18n.set('en');
+      await settle(t.fixture);
+      expect(t.q('#show-more')?.textContent?.trim()).toBe('Show more (150)');
+      expect(t.q('#row-count')?.textContent?.trim()).toBe('250 / 250 plots');
+    });
+
+    it('导出 CSV 导出筛选后的全部行，不是只导出渲染出来的这一页', async () => {
+      const blobs: Blob[] = [];
+      URL.createObjectURL = vi.fn((b: Blob) => {
+        blobs.push(b);
+        return 'blob:test/csv';
+      });
+      URL.revokeObjectURL = vi.fn();
+      vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+
+      const t = await many();
+      expect(t.all('.coop-row')).toHaveLength(100);
+      await t.click('#export-csv');
+      expect(blobs).toHaveLength(1);
+      const csv = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(new TextDecoder('utf-8').decode(r.result as ArrayBuffer));
+        r.onerror = () => reject(r.error);
+        r.readAsArrayBuffer(blobs[0]);
+      });
+      expect(csv.trim().split('\r\n')).toHaveLength(251); // 表头 + 250 行
+    });
+
+    it('行数不超过一页：没有「Tunjuk lagi」', async () => {
+      const t = await setup();
+      await t.ready();
+      expect(t.q('#show-more')).toBeNull();
+    });
+  });
+
   describe('导出 CSV', () => {
     let blobs: Blob[];
     let clicks: { download: string }[];

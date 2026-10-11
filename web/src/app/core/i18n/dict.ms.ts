@@ -310,6 +310,7 @@ export const ms = {
       updated: 'Dikemas kini',
     },
     rowCount: (shown: number, total: number) => `${shown} / ${total} tanah`,
+    showMore: (n: number) => `Tunjuk lagi (${n})`,
     emptyFilter: 'Tiada tanah sepadan dengan penapis.',
     clearFilter: 'Kosongkan penapis',
     emptyCoop: 'Belum ada tanah dalam koperasi ini.',

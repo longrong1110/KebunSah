@@ -167,14 +167,14 @@
 
             <div class="coop-tablebar">
               <span id="row-count" class="coop-rowcount">
-                {{ t().coop.rowCount(tableRows().length, total()) }}
+                {{ t().coop.rowCount(filteredCount(), total()) }}
               </span>
               <span class="spacer"></span>
               <button
                 type="button"
                 class="btn btn-quiet coop-export"
                 id="export-csv"
-                [disabled]="tableRows().length === 0"
+                [disabled]="filteredCount() === 0"
                 (click)="exportCsv()"
               >
                 {{ t().coop.exportCsv }}
@@ -196,7 +196,7 @@
 
             @if (total() === 0) {
               <p id="empty-coop" class="lead">{{ t().coop.emptyCoop }}</p>
-            } @else if (tableRows().length === 0) {
+            } @else if (filteredCount() === 0) {
               <div id="empty-filter">
                 <p class="lead">{{ t().coop.emptyFilter }}</p>
                 <button
@@ -252,6 +252,16 @@
                   </tbody>
                 </table>
               </div>
+              @if (hiddenCount() > 0) {
+                <button
+                  type="button"
+                  class="btn btn-quiet coop-more"
+                  id="show-more"
+                  (click)="showMore()"
+                >
+                  {{ t().coop.showMore(hiddenCount()) }}
+                </button>
+              }
             }
           </section>
 
