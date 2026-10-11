@@ -53,6 +53,7 @@ export class GoogleSurface implements MapSurface {
       gestureHandling: 'greedy',
       // 只留 +/− 缩放：手机上默认不显示，但不会双指缩放的人要靠它；其余控件都关（镜头、旋转／倾斜、街景、全屏、地图类型、比例尺）
       zoomControl: true,
+      controlSize: 48, // 缩放按钮默认 40 px，放到 48 px（触控目标 ≥48 px，与应用其余部分一致）
       cameraControl: false,
       rotateControl: false,
       scaleControl: false,
