@@ -55,3 +55,31 @@
 2. **逐步进度字段（可选）**：屏 7 的四步（读文件／核对／森林／行动清单）现在**只能推导**（文件还有没读完的 → 第 1 步；评估 `running` 且文件读完 → 第 2 步；第 3、4 步在结束前保持未开始）。后端若能写，例如 `progress: { read, check, forest, actions }`（各为 `pending`／`running`／`done`／`failed`），前端改读它。不写也行，前端不依赖。
 3. **谁创建 `users/{uid}`、`lastLoginAt` 谁写**：前端对 Firestore 只读，所以只能是后端（首次登录后调一个接口，或 Auth 触发器）。没有档案的账号屏 2 显示「Profil anda belum dibuat.」。
 4. **示例补全**：`examples/` 现在有三份评估（绿／黄／红）。`documents`、`plots` 的示例可以照 `seed/data/` 的同名文件补。
+
+## `plots/{plotId}/documents/{docId}`
+
+用户拍下来的原件照片；一份证件可有多页（多条记录）。**后端写**（登记、读取结果），前端只读（实时订阅）。
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `plotId` | string | 属于哪块地（等于路径里的 `{plotId}`） |
+| `docType` | string | `land_title`／`mpob_licence`／`mspo_cert`／`mspo_member_list`（`status.md`） |
+| `pageNo` | number | 第几页（地契正面、背面各一条） |
+| `isCurrent` | boolean | 重拍后旧照片改成 `false`、不删除。前端**只数 `isCurrent !== false` 的** |
+| `extractionStatus` | string | `uploaded` → `extracting` → `extracted`，或 `failed`／`needs_review`（`status.md`）。屏 7 靠它判断「还有没有文件没读完」（`uploaded`／`extracting` 算没读完，其余都算读完） |
+| `storagePath`／`mimeType`／`sha256`／`source`／`uploadedBy`／`capturedAt`／`extractedAt`／`modelVersion` | — | 审计与存储字段。**前端不显示** |
+| `fields` | map | 读出的逐项字段，见下 |
+| `isSynthetic` | boolean | 模拟数据一律 `true` |
+
+### `fields`（key 是 `<docType>.<字段名>`，如 `land_title.area_value`、`mpob_licence.valid_until`）
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `rawText` | string | 纸面上的原文（身份证号读出后先打码） |
+| `normalizedValue` | string | 规范化后的值（面积 `"3.0400"`、日期 `"2026-12-05"`） |
+| `confidence` | number | 0–1，Gemini 给的置信度；**低于 0.70**（`rule_params` 的 `EXTRACT.confidence_min`）要请用户确认 |
+| `confirmedValue`／`confirmedBy`／`confirmedAt` | string／string／Timestamp | 用户在屏 8 确认或改过的值，**优先于 `normalizedValue`**；没确认过就没有这三个字段 |
+
+屏 8（确认字段，待做）的读法：只列 `confidence < 0.70` 且还没有 `confirmedValue` 的字段；显示值取 `confirmedValue ?? normalizedValue`；读得准的字段不打扰用户。
+
+**待定（请队友定）：原图裁剪怎么显示。** 屏 8 要把原图的裁剪放在字段旁边对照。前端对 Storage 只能上传照片、不能读别人的文件；要么 `storage.rules` 允许本人／本合作社读自己的 `storagePath`（前端用 Storage SDK 取下载网址），要么后端给一个 15 分钟有效的签名读取网址（例如 `GET /api/documents/{id}/image`）。裁剪的坐标（字段在图上的位置）`fields` 里目前没有，要不要加（如 `box: [x, y, w, h]`，0–1 的比例）也请定；不加的话前端先显示整张图。
