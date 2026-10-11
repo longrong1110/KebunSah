@@ -788,7 +788,8 @@ a.plot-card:hover {
 .banner__date {
   margin: 8px 0 0;
   color: var(--muted);
-  font-size: 0.875rem;
+  // 手机端正文 ≥16px（企划书的大字原则）；原来是 14px，浏览器里用脚本审计各屏时发现的
+  font-size: 1rem;
 }
 
 .section-title {
