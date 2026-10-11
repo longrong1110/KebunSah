@@ -418,7 +418,7 @@ export const ms = {
       },
       area: (geran: string, lukisan: string) => `Geran ${geran} ha, lukisan ${lukisan} ha`,
       validityDays: (n: number) => `Baki ${n} hari`,
-      validityDate: (date: string) => `Tamat pada ${date}`,
+      validityDate: (date: string) => `Tarikh tamat: ${date}`,
       nameResult: {
         pass: 'Nama sepadan dengan pengusaha',
         warn: 'Nama sebahagian sepadan',
