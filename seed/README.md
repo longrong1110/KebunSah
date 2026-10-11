@@ -6,7 +6,7 @@
 - 状态比例：green 110 · yellow 50 · red 24 · needs_review 16（企划书 §8.10 的演示比例，**不是统计数据**）。没有 `pending` 地块。
 - 每个地块的状态不是随机贴的：先定场景（面积多出、执照临期、地契在已故父亲名下……），再由规则引擎（CC-01/02/03 + 读出置信度）算出 `ruleResults`、`gaps` 和状态，对不上就报错。
 - 固定基准日 **2026-10-09**，种子固定，重复运行逐字节相同。演示日在基准日前后 10 天内，各地块状态不变。
-- 照片本身**不生成**：`storagePath` 只是约定路径（`seed/<plotId>/…jpg`）。仿真证件照是 10/14 的另一项。
+- 照片本身**不在 `seed/data/` 里生成**：`storagePath` 只是约定路径（`seed/<plotId>/…jpg`）。仿真证件照在 `seed/photos/`（9 张：清晰、手写、模糊、偏暗歪斜、已过期、已故父亲名下，带「SIMULATED / CONTOH」水印；用 `npm run photos` 重画），说明与对应的种子文档见 `photos/README.md`；它们还没有上传到 Storage、也没有接进 `documents`（上传接口合同待定）。
 
 ## 用法
 
