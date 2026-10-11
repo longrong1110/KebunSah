@@ -76,7 +76,7 @@ export function latestAssessment(items: readonly AssessmentItem[]): AssessmentIt
 
 export type BannerKey = 'green' | 'yellow' | 'red' | 'needs_review' | 'pending' | 'running';
 
-const RESULTS = ['green', 'yellow', 'red', 'needs_review'] as const;
+export const RESULTS = ['green', 'yellow', 'red', 'needs_review'] as const;
 
 /**
  * 结论横幅。没有评估一律「还没开始」，不凭 plots.status 下结论（没有评估数据撑着，说「全部通过」会误导）。

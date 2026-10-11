@@ -20,6 +20,7 @@ async function setup(url = '/plots/p1') {
         { path: '', component: Blank },
         { path: 'plots/:id', component: ResultPage },
         { path: 'plots/:id/issue/:key', component: Blank },
+        { path: 'plots/:id/checking', component: Blank },
       ]),
       { provide: FIRESTORE_FACADE, useValue: facade },
     ],
@@ -287,6 +288,34 @@ describe('ResultPage（屏 9）', () => {
       expect(t.q('#banner')?.getAttribute('data-banner')).toBe('yellow');
       expect(t.q('#banner')?.textContent).toContain('Beberapa perkara perlu disemak.');
       expect(t.text()).not.toMatch(/0 perkara/);
+    });
+  });
+
+  describe('「Lihat kemajuan」入口（屏 7）', () => {
+    it('最新一次评估还在跑：横幅下面有「Lihat kemajuan」，点击进屏 7，保留 ?member', async () => {
+      const t = await setup('/plots/p1?member=m9');
+      await t.ready(assessment({ runStatus: 'running', result: null, finishedAt: null }));
+      expect(t.q('#banner')?.getAttribute('data-banner')).toBe('running');
+      expect(t.q('#see-progress')?.textContent?.trim()).toBe('Lihat kemajuan');
+
+      await t.click('#see-progress');
+      expect(t.router.url).toBe('/plots/p1/checking?member=m9');
+    });
+
+    it('queued 同样有；已完成、失败、没有评估都没有这个按钮', async () => {
+      const t = await setup();
+      await t.ready(assessment({ runStatus: 'queued', result: null }));
+      expect(t.q('#see-progress')).not.toBeNull();
+
+      await t.assessments([{ id: 'a1', data: assessment() }]);
+      expect(t.q('#see-progress')).toBeNull();
+
+      await t.assessments([{ id: 'a1', data: assessment({ runStatus: 'failed', result: null }) }]);
+      expect(t.q('#see-progress')).toBeNull();
+
+      await t.assessments([], false);
+      expect(t.q('#banner')?.getAttribute('data-banner')).toBe('pending');
+      expect(t.q('#see-progress')).toBeNull();
     });
   });
 

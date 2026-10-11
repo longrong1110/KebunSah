@@ -76,6 +76,17 @@
             </div>
           </section>
 
+          @if (v.bannerKey === 'running') {
+            <button
+              type="button"
+              class="btn btn-quiet progress-link"
+              id="see-progress"
+              (click)="openChecking()"
+            >
+              {{ t().result.seeProgress }}
+            </button>
+          }
+
           @if (v.total > 0) {
             <h2 class="section-title">{{ t().result.todo }}</h2>
             <ol id="gap-list" class="gap-list">

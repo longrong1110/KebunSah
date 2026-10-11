@@ -157,6 +157,7 @@ export const ms = {
       },
     },
     todo: 'Perlu dibuat',
+    seeProgress: 'Lihat kemajuan',
     seeAll: (n: number) => `Lihat semua (${n})`,
     seeLess: 'Tunjukkan lebih sedikit',
     passed: (n: number) => `${n} semakan lulus`,
@@ -447,6 +448,28 @@ export const ms = {
     },
     disclaimer:
       'Dokumen ini dijana oleh KebunSah sebagai bahan sokongan. Ia bukan Pernyataan Usaha Wajar (DDS) rasmi dan bukan pengesahan pematuhan. Saringan hutan hanyalah saringan awal. Semua data dibaca oleh sistem dan perlu disemak oleh manusia sebelum digunakan.',
+  },
+  checking: {
+    title: 'Sedang menyemak',
+    headline: 'Sedang menyemak tanah anda…',
+    steps: {
+      read: 'Membaca dokumen',
+      check: 'Menyemak maklumat',
+      forest: 'Menyemak imej satelit hutan',
+      actions: 'Menyediakan senarai tindakan',
+    },
+    stepState: {
+      done: 'Siap',
+      current: 'Sedang dibuat',
+      pending: 'Belum',
+    },
+    eta: 'Kira-kira 2 minit. Anda boleh keluar.',
+    backToPlots: 'Kembali ke Tanah saya',
+    doneHeadline: 'Semakan siap',
+    doneHelp: 'Keputusan sudah ada.',
+    seeResult: 'Lihat keputusan',
+    failedHeadline: 'Pegawai koperasi akan menyemak.',
+    notStarted: 'Tanah ini belum diperiksa.',
   },
 };
 

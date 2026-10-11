@@ -129,6 +129,12 @@ export class ResultPage {
     void this.router.navigate(['/'], this.keep);
   }
 
+  /** 评估还在跑：去屏 7 看分步进度 */
+  protected openChecking(): void {
+    const id = this.plotId();
+    if (id) void this.router.navigate(['/plots', id, 'checking'], this.keep);
+  }
+
   protected openIssue(key: string): void {
     const id = this.plotId();
     if (id) void this.router.navigate(['/plots', id, 'issue', key], this.keep);

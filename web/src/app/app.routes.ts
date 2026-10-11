@@ -46,7 +46,13 @@ export const routes: Routes = [
     canActivate: [requireAuth],
     loadComponent: () => import('./features/result/issue-page').then((m) => m.IssuePage),
   },
-  // 导出档案（A4 版面，浏览器打印成 PDF）：从看板右栏进入
+  // 屏 7 评估中：转圈＋分步进度，可离开；现在从屏 9 的「Lihat kemajuan」进入（屏 6「开始检查」做好后由它跳转）
+  {
+    path: 'plots/:id/checking',
+    canActivate: [requireAuth],
+    loadComponent: () => import('./features/checking/checking-page').then((m) => m.CheckingPage),
+  },
+  // 导出档案（A4 版面，浏览器打印成 PDF）：从看板里选中地块后进入
   {
     path: 'plots/:id/dossier',
     canActivate: [requireAuth],
