@@ -5,6 +5,7 @@ import {
   computed,
   effect,
   inject,
+  linkedSignal,
   signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -42,6 +43,9 @@ import {
 import type { BannerKey } from '../result/assessment';
 
 type PageState = 'loading' | 'offline' | 'error' | 'forbidden' | 'nocoop' | DashboardState;
+
+/** 表格一次渲染的行数；多出来的点「Tunjuk lagi」每次再展开这么多 */
+const ROWS_PER_PAGE = 100;
 
 // 屏 11「合作社看板」（线框 docs/ui/screen-11-dashboard.png）：宽屏三栏，左筛选、中统计＋表格、右详情。
 // 一页完成「看分布 → 找问题 → 看原因 → 导出」。只读：订阅 Firestore 实时更新，不调后端。
@@ -145,9 +149,23 @@ export class CoopPage {
   });
 
   protected readonly total = computed(() => this.rows().length);
+
+  /** 表格一次最多渲染这么多行（200 行渲染得动，真实规模更大时不会一次渲染几千个 DOM 行）；其余点「Tunjuk lagi」逐页展开 */
+  /** 筛选条件变了（不含选中的地块）就回到第一页；选中一块地不会让已展开的行收回去 */
+  private readonly filterKey = computed(() => JSON.stringify(this.filter()));
+  private readonly visibleLimit = linkedSignal({
+    source: this.filterKey,
+    computation: () => ROWS_PER_PAGE,
+  });
   private readonly counts = computed(() => countBuckets(this.rows()));
   private readonly issueCounts = computed(() => countIssues(this.rows()));
   private readonly filtered = computed(() => filterRows(this.rows(), this.filter()));
+  /** 筛选后的行数（「N / 总数」与「没有匹配」都按它，不是按这一页渲染了几行） */
+  protected readonly filteredCount = computed(() => this.filtered().length);
+  /** 筛选后还没渲染出来的行数；大于 0 才显示「Tunjuk lagi」 */
+  protected readonly hiddenCount = computed(() =>
+    Math.max(0, this.filteredCount() - this.visibleLimit()),
+  );
   protected readonly filterActive = computed(() => !isFilterEmpty(this.filter()));
 
   /** 数据来自本地缓存（还没和服务器对过）：能显示，但要说明可能不是最新 */
@@ -200,13 +218,15 @@ export class CoopPage {
     const t = this.t();
     const lang = this.i18n.lang();
     const selected = this.selectedId();
-    return this.filtered().map((row) => ({
-      id: row.id,
-      text: rowTexts(t, lang, row),
-      look: bannerLook(row.bucket),
-      bucket: row.bucket,
-      selected: row.id === selected,
-    }));
+    return this.filtered()
+      .slice(0, this.visibleLimit())
+      .map((row) => ({
+        id: row.id,
+        text: rowTexts(t, lang, row),
+        look: bannerLook(row.bucket),
+        bucket: row.bucket,
+        selected: row.id === selected,
+      }));
   });
 
   // ---- 右栏详情 ----
@@ -294,6 +314,10 @@ export class CoopPage {
 
   protected clearFilters(): void {
     this.go({ status: null, issue: null, q: null });
+  }
+
+  protected showMore(): void {
+    this.visibleLimit.update((n) => n + ROWS_PER_PAGE);
   }
 
   protected select(id: string): void {
