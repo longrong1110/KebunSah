@@ -23,9 +23,9 @@ Google Cloud AI Builder Cup 2026 参赛项目。原型提交截止 **2026-10-18*
 
 | # | 事项 | 前端在等什么 |
 | --- | --- | --- |
-| 1 | **审 [PR #14](https://github.com/longrong1110/KebunSah/pull/14)**（只改 `contract/`），没异议就 Approve | 屏 6「开始检查」、屏 8「确认字段」、看板按合作社收紧读取。PR 描述和评论里有前端已按推荐方案定下的 7 件事（原图读取方式、`coopId`、`CC-02` 每份文件一条……），不同意请直接指出，以你们为准 |
-| 2 | **写完「新建地块 → 传照片 → 评估」的接口请求与响应**：`POST /api/plots`、`PATCH /api/plots/{id}`（保存多边形）、`POST /api/plots/{id}/documents`（签名上传网址并登记） | 前端对 Firestore 只读、不能自己发明接口。屏 5（圈地块）正在做，只产出本地草稿、不调接口；屏 6 提交那一步全卡在这里。前端会另开 `contract/…` 的 PR 起草一版，你也可以先写 |
-| 3 | `PATCH /api/plots/{id}` 里**面积由后端按多边形重算**，前端只传多边形（点模式传点 + 手填面积）。`contract/api.md` 现在写的是前端传 `area_ha_computed`，与 `schema.sql`「不信前端传的数」相矛盾 | 前端据此不传 `area_ha_computed` |
+| 1 | **审 [PR #14](https://github.com/longrong1110/KebunSah/pull/14)**（评估文档形状、鉴权、assess、屏 8 的字段确认；只改 `contract/`），没异议就 Approve。**再审 [PR #23](https://github.com/longrong1110/KebunSah/pull/23)**（新建地块、保存位置与面积、登记文件；堆叠在 #14 上，先审 #14） | 屏 6「开始检查」、屏 8「确认字段」、看板按合作社收紧读取。PR 描述和评论里有前端已按推荐方案定下的 7 件事（原图读取方式、`coopId`、`CC-02` 每份文件一条……），不同意请直接指出，以你们为准 |
+| 2 | **定「新建地块 → 传照片」的接口请求与响应**：`POST /api/plots`、`PATCH /api/plots/{id}`（保存多边形）、`POST /api/plots/{id}/documents`（签名上传网址并登记）。前端已在 **#23** 里起草了一版，你改成你们要的就行 | 前端对 Firestore 只读、不能自己发明接口。屏 5（圈地块）已合并（#22），只产出本地草稿、不调接口；屏 6 提交那一步、上传、屏 10 重画全卡在这里 |
+| 3 | `PATCH /api/plots/{id}` 里**面积由后端按多边形重算**，前端只传多边形（点模式传点 + 手填面积）。`contract/api.md` 原来写的是前端传 `area_ha_computed`，与 `schema.sql`「不信前端传的数」相矛盾，#23 已改 | 前端据此不传 `area_ha_computed` |
 | 4 | **谁创建 `users/{uid}`、谁写 `lastLoginAt`**：uid 必须等于 Firebase Auth 的 uid。线上 Auth 不能预设 uid，要么首次登录由后端建档，要么用 Admin SDK 预建账号 | 前端不创建，现在没有档案的账号首页显示「Profil anda belum dibuat.」 |
 
 ### 二、前端按这些假设在读 Firestore（写入时请对齐；不一致就改合同，不要只改代码）
