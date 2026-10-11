@@ -1,0 +1,31 @@
+# 本地 PostgreSQL 16：把 contract/schema.sql 建成一个真的数据库（17 张表、每列的依据注释、规则阈值、3 个虚构的演示地块）。
+# 只在本机（127.0.0.1:5433）监听。账号密码是本地开发专用，不连任何线上环境，不是密钥。
+# 用法见同目录 README.md。
+name: kebunsah-db
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: kebunsah-pg
+    environment:
+      POSTGRES_DB: kebunsah
+      POSTGRES_USER: kebunsah
+      POSTGRES_PASSWORD: kebunsah-local-only
+    ports:
+      # 宿主机端口用 5433：本机上常有别的项目占着 5432
+      - '127.0.0.1:5433:5432'
+    volumes:
+      - kebunsah-pgdata:/var/lib/postgresql/data
+      # 直接挂载合同里的 schema.sql（只读），不复制，永远与 contract/ 一致。
+      # 只在数据卷第一次初始化时执行；想重建见 README 的「重建」。
+      - ../../contract/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      # 用 TCP（-h 127.0.0.1）探测：官方镜像初始化期间的临时服务器只开 unix socket，
+      # 用 socket 探测会在 schema 还没跑完时就报健康。
+      test: ['CMD-SHELL', 'pg_isready -h 127.0.0.1 -U kebunsah -d kebunsah']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  kebunsah-pgdata:
