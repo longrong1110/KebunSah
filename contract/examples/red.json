@@ -1,0 +1,112 @@
+{
+  "path": "plots/90000000-0000-4000-8000-000000000003/assessments/70000000-0000-4000-8000-000000000003",
+  "data": {
+    "plotId": "90000000-0000-4000-8000-000000000003",
+    "runStatus": "done",
+    "result": "red",
+    "startedAt": "2026-10-04T07:05:00.000Z",
+    "finishedAt": "2026-10-04T07:07:00.000Z",
+    "modelVersion": "demo",
+    "rulesVersion": "rules-0.1",
+    "inputSnapshot": null,
+    "forestDataset": null,
+    "forestCover2020Pct": 12.5,
+    "forestLossAfter2020Ha": 0.8,
+    "forestRisk": "high",
+    "summaryText": "Lesen MPOB telah tamat, geran atas nama arwah ayah, dan luas jauh berbeza.",
+    "summaryLang": "ms",
+    "errorMessage": null,
+    "ruleResults": [
+      {
+        "ruleCode": "CC-01",
+        "result": "fail",
+        "expectedValue": "2.0000 ha",
+        "actualValue": "3.4000 ha",
+        "paramsUsed": {
+          "tol_pct": 10,
+          "tol_min_ha": 0.1,
+          "fail_over_pct": 50
+        },
+        "evidence": [
+          {
+            "documentId": "cf72571e-dc26-44ed-83fa-f873120ecff8",
+            "fieldKey": "land_title.area_value"
+          }
+        ],
+        "detail": "Lebih 70%, melebihi had merah 50%"
+      },
+      {
+        "ruleCode": "CC-02",
+        "result": "fail",
+        "expectedValue": ">= 90 hari",
+        "actualValue": "2026-04-30 telah tamat",
+        "paramsUsed": {
+          "warn_days": 90
+        },
+        "evidence": [
+          {
+            "documentId": "b485bbc4-05d4-4dd7-8c75-795daf4e82bb",
+            "fieldKey": "mpob_licence.valid_until"
+          }
+        ],
+        "detail": "Lesen MPOB telah tamat tempoh"
+      },
+      {
+        "ruleCode": "CC-03",
+        "result": "fail",
+        "expectedValue": ">= 0.85",
+        "actualValue": "0.21",
+        "paramsUsed": {
+          "min_similarity": 0.85
+        },
+        "evidence": [
+          {
+            "documentId": "44d591b4-559a-4f38-88cd-8144c369c89b",
+            "fieldKey": "land_title.proprietor_1_name"
+          }
+        ],
+        "detail": "Pemegang geran ialah RAMAN A/L SUBRAMANIAM, berbeza daripada pengusaha"
+      }
+    ],
+    "gaps": [
+      {
+        "gapCode": "expired",
+        "severity": "high",
+        "docType": "mpob_licence",
+        "description": "Lesen MPOB telah tamat tempoh",
+        "suggestedAction": "Perbaharui lesen dahulu (fi lewat dikenakan), kemudian muat naik lesen baharu.",
+        "citation": null,
+        "status": "open"
+      },
+      {
+        "gapCode": "name_mismatch",
+        "severity": "high",
+        "docType": "land_title",
+        "description": "Geran masih atas nama arwah ayah",
+        "suggestedAction": "Sediakan dokumen pusaka atau surat kuasa wakil daripada semua waris, kemudian muat naik salinan yang jelas.",
+        "citation": null,
+        "status": "open"
+      },
+      {
+        "gapCode": "area_mismatch",
+        "severity": "high",
+        "docType": null,
+        "description": "Luas pada peta lebih besar 70% daripada geran",
+        "suggestedAction": "Semak sempadan tanah; jika membeli tanah bersebelahan, sediakan geran tanah itu juga.",
+        "citation": null,
+        "status": "open"
+      },
+      {
+        "gapCode": "not_in_mspo",
+        "severity": "medium",
+        "docType": "mspo_member_list",
+        "description": "Pengusaha tiada dalam senarai ahli skim kumpulan MSPO",
+        "suggestedAction": "Sahkan dengan koperasi sama ada sudah menyertai skim kumpulan MSPO.",
+        "citation": null,
+        "status": "open"
+      }
+    ],
+    "isSynthetic": true,
+    "createdAt": "2026-10-04T07:05:00.000Z"
+  }
+}
