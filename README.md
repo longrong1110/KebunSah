@@ -42,7 +42,7 @@ Google Cloud AI Builder Cup 2026 参赛项目。原型提交截止 **2026-10-18*
 
 - App 实际用的数据层是 **Firestore**（企划书第 6–7 章、8.9 节）。本地演示跑 Firebase 模拟器：`cd web && npm run emulators`，再 `cd seed && npm run load` 灌 200 个模拟地块。
 - **`contract/schema.sql` 已经建成一个真的 PostgreSQL 16 本地数据库**：`cd seed && npm run db:up`（需要 Docker，端口 5433），`npm run db:check` 跑 7 项约束自检。它是设计图和校验用的，不是 App 读写的库，详见 [`seed/db/README.md`](seed/db/README.md)。
-- **线上 Firestore（以及若改用的 Cloud SQL）还没建**：要 GCP／Firebase 项目和账单，需要负责人在控制台创建（区域 `asia-southeast1`）；建好后把 Firebase 控制台给的 Web 配置填进 `web/src/environments/environment.ts`（这些值本来就公开）。
+- **线上 Firestore（以及若改用的 Cloud SQL）还没建**：要 GCP／Firebase 项目和账单，需要负责人在控制台创建（区域 `asia-southeast1`；哪些要付费、怎么选见下面第五节）；建好后把 Firebase 控制台给的 Web 配置填进 `web/src/environments/environment.ts`（这些值本来就公开）。
 - 上线前：身份证哈希要加服务端秘密值（pepper），`schema.sql` 开头有说明。
 
 ### 四、已知的坑和遗留
@@ -53,6 +53,33 @@ Google Cloud AI Builder Cup 2026 参赛项目。原型提交截止 **2026-10-18*
 - **地图用 Google Maps JS 的 Demo key**（官方的免费试用 key，只适合原型，用量上限不明）；Google 的 Drawing Library 已下线，屏 5 自己画多边形（Google 的 `Polygon` + 可拖动 `Marker`）。屏 5 落地后 key 放在 `web/src/environments/`，不是密钥（浏览器端本来就公开），但**上线前要换成限制了 HTTP 来源的正式 key**。
 - **姓名相似度算法、`CC-02` 边界**（schema 写「不足 90 天」，企划书写「90 天内」）合同里没定，seed 的取舍见 `seed/README.md`。
 - 里程碑标签：`v0.1-e2e`（第一次端到端）、`v0.9-freeze`（10/16）、`v1.0-submit`（10/18）。前后端第一次端到端联调之前，前端屏 5–6 之后的写入路径是空的。
+
+### 五、要付费或要账号的云服务（请两人一起定）
+
+> 数字取自官方页面（2026-10-12 读的，价格会变，**以控制台和官方页面为准**）：[Firebase 定价](https://firebase.google.com/pricing)、[Google Cloud 免费试用与免费额度](https://docs.cloud.google.com/free/docs/free-cloud-features)。**提交要求「可运行原型部署在 Cloud Run 或 Firebase，附公开可访问网址」，并且要用 Gemini／Gemma 或 Google 智能体平台**——所以只在本机跑的方案满足不了提交，只能用于开发和第一次演示。
+
+| 服务 | 免费吗 | 要绑卡吗 | 我们拿它做什么 |
+| --- | --- | --- | --- |
+| **Firebase Spark** | 免费。Firestore 存 1 GiB、每天读 5 万／写 2 万；Hosting 存 10 GB、每天传输 360 MB | 不要 | 前端 Hosting、Firestore（200 个模拟地块绰绰有余） |
+| **Firebase Blaze** | 包含 Spark 的免费额度，超出才计费；合格的新用户有 $300 试用金 | **要** | Spark **没有**的下面这些都要它：Cloud Storage、Cloud Functions、手机号短信登录 |
+| **Google Cloud 试用** | $300、90 天，不扣费 | **要**（只做 $0–1 预授权）。资格：从没付过费给 Google Cloud、Google Maps Platform 或 Firebase | 开通 Blaze 和计费账号的最现实方式 |
+| **Cloud Run**（`kebunsah-api`、`kebunsah-ai`） | 每月 200 万次请求、36 万 GB 秒内存、18 万 vCPU 秒 | **要**计费账号 | 后端 API 与 AI 服务；Cloud Build 每月 2,500 分钟、Artifact Registry 0.5 GB、Secret Manager 6 个版本也在免费额度内 |
+| **Cloud Storage**（证件照） | Blaze 上有免费额度，但**只覆盖美国三个区域**（us-central1／us-west1／us-east1）；放 `asia-southeast1` 要按量付费，几十张照片费用很小但不是零 | 要（Blaze） | 存证件照（前端用签名网址或约定路径上传） |
+| **手机号短信 OTP** | Spark 上不可用，按发送的短信计费 | 要（Blaze） | 登录。可用 Firebase 控制台的「测试手机号」（固定验证码、不发短信）绕开；**我没在 Spark 上验证过** |
+| **Gemini**（评估必需） | Vertex AI 的免费额度页面没给数字；AI Studio 的 Gemini API 有免费档，页面没给数字，且**试用金不能付 AI Studio 的费用** | Vertex AI 要计费账号 | 读证件照、解释、定级。走 Vertex AI 还是 AI Studio 请后端定 |
+| **Earth Engine** | **我没查** | ？ | 森林初筛。请后端确认注册方式与费用 |
+| **Google Maps** | 现在用官方 Demo key：免费、免绑卡，但**只适合原型**，用量上限不明 | 正式 key 要计费账号 | 屏 5 的卫星图。上线前要换成限制了 HTTP 来源的正式 key |
+
+**请两人一起定的事**（前端的倾向写在后面，不同意就改）：
+
+1. **谁出卡、谁建 Firebase／GCP 项目**：倾向用符合试用资格的那位建项目、开 Blaze、**立刻在控制台设预算告警**；区域 `asia-southeast1`。没有这一步，后端上不了 Cloud Run，提交的公开网址也就没有。
+2. **证件照存哪**（前端不能写 Firestore，所以照片不论存哪，都是后端写或签名网址直传）：
+   - **A. Cloud Storage（倾向）**：要 Blaze，费用很小；照片不进 Firestore 文档，屏 7／看板订阅文档时不会把图片拉下来。
+   - **B. 照片转 base64 存 Firestore（Spark 可用，不推荐）**：Firestore 单个文档上限 1 MiB，base64 比原图大约三分之一。模拟证件照 250–420 KB（转 base64 约 330–560 KB），真手机拍的往往更大，可能超限；而且要由后端写入（前端不能写），还是要有后端——Cloud Run 要计费账号，**省不下那张卡**。若坚持，要放在单独的集合里（如 `documentImages/{docId}`，不要和被订阅的 `documents` 放一起），并限制图片尺寸。
+   - **C. 只在本机跑（Firebase 模拟器，含 Storage 模拟器）**：零成本，开发和第一次演示够用，但**满足不了提交要求的公开网址**。App 读写的是 Firestore 模拟器，不是 `seed/db` 里的 PostgreSQL（那个是设计图落地，没接进 App）。
+3. **手机号 OTP 怎么登录**：测试手机号（不发短信，零成本，演示够用）还是真实短信（要 Blaze）。
+4. **Gemini 走 Vertex AI 还是 AI Studio**（后端定），以及 Earth Engine 的注册。
+5. **正式 Maps key**：谁的项目、限制哪些来源。
 
 ## 怎么协作
 
