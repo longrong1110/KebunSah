@@ -12,6 +12,7 @@ Google Cloud AI Builder Cup 2026 参赛项目。原型提交截止 **2026-10-18*
 | `seed/` | 200 个模拟地块、仿真证件照 | 前端 |
 | `api/` | Python FastAPI → Cloud Run `kebunsah-api` | 后端 |
 | `ai-worker/` | Gemini 抽取、规则引擎、Earth Engine → Cloud Run `kebunsah-ai` | 后端 |
+| `core/` | 共用核心：规则、定级、几何、姓名相似度（纯 Python，不依赖云服务，API 与评估流水线共用） | 后端 |
 | `contract/` | 字段、状态值、接口、示例 JSON | 两人共管 |
 | `infra/` | Firestore 规则、Cloud Build 流水线 | 两人共管 |
 

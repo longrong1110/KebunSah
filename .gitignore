@@ -22,6 +22,12 @@ obj/
 .firebase/
 firebase-debug.log
 
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
 # 编辑器与系统
 .vscode/*
 !.vscode/extensions.json

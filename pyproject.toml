@@ -1,0 +1,4 @@
+# 只放工具配置。依赖在 requirements*.txt；代码按目录分开（core/ api/ ai-worker/），不打包成一个发行包。
+[tool.pytest.ini_options]
+pythonpath = ["core"]
+testpaths = ["core/tests"]
