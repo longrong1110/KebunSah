@@ -21,7 +21,8 @@ import {
 } from './assessment';
 import { bannerLook } from './banner-look';
 import { forestLine, gapView } from './gap-view';
-import { pageState, watchPlotAssessment } from './result-data';
+import { pageState } from '../plots/plot-watch';
+import { watchPlotAssessment } from './result-data';
 
 /** 先列最多这么多件要做的事，其余收起（线框：先列最多 2–3 件） */
 const VISIBLE_GAPS = 3;
@@ -48,7 +49,7 @@ export class ResultPage {
   });
 
   private readonly data = watchPlotAssessment(this.plotId);
-  protected readonly state = computed(() => pageState(this.data.plot(), this.data.assessments()));
+  protected readonly state = computed(() => pageState(this.data.plot(), [this.data.assessments()]));
 
   private readonly plot = computed<PlotData | null>(() => {
     const p = this.data.plot();
