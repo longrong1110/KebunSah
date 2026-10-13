@@ -109,7 +109,7 @@ scripts/                      emulators.mjs、check-readonly.mjs、check-prod-bu
 - **别把 0 当事实**：`collection$` 带出 `fromCache`。服务器还没确认的空快照不能显示成「0」，要显示加载态，超时（10 秒）转成离线状态。统一用 `core/load-state.ts` 的 `loadState$()`，产出 `loading | offline | error | data` 四态，每个订阅各管各的计时器，「Cuba lagi」重新订阅。
 - **只读过滤**：`collection$(path, { where: [{ field, value }] })` 只支持「等于」。这是为了少下载，**不是权限**——`infra/firestore.rules` 现在是「任何登录用户可读全部」，园主改地址栏也能读到别人的数据。规则收紧由队友做（见下方已知限制）。
 - **多语言**：词典是两个带类型的对象，`dict.ms.ts` 是基准，`dict.en.ts` 声明为同一个 `Dict` 类型，漏一个键编译就报错。组件用 `inject(I18nService).t`（signal）取词，模板写 `{{ t().plots.title }}`；带参数的文案是函数。新增文案两个文件都要加。语言的取值优先级：本机上次的选择（`localStorage` `kebunsah.lang`）> `users.language`（只认 `ms`／`en`）> 马来语。`<html lang>` 随之同步。
-- **草稿只在内存里**：`features/new-plot/draft.service.ts` 保存屏 3 三份文档的状态和照片 Blob，刷新就没了。回到 `/` 会清空并撤销所有预览 URL。
+- **草稿只在内存里**：`features/new-plot/draft.service.ts` 保存屏 3 三份文档的状态和照片 Blob，以及屏 5 的几何（各页签的点、手填面积），刷新就没了。回到 `/` 会清空并撤销所有预览 URL。
 - **图片管线**：`features/new-plot/image.ts`。相册和相机的图都统一重画到 canvas 再编码成 JPEG（质量 0.85，长边 ≤1600px，小图不放大，按 EXIF 方向摆正，输出不含 EXIF／GPS），相册文件 >20 MB 直接拒绝；`type` 为空的文件（部分 Windows 上的 HEIC 没有 MIME）先尝试解码，解不出才报「不是图片」；重画前先铺白底（透明 PNG 不会变黑底）。1600px 对地契上的小字做 OCR 可能偏小，屏 8 读字段前很可能要调大（改 `MAX_LONG_SIDE` 一处即可）。
 - **摄像头一定要关**：`camera-page` 在点 ✕、浏览器返回、路由切走、切到后台、授权等待中就离开、轨道被系统结束时，都会停掉所有轨道并撤销预览 URL。
 - **返回键**：统一走 `core/back-navigator.ts`：有上一条同源历史记录（优先用 Navigation API 的 `canGoBack`；不支持的浏览器退回 `history.length > 1`）就 `Location.back()`（不新增历史记录，管理员从看板进屏 9 再返回就回到看板，筛选和选中的地块都在），否则 `navigate(兜底路径, { replaceUrl: true })` 并保留 `?member`。不要在页面里自己 `navigate(['/'])` 当返回键（会产生 `[/plots/new, /, /plots/new]` 这样的历史回环）。屏 4 的「✕」「Guna gambar」也走它。测试里用 `src/testing/back.ts` 的 `stubHistory(true／false)` 控制分支。屏 7 的 ← 与「Kembali ke Tanah saya」是明确去处，固定去屏 2，不走它。
@@ -132,13 +132,12 @@ scripts/                      emulators.mjs、check-readonly.mjs、check-prod-bu
 
 ## 已知限制
 
-- **屏 5 的地图是 Google 官方 Demo key**：只适合原型、不支持正式上线，用量上限不明，能否限制 HTTP 来源没测（`specs/_facts.md` F-043）。演示当天撞上上限地图会停：C、B 页签不依赖地图，仍可用。上线前要换成限制了来源的正式 key（`TODO.md`）。key 放 `environment.development.ts`，生产文件是空串，地图显示「Peta belum dikonfigurasi」。
-- **屏 5 不用 Google 的 Drawing Library（已下线）也不用 Terra Draw**：自持顶点数组 + `google.maps.Polygon` + 可拖动 `Marker`（`google-surface.ts`），点按自己用 `pointerdown／pointerup` 判断（Google 的 `click` 会吞快速的第二下，F-045）。`google.maps.Marker` 被 Google 标为弃用但仍可用、没有下线日期，Google 以后动它要换成 `AdvancedMarkerElement`（要 mapId）。
+- **屏 5 的地图是 Google 官方 Demo key**：只适合原型、不支持正式上线，用量上限不明，能否限制 HTTP 来源没测。演示当天撞上上限地图会停：C、B 页签不依赖地图，仍可用。上线前要换成限制了来源的正式 key（见根 README「系统还没做的」P1 #10）。key 放 `environment.development.ts`，生产文件是空串，地图显示「Peta belum dikonfigurasi」。
+- **屏 5 不用 Google 的 Drawing Library（已下线）也不用 Terra Draw**：自持顶点数组 + `google.maps.Polygon` + 可拖动 `Marker`（`google-surface.ts`），点按自己用 `pointerdown／pointerup` 判断（Google 的 `click` 会吞快速的第二下，浏览器里实测过）。`google.maps.Marker` 被 Google 标为弃用但仍可用、没有下线日期，Google 以后动它要换成 `AdvancedMarkerElement`（要 mapId）。
 - **屏 5 没在真机上验证**：手指点按、拖把手、双指缩放、定位权限弹窗、iOS Safari 的表现都只在电脑浏览器的手机视口里用鼠标试过；`google-surface.ts` 无法在 jsdom 里测，靠浏览器实跑（点按判定与把手命中的纯函数在 `tap.ts` 里有单测）。**Claude 内置浏览器的面板被隐藏时 Google 地图不会完成初始化**（只显示静态图、没有控件和 Google 标志），测地图前要保证面板可见。
 - **屏 5 的结果不上传、不创建地块**：草稿只在内存，刷新就没了；几何用中性的 `[经度, 纬度]` 数组，以后接 `PATCH /api/plots/{id}`（面积由后端按多边形重算，所以前端不传 `area_ha_computed`）时再映射。预览面积是球面算法（`@turf/area`）的「≈」值，后端重算后屏 6／屏 9 上的数字可能略有出入。
 - **屏 5 的「走角点」精度靠设备**：电脑浏览器的 IP 定位精度很差，只能验证流程；室内、树冠下手机 GPS 也可能 > 10 m。每次只读一次，不持续跟踪。
-
-- **照片不上传、地块不创建**：`contract/api.md` 还没有上传照片和新建地块的请求／响应，前端对 Firestore 只读也不能自己写。屏 3、4 拍的照片只留在本机内存；「Seterusnya」进的是占位页。合同定了再接。
+- **照片不上传、地块不创建**：`contract/api.md` 还没有上传照片和新建地块的请求／响应，前端对 Firestore 只读也不能自己写。屏 3、4 拍的照片和屏 5 圈出的几何只留在本机内存；屏 3 的「Seterusnya」进屏 5，屏 5 的「Selesai」进屏 6 的壳（占位页）。合同（#14／#23）批准后再接。
 - **没有模糊检测**：屏 4 目前不判断照片糊不糊（原型阶段由后端评估）；`unreadable` 提示只在「图片解码或编码失败」时出现。
 - **只有马来语和英文**：企划书里的中文界面不做。词典里的 `needs_review` 标签（BM「Menunggu pegawai」、屏 9 横幅「Menunggu semakan pegawai」）线框里没有，是文案取舍：原来的「Perlu semakan pegawai」与黄色的「Perlu semakan」（线框里的标签）在 BM 里太像，所以换了；英文（「Officer to review」）不动。
 - **真机相机行为没验证过**：电脑上的 Claude 内置浏览器没有真实摄像头。后置镜头选择、手电筒、iOS Safari 的 `playsinline` 自动播放、权限弹窗，都要在真机（HTTPS）上走一遍。取景流程在自动化里是用注入的假 `getUserMedia` 验证的。
@@ -148,7 +147,7 @@ scripts/                      emulators.mjs、check-readonly.mjs、check-prod-bu
 - **看板的状态以最新评估为准**（与屏 9 同一套规则），屏 2 的卡片用 `plots.status`；种子里两者一致，真实后端若不一致，同一块地在两处可能不同色。看板没有评估的地块是「Belum mula」。
 - **看板导出 CSV 是本轮的临时做法**：纯前端生成（当前筛选后的表格；列 Plot、District、Member、Status、Main issue、Updated；**含成员姓名**，不含证件信息、评估说明、地块 id；防公式注入、UTF-8 带 BOM）。合同里的 `GET /api/coop/export` 还是「待定」，定了再换。「Export dossier (PDF)」选中地块后进档案页（见下一条）；虚线的「Override as pass」是待确认功能，没做。
 - **看板没有证件原图**（Storage 里没有照片），右栏只画形状预览（内联 SVG，不是卫星图）。表格一次渲染 100 行，其余点表格下面的「Tunjuk lagi」每次再展开 100 行（筛选条件变了回到第一页，选中一块地不会收回去；「N / 总数」和 CSV 导出按筛选后的**全部**行，不是渲染出来的那一页）。这是简单的逐页展开，不是虚拟滚动：展开几千行后 DOM 仍会很大，真实规模上千块地时再做虚拟滚动或服务端分页（`GET /api/coop/dashboard` 合同待定）。宽屏布局只在内置浏览器里看过，真实大屏未验证。
-- **评估文档的形状是种子的临时约定**（camelCase 的 `ruleResults`／`gaps`／`runStatus`，`gapCode` 取 `area_mismatch／expiring／expired／name_mismatch／not_in_mspo／low_confidence／missing_doc`，规则 `result` 取 `pass／warn／fail／needs_review`），`contract/` 里还没有示例。真实后端写入若不同，解析是防御式的：缺字段不崩，未知 `gapCode` 走通用文案；但要请队友把形状补进合同。
+- **评估文档的形状是种子的临时约定**（camelCase 的 `ruleResults`／`gaps`／`runStatus`，`gapCode` 取 `area_mismatch／expiring／expired／name_mismatch／not_in_mspo／low_confidence／missing_doc`，规则 `result` 取 `pass／warn／fail／needs_review`），示例和形状已在 PR #14 里提议（`contract/firestore.md`、`examples/*.json`），批准前仍是种子的临时约定。真实后端写入若不同，解析是防御式的：缺字段不崩，未知 `gapCode` 走通用文案；但要请队友把形状补进合同。
 - **屏 10 不放会失败的按钮**：「Lukis semula」需要屏 5 的重画和保存多边形的接口，现在**禁用**并写明原因（不能跳到 `/plots/new/map`，那是新建草稿）；上传新文件、确认字段（屏 8）也都还没有，其余事项只给说明。屏 9 上的「Cara mendapatkannya」是进屏 10 看步骤，不是真的去办。线框里虚线的「Hantar ke koperasi」是待确认功能，没做。
 - **数字对照取评估时的快照**（`CC-01` 的 `expectedValue`／`actualValue`），可能与 `plots.areaHaComputed` 的当前值不同，所以页面上标了「Disemak pada …」。形状预览是内联 SVG，没有地图底图。
 - **屏 7 的步骤进度是推导的，不是后端报的**：合同里 `assessments` 只有 `run_status`，没有逐步进度字段。第 1 步看 `documents` 里还有没有 `uploaded`／`extracting` 的当前页文件；第 2 步在评估 `running` 且文件读完后是当前步；第 3、4 步（森林、行动清单）在评估结束前保持「未开始」，`done` 时一起变「完成」——**不按时间假装前进**，所以它们不会单独亮起。后端以后若写逐步进度字段，换成读它。「大约 2 分钟」是固定文案，不倒计时。入口目前只有屏 9 的「Lihat kemajuan」：屏 6「开始检查」和 `POST /api/plots/{id}/assess` 还没有，所以真实的「提交 → 转圈」要等它们。
