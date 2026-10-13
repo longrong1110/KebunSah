@@ -64,3 +64,34 @@ def test_check_point_rejects_nonpositive_or_non_numeric_area(area):
     with pytest.raises(GeometryError) as err:
         check_point(4.3, 101.1, area)
     assert err.value.code == "geometry_invalid"
+
+
+def test_parse_polygon_rejects_ring_that_is_not_a_list():
+    # 外环不是数组时要给 GeometryError，而不是 TypeError（接口层只映射 GeometryError）
+    for rings in ([None], [5]):
+        with pytest.raises(GeometryError) as err:
+            parse_polygon({"type": "Polygon", "coordinates": rings})
+        assert err.value.code == "geometry_invalid"
+
+
+def test_parse_polygon_rejects_integer_too_large_for_float():
+    # json.loads 接受超大整数，math.isfinite 会抛 OverflowError，要转成 GeometryError
+    ring = [[10**400, 4], [101.1, 4], [101.1, 4.1], [10**400, 4]]
+    with pytest.raises(GeometryError) as err:
+        parse_polygon({"type": "Polygon", "coordinates": [ring]})
+    assert err.value.code == "geometry_invalid"
+
+
+def test_check_point_rejects_declared_area_too_large_for_float():
+    with pytest.raises(GeometryError) as err:
+        check_point(4.3, 101.1, 10**400)
+    assert err.value.code == "geometry_invalid"
+
+
+def test_parse_polygon_rejects_area_below_minimum():
+    # 边长约 6.6 米、面积约 0.0044 公顷，低于 MIN_AREA_HA，且顶点彼此不同，走的是面积分支
+    ring = [[101, 4], [101.00006, 4], [101.00006, 4.00006], [101, 4.00006], [101, 4]]
+    with pytest.raises(GeometryError) as err:
+        parse_polygon({"type": "Polygon", "coordinates": [ring]})
+    assert err.value.code == "geometry_invalid"
+    assert "too small" in str(err.value)

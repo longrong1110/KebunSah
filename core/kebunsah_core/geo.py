@@ -37,12 +37,22 @@ def _invalid(message: str) -> GeometryError:
     return GeometryError("geometry_invalid", message)
 
 
+def _is_finite_number(v: Any) -> bool:
+    """非 bool 的有限数。超大整数（json 接受，但转 float 会溢出）视为非有限数。"""
+    if isinstance(v, bool) or not isinstance(v, (int, float)):
+        return False
+    try:
+        return math.isfinite(v)
+    except OverflowError:
+        return False
+
+
 def _coord(pair: Any) -> list[float]:
     if not isinstance(pair, (list, tuple)) or len(pair) < 2:
         raise _invalid("coordinate must be [lng, lat]")
     lng, lat = pair[0], pair[1]
     for v in (lng, lat):
-        if isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v):
+        if not _is_finite_number(v):
             raise _invalid("coordinate must be a finite number")
     if not (-180 <= lng <= 180 and -90 <= lat <= 90):
         raise _invalid("coordinate out of range")
@@ -55,6 +65,8 @@ def parse_polygon(geojson: Any) -> PolygonInfo:
     rings = geojson.get("coordinates")
     if not isinstance(rings, list) or len(rings) != 1:
         raise _invalid("polygon must have exactly one ring (no holes)")
+    if not isinstance(rings[0], list):
+        raise _invalid("ring must be an array of coordinates")
     ring = [_coord(p) for p in rings[0]]
     if len(ring) < 4:
         raise _invalid("ring needs at least 3 distinct vertices")
@@ -79,7 +91,7 @@ def parse_polygon(geojson: Any) -> PolygonInfo:
 def check_point(lat: Any, lng: Any, area_ha_declared: Any, params: Params = DEFAULT_PARAMS) -> tuple[float, float, float]:
     """只记一个点：返回规范化后的 (lat, lng, 手填面积)。面积必须 >0 且 < point_max_ha（EUDR：4 公顷以下才能只给一个点）。"""
     lng_, lat_ = _coord([lng, lat])
-    if isinstance(area_ha_declared, bool) or not isinstance(area_ha_declared, (int, float)) or not math.isfinite(area_ha_declared):
+    if not _is_finite_number(area_ha_declared):
         raise _invalid("declared area must be a number")
     if area_ha_declared <= 0:
         raise _invalid("declared area must be greater than 0")
