@@ -91,7 +91,7 @@ Google Cloud AI Builder Cup 2026 参赛项目。原型提交截止 **2026-10-18*
 | 8 | **谁创建 `users/{uid}`、谁写 `lastLoginAt`** | 前端只读，只能是后端；线上 Auth 不能预设 uid（首次登录建档或用 Admin SDK 预建）。现在没有档案的账号首页显示「Profil anda belum dibuat.」 |
 | 9 | **森林初筛（Earth Engine）** | 先让 1 块地查通；1–2 块演示地块的坐标要落在真实有森林变化的区域，种子里的森林数据只是占位 |
 | 10 | **换正式 Maps key** | 现在是 Google Demo key，只适合原型，用量上限不明；限制 HTTP 来源（`localhost:4200` 和 Hosting 网址），只开 Maps JavaScript API |
-| 11 | **真机验证（只能人手做）** | 屏 3／4／5 的相机、手电筒、触摸、双指缩放、定位权限、iOS Safari；看板真实大屏；档案打印预览（取消「页眉和页脚」）。手机访问本机要 HTTPS 或隧道 |
+| 11 | **真机验证（只能人手做）** | 屏 3／4／5 的相机、手电筒、触摸、双指缩放、定位权限、iOS Safari；看板真实大屏；档案打印预览（取消「页眉和页脚」）。手机访问本机要 HTTPS 或隧道；步骤和逐条清单见 [`docs/real-device-testing.md`](docs/real-device-testing.md) |
 | 12 | **屏 10「重画」** | 现在禁用。批准 #23 后改成进入重画（带 plotId，复用屏 5 的页面）＋ `PATCH` 保存，粗估 2–3 小时 |
 | 13 | **`firebase.json` 加 `emulators`**（共管文件） | 加了之后 `web/scripts/emulators.mjs` 可以退休；现在只起 Auth＋Firestore，Storage 模拟器没接 |
 
