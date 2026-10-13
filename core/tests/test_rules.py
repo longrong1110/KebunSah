@@ -39,6 +39,13 @@ def test_cc01_without_a_title_is_a_missing_document():
     assert (r.result, r.doc_type, r.meta["kind"]) == ("fail", "land_title", "missing")
 
 
+@pytest.mark.parametrize("title_ha", [0, 0.00001, -2.0])
+def test_cc01_with_an_unusable_title_area_needs_review_instead_of_crashing(title_ha):
+    r = cc01(title_ha=title_ha, plot_ha=1.0)
+    assert r.result == "needs_review"
+    assert (r.meta["kind"], r.meta["doc_type"]) == ("low_confidence", "land_title")
+
+
 # ---- CC-02 有效期 ----
 def test_cc02_passes_with_plenty_of_time():
     r = cc02(as_of=AS_OF, doc_type="mpob_licence", label="MPOB", expiry_date="2027-03-31")

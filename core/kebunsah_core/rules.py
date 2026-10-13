@@ -60,6 +60,11 @@ def cc01(*, title_ha: float | None, plot_ha: float, params: Params = DEFAULT_PAR
         return RuleResult("CC-01", "fail", "Geran ada", "Tiada geran", used, "Geran belum dimuat naik",
                           doc_type="land_title", meta={"kind": "missing"})
     t = to_ten_thousandths(title_ha)
+    if t <= 0:
+        # 地契面积读成 0 或负数（读错、或被确认成了 0）：不能拿它当分母，按"读不准，需确认"处理
+        return RuleResult("CC-01", "needs_review", "Luas geran sah", "Luas geran tidak sah", used,
+                          "Luas pada geran tidak sah, perlu disahkan",
+                          meta={"kind": "low_confidence", "doc_type": "land_title"})
     p = to_ten_thousandths(plot_ha)
     over = p - t
     tol = max(t * params.area_tolerance_pct / 100, params.area_tolerance_min_ha * 10000)
