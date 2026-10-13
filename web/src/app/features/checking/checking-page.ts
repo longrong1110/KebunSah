@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { LangButton } from '../../shared/lang-button';
-import { dossierState } from '../dossier/dossier-data';
+import { pageState } from '../plots/plot-watch';
 import { buildChecking } from './checking';
 import { watchChecking } from './checking-data';
 
@@ -30,7 +30,7 @@ export class CheckingPage {
   private readonly data = watchChecking(this.plotId);
 
   protected readonly state = computed(() =>
-    dossierState(this.data.plot(), [this.data.assessments(), this.data.documents()]),
+    pageState(this.data.plot(), [this.data.assessments(), this.data.documents()]),
   );
 
   protected readonly view = computed(() => {

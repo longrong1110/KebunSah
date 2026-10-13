@@ -17,7 +17,8 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import type { Load } from '../../core/load-state';
 import { LangButton } from '../../shared/lang-button';
 import { buildDossier, SVG_HEIGHT, SVG_WIDTH } from './dossier';
-import { dossierState, watchDossier } from './dossier-data';
+import { pageState } from '../plots/plot-watch';
+import { watchDossier } from './dossier-data';
 
 const docOf = <T>(l: Load<DocState<T>> | null): T | null =>
   l?.kind === 'data' ? l.value.data : null;
@@ -45,7 +46,7 @@ export class DossierPage {
   private readonly data = watchDossier(this.plotId);
 
   protected readonly state = computed(() =>
-    dossierState(this.data.plot(), [
+    pageState(this.data.plot(), [
       this.data.assessments(),
       this.data.documents(),
       this.data.title(),
