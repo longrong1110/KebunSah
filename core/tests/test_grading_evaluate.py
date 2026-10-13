@@ -117,3 +117,18 @@ def test_evaluate_lease_expiry_gets_its_own_row():
     ev = evaluate_plot(facts, {"area": OK, "valid_until": OK, "name": OK}, as_of=AS_OF)
     assert ev.status == "yellow"
     assert [(g.gap_code, g.doc_type) for g in ev.gaps] == [("expiring", "land_title")]
+
+
+def test_title_with_an_area_but_no_proprietor_names_still_gets_a_gap():
+    facts = PlotFacts(operator_name="TAN AH KOW", plot_ha=3.0, title_ha=3.0, title_names=(),
+                      licence_valid_until="2027-03-31", licence_name="TAN AH KOW", cert_expiry="2029-02-28",
+                      member_name="TAN AH KOW", in_mspo=True)
+    ev = evaluate_plot(facts, {"area": OK, "valid_until": OK}, as_of=AS_OF)
+    assert ev.status == "needs_review"
+    assert [(g.gap_code, g.severity, g.doc_type) for g in ev.gaps] == [("missing_doc", "medium", "land_title")]
+    assert summarize(ev.status, ev.gaps) != ""
+
+
+def test_missing_title_entirely_reports_one_land_title_gap_not_two():
+    gaps = derive_gaps([cc01(title_ha=None, plot_ha=3.0), cc03(operator_name="A", title_names=[])], not_in_mspo=False)
+    assert [(g.gap_code, g.doc_type) for g in gaps] == [("missing_doc", "land_title")]

@@ -88,7 +88,13 @@ def derive_gaps(rule_results: list[RuleResult], *, not_in_mspo: bool) -> list[Ga
                 gaps.append(_expiry_gap(r))
         elif r.rule_code == "CC-03":
             if kind == "missing":
-                continue  # 缺地契已由 CC-01 的 missing_doc 说明
+                # 地契整份缺失时 CC-01 已报 missing_doc，这里不重复；地契有面积但没读到持有人（只缺第二页）时要单独报
+                if any(x.rule_code == "CC-01" and x.meta.get("kind") == "missing" for x in rule_results):
+                    continue
+                gaps.append(Gap("missing_doc", "medium", "land_title",
+                                "Halaman geran yang menyenaraikan pemilik berdaftar belum dimuat naik",
+                                "Ambil gambar halaman belakang geran (Rekod Pemilikan) dan muat naik."))
+                continue
             gaps.append(Gap("name_mismatch", "high", "land_title",
                             f"Nama pada {m['label']} ialah {m['name']}, berbeza daripada pengusaha",
                             "Sediakan dokumen pusaka (surat kuasa mentadbir atau perintah faraid) atau surat kuasa wakil "
