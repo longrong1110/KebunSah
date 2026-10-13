@@ -242,3 +242,88 @@ describe('Login：语言', () => {
     expect(text()).toContain(en.login.resendIn(30));
   });
 });
+
+describe('Login 无障碍', () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => localStorage.clear());
+
+  const flush = async (fixture: ComponentFixture<Login>) => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  };
+
+  it('读屏提示区一直在页面里（role=alert），#error 只在有错误时出现，不靠 hidden 切换', async () => {
+    const { c, fixture } = setup();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[role="alert"]')).not.toBeNull();
+    expect(el.querySelector('#error')).toBeNull();
+    c.error.set('phoneFormat');
+    await flush(fixture);
+    expect(el.querySelector('[role="alert"] #error')?.textContent).toContain(
+      ms.login.errors.phoneFormat,
+    );
+    c.error.set(null);
+    await flush(fixture);
+    expect(el.querySelector('#error')).toBeNull();
+    expect(el.querySelector('[role="alert"]')).not.toBeNull();
+  });
+
+  it('验证码发出后焦点落在验证码输入框（提交时按钮被禁用，焦点会丢到 body）', async () => {
+    const { c, fixture } = setup();
+    c.phone.set('+60100000001');
+    await c.send();
+    await flush(fixture);
+    const el = fixture.nativeElement as HTMLElement;
+    expect(document.activeElement).toBe(el.querySelector('#code'));
+  });
+
+  it('「换号码」后焦点回到号码输入框', async () => {
+    const { c, fixture } = setup();
+    c.phone.set('+60100000001');
+    await c.send();
+    await flush(fixture);
+    c.changeNumber();
+    await flush(fixture);
+    expect(document.activeElement).toBe(
+      (fixture.nativeElement as HTMLElement).querySelector('#phone'),
+    );
+  });
+
+  it('号码写错、发送失败：焦点落在号码输入框，错误由提示区念出', async () => {
+    const sendCode = vi.fn().mockRejectedValue({ code: 'auth/network-request-failed' });
+    const { c, fixture } = setup({ sendCode });
+    const el = fixture.nativeElement as HTMLElement;
+    c.phone.set('abc');
+    await c.send();
+    await flush(fixture);
+    expect(document.activeElement).toBe(el.querySelector('#phone'));
+
+    c.phone.set('+60100000001');
+    (document.activeElement as HTMLElement).blur();
+    await c.send();
+    await flush(fixture);
+    expect(c.error()).toBe('network');
+    expect(document.activeElement).toBe(el.querySelector('#phone'));
+  });
+
+  it('验证码格式错、确认失败：焦点停在验证码输入框', async () => {
+    const confirmCode = vi.fn().mockRejectedValue({ code: 'auth/invalid-verification-code' });
+    const { c, fixture } = setup({ confirmCode });
+    const el = fixture.nativeElement as HTMLElement;
+    c.phone.set('+60100000001');
+    await c.send();
+    await flush(fixture);
+    await c.confirm(); // 空的验证码
+    await flush(fixture);
+    expect(c.error()).toBe('codeFormat');
+    expect(document.activeElement).toBe(el.querySelector('#code'));
+
+    c.code.set('123456');
+    (document.activeElement as HTMLElement).blur();
+    await c.confirm();
+    await flush(fixture);
+    expect(c.error()).toBe('codeWrong');
+    expect(document.activeElement).toBe(el.querySelector('#code'));
+  });
+});

@@ -3,6 +3,8 @@ import {
   Component,
   DestroyRef,
   ElementRef,
+  Injector,
+  afterNextRender,
   inject,
   signal,
   viewChild,
@@ -56,6 +58,9 @@ export class Login {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly recaptcha = viewChild.required<ElementRef<HTMLElement>>('recaptcha');
+  private readonly phoneInput = viewChild<ElementRef<HTMLInputElement>>('phoneInput');
+  private readonly codeInput = viewChild<ElementRef<HTMLInputElement>>('codeInput');
+  private readonly injector = inject(Injector);
   private readonly i18n = inject(I18nService);
   protected readonly t = this.i18n.t;
 
@@ -96,6 +101,7 @@ export class Login {
     const parsed = normalizePhone(this.phone());
     if (!parsed.ok) {
       this.error.set(parsed.reason === 'empty' ? 'phoneEmpty' : 'phoneFormat');
+      this.focusField();
       return;
     }
     this.busy.set(true);
@@ -110,6 +116,7 @@ export class Login {
       this.error.set(errorKeyFor(err));
     } finally {
       this.busy.set(false);
+      this.focusField();
     }
   }
 
@@ -117,6 +124,7 @@ export class Login {
     if (this.busy()) return;
     if (!/^\d{6}$/.test(this.code())) {
       this.error.set('codeFormat');
+      this.focusField();
       return;
     }
     this.busy.set(true);
@@ -126,6 +134,7 @@ export class Login {
       await this.router.navigateByUrl('/', { replaceUrl: true });
     } catch (err) {
       this.error.set(errorKeyFor(err));
+      this.focusField();
     } finally {
       this.busy.set(false);
     }
@@ -144,10 +153,25 @@ export class Login {
     this.error.set(null);
     this.cooldown.set(0);
     this.step.set('phone');
+    this.focusField();
   }
 
   submit(): Promise<void> {
     return this.step() === 'phone' ? this.send() : this.confirm();
+  }
+
+  /**
+   * 把焦点交给当前步骤的输入框。提交时按钮会被禁用（失去焦点，回到 body），步骤切换后原来的按钮也不再是用户要去的地方；
+   * 键盘和读屏用户要落在新出现的输入框（或出错的那一格）上。等下一次渲染之后再聚焦，输入框才在页面里。
+   */
+  private focusField(): void {
+    afterNextRender(
+      () => {
+        const ref = this.step() === 'phone' ? this.phoneInput() : this.codeInput();
+        ref?.nativeElement.focus();
+      },
+      { injector: this.injector },
+    );
   }
 
   private startCooldown(): void {
