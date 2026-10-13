@@ -34,4 +34,4 @@ postgresql://kebunsah:kebunsah-local-only@127.0.0.1:5433/kebunsah
 ## 没做
 
 - **200 个模拟地块没有灌进这个库。** 它们是 Firestore 形状的 JSON（`seed/data/`），用 `npm run load` 灌 Firebase 模拟器；要灌 PostgreSQL 需要另写一份映射。
-- **线上数据库没建**：线上 Firestore 与（若采用）Cloud SQL 都要 GCP／Firebase 项目与账单，由负责人在控制台创建，见仓库根 `TODO.md` 与 `README.md` 的「队友处理须知」。
+- **线上数据库没建**：线上 Firestore 与（若采用）Cloud SQL 都要 GCP／Firebase 项目与账单，由负责人在控制台创建，见仓库根 `README.md` 的「队友处理须知」。

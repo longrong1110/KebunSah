@@ -35,7 +35,7 @@ export class BackNavigator {
   /**
    * 当前页之前还有一条同源的历史记录。优先用 Navigation API 的 canGoBack：它只数当前位置之前、同源的条目，
    * 不会被「前进」条目误导（history.length 是整个标签页的总条数），也不会退回别的网站；
-   * 不支持的浏览器退回 history.length > 1（测试环境里恒为 1，见 F-033）。
+   * 不支持的浏览器退回 history.length > 1（测试环境里恒为 1）。
    */
   canGoBack(): boolean {
     const win = this.document.defaultView as WindowWithNavigation | null;

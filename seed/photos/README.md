@@ -31,5 +31,5 @@ node seed/photos/render.mjs      # 起本机小服务（端口 4310）
 
 ## 没做的
 
-- 企划书 10/14 的待办还写着「其中 1–2 块地的坐标落在真实有森林变化的区域」：这要用 Earth Engine／Global Forest Watch 查真实的森林变化数据来选坐标，我这边没有办法验证，留给队友的 Earth Engine 联调（TODO「Earth Engine 先让 1 块地查通」）。
+- 企划书 10/14 的待办还写着「其中 1–2 块地的坐标落在真实有森林变化的区域」：这要用 Earth Engine／Global Forest Watch 查真实的森林变化数据来选坐标，前端这边没有办法验证，留给队友的 Earth Engine 联调（TODO「Earth Engine 先让 1 块地查通」）。
 - 照片还**没有上传到 Storage**，也**没有接进 `documents`**：上传要走后端的签名网址（`contract/api.md` 的 `POST /api/plots/{id}/documents` 还是「待定」）。现在它们只是文件，可以在屏 3／4 用「从相册选」测，或给后端联调用。

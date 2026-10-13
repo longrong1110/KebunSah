@@ -55,7 +55,7 @@ FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:909
 
 ## 需要和队友在合同里对齐的缺口
 
-`contract/` 里还没有任何 Firestore 文档示例，下面这些是 seed 的**临时约定**，字段名和类型集中在 `src/shape.mjs`，合同定下后只改一处。建议开一个 `contract/…` PR 把它们写下来。
+`contract/` 里还没有（已合并的）Firestore 文档示例；评估文档的形状与三份示例已在 PR #14 里提议（`contract/firestore.md`、`examples/*.json`），批准前下面这些仍是 seed 的**临时约定**，字段名和类型集中在 `src/shape.mjs`，合同定下后只改一处。建议开一个 `contract/…` PR 把它们写下来。
 
 1. **字段名大小写**：本次 camelCase。
 2. **`polygonGeojson` 存成 JSON 字符串**：Firestore 不允许数组直接嵌套数组，GeoJSON 的 `coordinates` 原样写不进去。**已实测**（2026-10-09，Firestore 模拟器 v1.22.0）：写入数组套数组返回 HTTP 400 `Nested arrays are not allowed`。`centroidLat`／`centroidLng` 是两个数字，不是 GeoPoint。
@@ -72,7 +72,7 @@ FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:909
 
 ## 已知取舍
 
-- 没有 `pending`、`queued`／`running`／`failed` 的样本：屏 2 的「Belum mula」和屏 7 要靠现场新建地块来演示。
+- 没有 `pending`、`queued`／`running`／`failed` 的样本：屏 2 的「Belum mula」要靠现场新建地块来演示（写入路径还没通）；屏 7 的转圈用模拟器 REST 把一条评估改成 `running`，命令见 `web/README.md` 的「屏 7（评估中）」。
 - 生成地块的 `summaryText`／缺口文案用马来语；3 个演示地块的 `detail`／`description`／`suggestedAction` 和数值字符串（`58 hari`、`2026-04-30 telah tamat`）原是 `schema.sql` 里的中文，2026-10-11 起也换成马来语（数值与结论不变，格式与生成的地块一致）。虚构机构名后缀由「(虚构)」改成「(rekaan)」。数据里已没有中文。前端只解析天数、日期、公顷这几个数，不显示这些说明文字。
 - 演示 3 块的多边形与它声明的 `areaHaComputed` 相差最多约 0.03 公顷（原值与球面实算有约 0.7% 的差），原样保留；生成地块的误差都在 0.01 公顷内。
 - 坐标是把虚构地块撒在各县县城附近，卫星图上可能是森林、水域或市区；森林初筛的数值（`forestCover2020Pct` 等）是演示占位，`forestDataset` 为空。mukim／kampung 名称是示意，没有逐一核对。
