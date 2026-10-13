@@ -12,8 +12,9 @@ from __future__ import annotations
 
 import math
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
-from typing import Any, Mapping
+from typing import Any
 
 from .dates import day_number
 from .names import similarity
@@ -219,5 +220,8 @@ def to_needs_review(base: RuleResult, field_doc: Mapping[str, Any], doc_type: st
         result="needs_review",
         actual_value=f"keyakinan bacaan {shown}",
         detail="Bacaan gambar kurang jelas, perlu disahkan",
+        # 容器都复制一份：后面的流水线会往降级后的行追加证据，不能连带改到原来的行
+        params_used=dict(base.params_used),
+        evidence=[dict(e) for e in base.evidence],
         meta={**base.meta, "kind": "low_confidence", "doc_type": doc_type},
     )

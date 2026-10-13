@@ -93,8 +93,9 @@ def check_point(lat: Any, lng: Any, area_ha_declared: Any, params: Params = DEFA
     lng_, lat_ = _coord([lng, lat])
     if not _is_finite_number(area_ha_declared):
         raise _invalid("declared area must be a number")
-    if area_ha_declared <= 0:
+    area = round(float(area_ha_declared), 4)  # 先取到存库的精度再判断，免得 0.00001 存成 0.0、3.99999 存成 4.0
+    if area <= 0:
         raise _invalid("declared area must be greater than 0")
-    if area_ha_declared >= params.point_max_ha:
+    if area >= params.point_max_ha:
         raise GeometryError("point_area_too_large", f"point mode needs an area below {params.point_max_ha} ha")
-    return lat_, lng_, round(float(area_ha_declared), 4)
+    return lat_, lng_, area

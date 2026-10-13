@@ -85,15 +85,19 @@ def test_plot_matches_seed_assessment(plot_id, plot):
     ev = evaluate_plot(facts, critical, as_of=AS_OF, params=PARAMS)
     stored = ASSESSMENTS[plot_id]
 
-    assert ev.status == plot["status"] == stored["result"]
+    assert ev.status == plot["status"], f"{plot_id}: status {ev.status!r} != plots.json {plot['status']!r}"
+    assert plot["status"] == stored["result"], f"{plot_id}: plots.json status != assessments.json result"
+    # 钉住规则集合：种子里每个地块的评估都正好是这三条（以后加规则必须同步更新黄金测试）
+    assert {w["ruleCode"] for w in stored["ruleResults"]} == {"CC-01", "CC-02", "CC-03"}, plot_id
 
     for want in stored["ruleResults"]:
         code = want["ruleCode"]
         if code == "CC-02":
             # 种子只留"最差的一份"（始终是 MPOB 执照，或缺执照那一行）；我们每份文件一条
-            got = next(r for r in ev.results if r.rule_code == "CC-02" and r.doc_type == "mpob_licence")
+            got = next((r for r in ev.results if r.rule_code == "CC-02" and r.doc_type == "mpob_licence"), None)
         else:
-            got = next(r for r in ev.results if r.rule_code == code)
+            got = next((r for r in ev.results if r.rule_code == code), None)
+        assert got is not None, f"{plot_id}: no {code} row"
         assert got.result == want["result"], code
         if plot_id not in DEMO_PLOT_IDS:
             assert got.expected_value == want["expectedValue"], code

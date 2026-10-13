@@ -95,3 +95,15 @@ def test_parse_polygon_rejects_area_below_minimum():
         parse_polygon({"type": "Polygon", "coordinates": [ring]})
     assert err.value.code == "geometry_invalid"
     assert "too small" in str(err.value)
+
+
+def test_check_point_rounds_the_declared_area_before_judging_it():
+    # 先取到 4 位小数再判断：0.00001 成了 0.0 → 不合法；3.99999 成了 4.0 → 到了上限
+    with pytest.raises(GeometryError) as err:
+        check_point(4.3, 101.1, 0.00001)
+    assert err.value.code == "geometry_invalid"
+    with pytest.raises(GeometryError) as err:
+        check_point(4.3, 101.1, 3.99999)
+    assert err.value.code == "point_area_too_large"
+    assert check_point(4.3, 101.1, 3.9999) == (4.3, 101.1, 3.9999)  # 取整后仍在上限以下
+    assert check_point(4.3, 101.1, 0.0001) == (4.3, 101.1, 0.0001)  # 取整后仍大于 0

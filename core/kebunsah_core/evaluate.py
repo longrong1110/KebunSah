@@ -1,8 +1,8 @@
 """把一个地块的事实喂给三条规则，得到规则结果、缺口和红黄绿。评估流水线和黄金测试都从这里进。"""
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Mapping
 
 from .dates import day_number
 from .grading import Gap, aggregate, derive_gaps

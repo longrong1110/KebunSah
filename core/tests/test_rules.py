@@ -227,3 +227,18 @@ def test_rule_result_to_doc_uses_the_firestore_shape():
     assert set(doc) == {"ruleCode", "result", "expectedValue", "actualValue", "paramsUsed", "evidence", "detail", "docType"}
     assert doc["paramsUsed"] == {"warn_days": 90} and doc["evidence"] == []
     assert "docType" not in cc01(title_ha=3.0, plot_ha=3.0).to_doc()
+
+
+def test_to_needs_review_shares_nothing_mutable_with_the_base_row():
+    # 后面的流水线会往降级后的行里追加证据；不能因此改到原来的行
+    base = cc01(title_ha=3.04, plot_ha=3.05)
+    base.evidence.append({"page": "1"})
+    r = to_needs_review(base, {"confidence": 0.59}, "land_title")
+    assert r.evidence == [{"page": "1"}] and r.params_used == base.params_used
+    r.evidence.append({"page": "2"})
+    r.evidence[0]["page"] = "changed"
+    r.params_used["tol_pct"] = 999
+    r.meta["extra"] = True
+    assert base.evidence == [{"page": "1"}]
+    assert base.params_used["tol_pct"] == 10
+    assert "extra" not in base.meta

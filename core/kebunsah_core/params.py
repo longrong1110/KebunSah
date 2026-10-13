@@ -1,8 +1,9 @@
 """规则阈值。默认值取自 contract/schema.sql 的 rule_params；线上从 config/ruleParams 文档读。"""
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
-from typing import Any, Mapping
+from typing import Any
 
 
 @dataclass(frozen=True)

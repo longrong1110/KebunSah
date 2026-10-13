@@ -132,3 +132,54 @@ def test_title_with_an_area_but_no_proprietor_names_still_gets_a_gap():
 def test_missing_title_entirely_reports_one_land_title_gap_not_two():
     gaps = derive_gaps([cc01(title_ha=None, plot_ha=3.0), cc03(operator_name="A", title_names=[])], not_in_mspo=False)
     assert [(g.gap_code, g.doc_type) for g in gaps] == [("missing_doc", "land_title")]
+
+
+# ---- evaluate_plot：几条跨任务的路径 ----
+def _row(ev, code, doc_type=None):
+    return next(r for r in ev.results if r.rule_code == code and r.doc_type == doc_type)
+
+
+def test_expired_lease_is_red_with_an_expired_land_title_gap():
+    facts = PlotFacts(operator_name="TAN AH KOW", plot_ha=4.2, title_ha=4.2, title_names=("TAN AH KOW",),
+                      lease_expiry="2026-09-01", licence_valid_until="2027-06-01", licence_name="TAN AH KOW",
+                      cert_expiry="2029-02-28", member_name="TAN AH KOW", in_mspo=True)
+    ev = evaluate_plot(facts, {"area": OK, "valid_until": OK, "name": OK}, as_of=AS_OF)
+    assert ev.status == "red"
+    assert _row(ev, "CC-02", "land_title").result == "fail"
+    assert [(g.gap_code, g.doc_type) for g in ev.gaps] == [("expired", "land_title")]
+
+
+def test_expired_mspo_certificate_is_red_with_an_expired_mspo_cert_gap():
+    facts = PlotFacts(operator_name="TAN AH KOW", plot_ha=4.2, title_ha=4.2, title_names=("TAN AH KOW",),
+                      licence_valid_until="2027-06-01", licence_name="TAN AH KOW", cert_expiry="2026-09-01",
+                      member_name="TAN AH KOW", in_mspo=True)
+    ev = evaluate_plot(facts, {"area": OK, "valid_until": OK, "name": OK}, as_of=AS_OF)
+    assert ev.status == "red"
+    assert _row(ev, "CC-02", "mspo_cert").result == "fail"
+    assert [(g.gap_code, g.doc_type) for g in ev.gaps] == [("expired", "mspo_cert")]
+
+
+def test_unconfirmed_low_confidence_area_makes_cc01_needs_review():
+    ev = evaluate_plot(GREEN, {"area": {"confidence": 0.5}, "valid_until": OK, "name": OK}, as_of=AS_OF)
+    row = _row(ev, "CC-01")
+    assert (row.result, row.actual_value) == ("needs_review", "keyakinan bacaan 0.50")
+    assert ev.status == "needs_review"
+    assert [(g.gap_code, g.doc_type) for g in ev.gaps] == [("low_confidence", "land_title")]
+
+
+def test_unconfirmed_low_confidence_valid_until_makes_the_mpob_row_needs_review():
+    ev = evaluate_plot(GREEN, {"area": OK, "valid_until": {"confidence": 0.5}, "name": OK}, as_of=AS_OF)
+    assert _row(ev, "CC-02", "mpob_licence").result == "needs_review"
+    assert _row(ev, "CC-02", "mspo_cert").result == "pass"  # 只降级它依赖的那一行
+    assert ev.status == "needs_review"
+    assert [(g.gap_code, g.doc_type) for g in ev.gaps] == [("low_confidence", "mpob_licence")]
+
+
+def test_a_title_area_of_zero_through_evaluate_plot_needs_review():
+    facts = PlotFacts(operator_name="TAN AH KOW", plot_ha=4.23, title_ha=0.0, title_names=("TAN AH KOW",),
+                      licence_valid_until="2027-03-31", licence_name="TAN AH KOW", cert_expiry="2029-02-28",
+                      member_name="TAN AH KOW", in_mspo=True)
+    ev = evaluate_plot(facts, {"area": OK, "valid_until": OK, "name": OK}, as_of=AS_OF)
+    assert _row(ev, "CC-01").result == "needs_review"
+    assert ev.status == "needs_review"
+    assert [(g.gap_code, g.doc_type) for g in ev.gaps] == [("low_confidence", "land_title")]
