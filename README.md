@@ -81,6 +81,56 @@ Google Cloud AI Builder Cup 2026 参赛项目。原型提交截止 **2026-10-18*
 4. **Gemini 走 Vertex AI 还是 AI Studio**（后端定），以及 Earth Engine 的注册。
 5. **正式 Maps key**：谁的项目、限制哪些来源。
 
+## 系统还没做的（交接清单，按优先度）
+
+> 2026-10-14 整理。前端负责人 10/15 起不在（回来日期待补）。**只列系统还没做的**；已做完的见上面的「队友处理须知」和 `web/README.md`。
+> **现状一句话：** 前端「读」的流程全部做完（登录、我的地块、拍文件、圈地块、评估中、结果、问题详情、合作社看板、导出档案），数据来自本地 Firebase 模拟器里的种子；**「写」的路径整条没通**——新建地块、传照片、开始评估，因为后端没有代码、合同 #14／#23 没人审、没有线上项目。
+> 时间：10/16 功能冻结，10/18 提交（要求公开可访问网址，并用 Gemini／Gemma）。
+
+### P0：演示和提交的系统必需
+
+| # | 事项 | 现状与做法 | 谁 | 依赖 |
+| --- | --- | --- | --- | --- |
+| 1 | **后端 API 与 AI 服务** | `api/`、`ai-worker/` 只有 README。要做：`POST/GET /api/plots`、`PATCH /api/plots/{id}`、`POST /api/plots/{id}/documents`、`POST /api/plots/{id}/assess`；Gemini 抽取（三种文件，带置信度）、规则引擎（面积 CC-01、有效期 CC-02、姓名 CC-03）、写出 `assessments`／`gaps`／`plots.status`。**时间不够的最低限度版本**：一个脚本把 `seed/photos/` 的仿真证件照交给 Gemini 抽取、核对规则、写出评估，先让「用了 Gemini」成立 | 队友 | 合同 #14／#23 |
+| 2 | **审并 Approve [#14](https://github.com/longrong1110/KebunSah/pull/14)、[#23](https://github.com/longrong1110/KebunSah/pull/23)** | 无回应。#14 是评估文档形状、鉴权、`assess`、屏 8 字段确认；#23 是建地块、保存位置与面积、登记文件，堆叠在 #14 上，先审 #14。不同意的地方直接在 PR 里改，以你们为准 | 队友 | — |
+| 3 | **线上项目与部署（公开网址）** | 没有 Firebase／GCP 项目。要：建项目开计费（见上面第五节哪些要钱）、开 Firestore／Auth／Storage、`web/src/environments/environment.ts` 填 Firebase Web 配置和正式 Maps key、Hosting 发布前端、Cloud Run 发布 `kebunsah-api`／`kebunsah-ai`、把 `seed/` 灌进线上 Firestore（要服务账号，**不进仓库**） | 要有卡的人 | 第五节的决定 |
+| 4 | **前端接线：屏 6 本体、建地块、上传、开始评估** | 现在屏 6 只是壳（`web/src/app/features/new-plot/review-placeholder.ts`）。批准后要做：建地块 → `PATCH` 保存屏 5 的多边形／点（草稿已在 `DraftService`，面积由后端重算）→ 每份文件取签名网址并 `PUT` 直传 → `POST /assess` → 跳屏 7（`/plots/:id/checking` 已有）；加载态和错误态；屏 9 里「Belum mula」状态补「开始检查」按钮。**粗估 1 天** | 前端接手人 | #1、#2 |
+| 5 | **端到端联调** | 用 5 份仿真证件照跑完整链路（联调 #1），再按演示脚本彩排（联调 #2）；跑通打标签 `v0.1-e2e` | 两人 | #1、#4 |
+
+### P1：强烈建议
+
+| # | 事项 | 备注 |
+| --- | --- | --- |
+| 6 | **收紧 `infra/firestore.rules`**（若用 Storage 还要 `storage.rules`） | 现在任何登录用户都能读全部集合，包括 `persons` 的 `icHash`／`icLast4`。至少改成只能读本合作社；看板用 collection group 读评估，所以评估文档要带 `coopId`（#14 的提议）。共管文件，对方 Approve |
+| 7 | **接上 PR 检查（Cloud Build）** | `infra/cloudbuild/pr.yaml` 的后端步骤还是 `dotnet test`，后端是 Python，要换成 pytest；GitHub 上 PR 页面现在看不到任何检查 |
+| 8 | **谁创建 `users/{uid}`、谁写 `lastLoginAt`** | 前端只读，只能是后端；线上 Auth 不能预设 uid（首次登录建档或用 Admin SDK 预建）。现在没有档案的账号首页显示「Profil anda belum dibuat.」 |
+| 9 | **森林初筛（Earth Engine）** | 先让 1 块地查通；1–2 块演示地块的坐标要落在真实有森林变化的区域，种子里的森林数据只是占位 |
+| 10 | **换正式 Maps key** | 现在是 Google Demo key，只适合原型，用量上限不明；限制 HTTP 来源（`localhost:4200` 和 Hosting 网址），只开 Maps JavaScript API |
+| 11 | **真机验证（只能人手做）** | 屏 3／4／5 的相机、手电筒、触摸、双指缩放、定位权限、iOS Safari；看板真实大屏；档案打印预览（取消「页眉和页脚」）。手机访问本机要 HTTPS 或隧道 |
+| 12 | **屏 10「重画」** | 现在禁用。批准 #23 后改成进入重画（带 plotId，复用屏 5 的页面）＋ `PATCH` 保存，粗估 2–3 小时 |
+| 13 | **`firebase.json` 加 `emulators`**（共管文件） | 加了之后 `web/scripts/emulators.mjs` 可以退休；现在只起 Auth＋Firestore，Storage 模拟器没接 |
+
+### P2：有空再做，可砍
+
+- **屏 8 确认字段**（只显示读不准的、可直接改）：要 `PATCH /api/documents/{id}/fields`（#14 的提议）。粗估约 1 天
+- **看板里的证件原图与地图并排**：现在只有形状预览。要先定原图怎么读（#14：后端给 15 分钟签名读取网址，还是 `storage.rules` 放行），并且 Storage 里要有照片
+- `GET /api/coop/dashboard`、`/api/coop/export`、`/api/plots/{id}/report`：前端已在浏览器里算统计、导出 CSV 和档案，**不依赖它们**，做不做由后端定
+- 屏 9 的「Hantar ke koperasi」、看板的「Override as pass」：线框里的虚线建议功能，没做，要先确认要不要
+- 把 200 个模拟地块也灌进本地 PostgreSQL（现在只有 `schema.sql` 自带的 3 个）；屏 7 与档案页共用的 `dossierState` 小清理；屏 1／4 的无障碍审计；清理已合并的旧分支和 `.gitignore` 加 `*-debug.log`
+
+### 写这些之前需要先定的（括号里是前端的默认）
+
+| 决定 | 默认 | 影响 |
+| --- | --- | --- |
+| 谁出卡建项目、开不开 Blaze | 符合 $300 试用资格的那位，立刻设预算告警 | #3 |
+| 证件照存哪 | Cloud Storage（不用 base64 存 Firestore） | #3、#4、P2 原图 |
+| 手机号 OTP | 测试手机号，不发真短信 | #3 |
+| Gemini 走 Vertex AI 还是 AI Studio | 后端定 | #1 |
+| #14 里前端已定的 7 件事（原图读取、`coopId`、`CC-02` 每份文件一条……） | 同意 | #1、#6 |
+| 上传完成后谁通知后端 | Storage 的 `object.finalize` 触发（#23 的建议） | #1、#4 |
+
+**别在 #14／#23 批准前写调用后端接口的前端代码**，合同还会变。
+
 ## 演示视频计划（3 分钟）
 
 > 依据企划书第 12 章，按前端现在**真的做出来了什么**改写。官方要求：约 3 分钟、**英文**、上传 YouTube／Vimeo／公开 Google Drive，要看得出用了 Gemini，并标明问题陈述 Sustainability & Social Impact。录制排在 **10/17（六）**，10/15 联调 #2 先按这份彩排。故事线：问题 → 园主体验 → 智能体幕后 → 合作社视角 → 影响。
