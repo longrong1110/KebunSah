@@ -72,7 +72,7 @@ curl http://127.0.0.1:9099/emulator/v1/projects/demo-kebunsah/verificationCodes
 - **没有摄像头的电脑**：取景页会显示「Tiada kamera…」并保留相册入口，屏 3／4 仍可用相册走完。
 - **离线**：停掉 Firestore 模拟器，屏 2 在 10 秒内转为离线提示并给「Cuba lagi」；模拟器恢复后点它即可重新订阅。
 
-> 手机用局域网 IP 的 **http** 地址访问时，浏览器不开放 `getUserMedia`（需要 HTTPS 或 `localhost`），取景页会提示「只能通过安全连接打开相机」，相册仍可用。真机拍照要走 HTTPS（部署后的 Hosting，或隧道）。
+> 手机用局域网 IP 的 **http** 地址访问时，浏览器不开放 `getUserMedia`（需要 HTTPS 或 `localhost`），取景页会提示「只能通过安全连接打开相机」，相册仍可用。真机拍照要走 HTTPS（部署后的 Hosting，或隧道）；Android 用 USB 端口转发就不用 HTTPS。步骤和真机清单见 [`../docs/real-device-testing.md`](../docs/real-device-testing.md)。
 
 ## 常用命令
 
