@@ -14,6 +14,18 @@ export const ms = {
     back: 'Kembali',
     close: 'Tutup',
   },
+  titles: {
+    login: 'Log masuk',
+    plots: 'Tanah saya',
+    newDocs: 'Tanah baharu · Foto dokumen',
+    camera: 'Ambil gambar',
+    map: 'Tanah baharu · Lukis tanah',
+    review: 'Tanah baharu · Semak',
+    result: 'Keputusan',
+    issue: 'Butiran masalah',
+    checking: 'Sedang menyemak',
+    coop: 'Papan pemuka koperasi',
+  },
   months: ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogo', 'Sep', 'Okt', 'Nov', 'Dis'],
   status: {
     green: 'Lengkap',
