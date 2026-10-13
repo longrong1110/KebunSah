@@ -186,20 +186,45 @@ git push -u origin fe/screens-1-3
 gh pr create --fill
 ```
 
-## 本地运行（Firebase 模拟器）
+## 本地运行前端（Firebase 模拟器）
 
-第一次演示全部在本地跑，用 Firebase 模拟器（Auth、Firestore、Storage），不连线上项目。
+第一次演示全部在本地跑，用 Firebase 模拟器，不连线上项目，**不需要 `.env`、不需要改任何配置**。完整说明、测试账号、常见问题见 [`web/README.md`](web/README.md)。
 
 **前置条件**（每台开发机都要装）：
 
-- Java 11 或更新版本（Firestore 和 Storage 模拟器依赖 Java）
-- `firebase-tools`：`npm install -g firebase-tools`，或每次用 `npx firebase-tools`
+| 项 | 要求 |
+| --- | --- |
+| Node | `^22.22.3`、`^24.15` 或 `>=26`（Node 20 或旧版 22 会 `npm install` 失败） |
+| Java | 11 或更新（Firestore 模拟器依赖 Java） |
+| `firebase-tools` | `npm install -g firebase-tools`（提供 `firebase` 命令） |
+| 网络 | 屏 5 的 Google 地图在线加载；Maps 的 Demo key 已在 `web/src/environments/environment.development.ts` 里，不用另配 |
+| Docker | **可选**：只有想起本地 PostgreSQL（`seed/db`）才要，App 不依赖它 |
 
-**现状**：`firebase.json`（共管文件）还没有 `emulators` 设置，所以直接 `firebase emulators:start` 起不来。前端的做法是 `cd web && npm run emulators`（独立配置，目前只起 Auth + Firestore，Storage 还没接，原因见 [`web/README.md`](web/README.md)「模拟器怎么启动的」）。`firebase.json` 补上 `emulators` 之后可以改用下面的命令：
+**启动**（三个终端，按顺序）：
 
 ```bash
-firebase emulators:start --only auth,firestore,storage
+cd web && npm install && npm run emulators     # 终端 1：Auth(9099) + Firestore(8080)，别关
+cd seed && FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 npm run load   # 终端 2：灌数据、建测试账号
+cd web && npm start                            # 终端 3：http://localhost:4200
 ```
+
+PowerShell 设环境变量：`$env:FIRESTORE_EMULATOR_HOST="127.0.0.1:8080"; $env:FIREBASE_AUTH_EMULATOR_HOST="127.0.0.1:9099"; npm run load`。
+
+**登录**：模拟器不发短信，验证码从模拟器取（PowerShell 里用 `curl.exe`）：
+
+```bash
+curl http://127.0.0.1:9099/emulator/v1/projects/demo-kebunsah/verificationCodes
+```
+
+测试手机号：`+60100000011`／`12`／`13` 是园主（绿／黄／红），`+60100000001` 是外勤，`+60100000002` 是合作社管理员（看板 `/coop`，要电脑宽屏）。
+
+**注意**：
+
+- 用 `npm run emulators`，**不要**直接 `firebase emulators:start`：`firebase.json`（共管文件）没有 `emulators` 设置，直接启动 Auth 起不来；`npm run emulators` 用独立配置绕过（原因见 `web/README.md`「模拟器怎么启动的」）。目前只起 Auth＋Firestore，Storage 模拟器没接。
+- **模拟器一重启，数据和账号全清空**，要重新跑 `npm run load`；浏览器里残留的旧登录会被当成未登录。
+- 屏 4 要摄像头，电脑没有就走相册（仿真证件照在 `seed/photos/`）；屏 5 的地图要在**可见的**浏览器窗口里才会正常显示。
+- 一次跑完只读检查、构建、产物检查和全部测试：`cd web && npm run verify`。
+- 现在能跑通的是「读」的全部流程；建地块、上传、开始评估要等后端和合同（见上面「系统还没做的」）。
 
 ## 发布流水线
 
