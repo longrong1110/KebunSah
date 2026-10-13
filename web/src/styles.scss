@@ -142,6 +142,12 @@ label {
   border-color: var(--bad);
 }
 
+// 占位文字的对比度：浏览器默认的占位色在深色模式下只有约 3.6:1（要 4.5:1），统一用 --muted
+.field::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
 .code-field {
   text-align: center;
   letter-spacing: 0.4em;

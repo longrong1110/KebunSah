@@ -13,6 +13,7 @@
 
       <label for="phone">{{ t().login.phoneLabel }}</label>
       <input
+        #phoneInput
         id="phone"
         class="field"
         type="tel"
@@ -32,6 +33,7 @@
 
       <label for="code">{{ t().login.codeLabel }}</label>
       <input
+        #codeInput
         id="code"
         class="field code-field"
         type="text"
@@ -47,9 +49,14 @@
       />
     }
 
-    <p id="error" class="error" role="alert" [hidden]="!key">
-      <span aria-hidden="true">⚠</span> {{ key ? t().login.errors[key] : '' }}
-    </p>
+    <!-- 读屏的提示区一直在页面里，只替换里面的内容：整个元素 hidden 切换时，部分读屏不会念 -->
+    <div role="alert">
+      @if (key) {
+        <p id="error" class="error">
+          <span aria-hidden="true">⚠</span> {{ t().login.errors[key] }}
+        </p>
+      }
+    </div>
   </section>
 
   <footer class="bar">
