@@ -771,7 +771,8 @@ a.plot-card:hover {
   height: 48px;
   border-radius: 50%;
   background: var(--tone, var(--muted));
-  color: #fff;
+  // 浅色模式是白字（与原来一致）；深色模式状态色是亮色，白字只有 1.9:1，改用深色字（--on-palm）
+  color: var(--on-palm);
   font-size: 1.5rem;
   font-weight: 700;
 }
@@ -1121,8 +1122,9 @@ a.plot-card:hover {
 
 .coop-tablebar {
   display: flex;
+  flex-wrap: wrap; // 窄屏换行：不换行时「行数＋两个导出按钮＋提示」比 375 px 宽，把整页撑出横向滚动条
   align-items: center;
-  gap: 12px;
+  gap: 8px 12px;
   margin-bottom: 8px;
 }
 
