@@ -307,6 +307,24 @@ describe('DossierPage（导出档案）', () => {
       expect(t.q('#dossier')).toBeNull();
     });
 
+    it('派生文档出错后点重试：派生订阅也重新订阅，读到后恢复出档案', async () => {
+      const t = await setup();
+      await t.ready();
+      t.facade.failDoc('titles/t1');
+      await settle(t.fixture);
+      expect(t.q('#error')).not.toBeNull();
+      expect(t.q('#dossier')).toBeNull();
+      expect(t.facade.activeDocs('titles/t1')).toHaveLength(0);
+
+      // 重试先重新订阅地块；派生文档要等地块再读到、拿到引用 id 后才重新订阅
+      await t.click('#retry');
+      expect(t.facade.activeDocs('plots/p1')).toHaveLength(1);
+      await t.ready();
+      expect(t.facade.activeDocs('titles/t1')).toHaveLength(1);
+      expect(t.q('#error')).toBeNull();
+      expect(t.q('#dossier')).not.toBeNull();
+    });
+
     it('缓存里有数据：照常出档案，并把「可能不是最新」写在纸面上（印出来的 PDF 也带）', async () => {
       const t = await setup();
       t.facade.emitDoc('plots/p1', PLOT, true);
@@ -607,17 +625,28 @@ describe('DossierPage（导出档案）', () => {
       expect(bar.contains(t.q('#dossier'))).toBe(false);
     });
 
-    it('页面标题设成「KebunSah dossier — {lot}」，离开页面还原', async () => {
-      document.title = 'KebunSah';
+    it('页面标题：读到之前是通用标题（不留着上一页的名字），读到后设成「KebunSah dossier — {lot}」，离开页面还原', async () => {
+      document.title = 'Keputusan — KebunSah';
       const t = await setup();
       const title = TestBed.inject(Title);
-      expect(title.getTitle()).toBe('KebunSah');
+      expect(title.getTitle()).toBe('Dossier pematuhan tanah — KebunSah');
 
       await t.ready();
       expect(title.getTitle()).toBe('KebunSah dossier — Lot 2217, Kampar');
 
       t.fixture.destroy();
-      expect(title.getTitle()).toBe('KebunSah');
+      expect(title.getTitle()).toBe('Keputusan — KebunSah');
+    });
+
+    it('地块不存在：标题仍是通用标题，切英语跟着变', async () => {
+      document.title = 'Keputusan — KebunSah';
+      const t = await setup();
+      const title = TestBed.inject(Title);
+      await t.plot(null);
+      expect(title.getTitle()).toBe('Dossier pematuhan tanah — KebunSah');
+      t.i18n.set('en');
+      await settle(t.fixture);
+      expect(title.getTitle()).toBe('Land compliance dossier — KebunSah');
     });
 
     it('返回：有历史就后退，不再导航', async () => {

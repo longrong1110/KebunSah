@@ -99,6 +99,17 @@ describe('selfIntersects', () => {
     expect(selfIntersects(touching)).toBe(true);
   });
 
+  it('四个点、只有最后一条边（末点→首点）与第 2 条边交叉：回绕的那条边也要比', () => {
+    // 末边 (3,1)→(0,0) 穿过第 2 条边 (2,0)→(2,3)；它与第 1、3 条边只共用端点，所以只有「末边 × 第 2 条边」这一对能查出来
+    const wrap: Ring = [
+      [0, 0],
+      [2, 0],
+      [2, 3],
+      [3, 1],
+    ];
+    expect(selfIntersects(wrap)).toBe(true);
+  });
+
   it('首尾相连的那条边与别的边交叉也要查出来', () => {
     // 最后一条边（4→0）与第 2 条边（1→2）交叉
     const closing: Ring = [

@@ -1844,7 +1844,7 @@ a.plot-card:hover {
   z-index: 2;
   top: 12px;
   left: 12px;
-  max-width: calc(100% - 156px);
+  max-width: calc(100% - 24px);
   padding: 6px 14px;
   border: 2px solid var(--ink);
   border-radius: 999px;
@@ -1856,24 +1856,15 @@ a.plot-card:hover {
   pointer-events: none;
 }
 
+// 「Lokasi saya」放在地图下面、提示文字旁，不盖在地图上（原来在右上角，会挡住那里的把手）
 .map-locate {
-  position: absolute;
-  z-index: 2;
-  top: 12px;
-  right: 12px;
+  align-self: flex-start;
   min-height: 48px;
-  padding: 6px 14px;
-  border: 2px solid var(--line);
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--ink);
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
+  padding: 8px 18px;
+  font-size: 1rem;
 }
 
 .map-locate:disabled {
-  opacity: 0.6;
   cursor: progress;
 }
 
