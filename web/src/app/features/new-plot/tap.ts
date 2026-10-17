@@ -1,5 +1,5 @@
 // 地图上「点按」怎么判断（纯函数，google-surface.ts 用）。
-// 为什么不用 Google 的 click 事件：它会把紧跟的快速第二下当成双击吞掉（specs/_facts.md F-045），
+// 为什么不用 Google 的 click 事件：它会把紧跟的快速第二下当成双击吞掉（浏览器里实测过），
 // 农户连点几个角点时会丢点。所以自己看 pointerdown／pointerup。
 
 export interface PointerSample {
@@ -18,14 +18,14 @@ export interface Px {
 export const TAP_MAX_MOVE_PX = 8;
 export const TAP_MAX_MS = 600;
 
-/** 顶点把手的点击半径（把手图标 44×44 px）：点在已有把手上是选它，不是放新点（F-046） */
+/** 顶点把手的点击半径（把手图标 44×44 px）：点在已有把手上是选它，不是放新点 */
 export const HANDLE_RADIUS_PX = 24;
 
 export function isTap(down: PointerSample, up: PointerSample): boolean {
   return Math.hypot(up.x - down.x, up.y - down.y) <= TAP_MAX_MOVE_PX && up.t - down.t <= TAP_MAX_MS;
 }
 
-/** 点按位置是否落在任何一个已有把手的半径内（用几何判断，不依赖 Google 的 DOM，见 F-046） */
+/** 点按位置是否落在任何一个已有把手的半径内（用几何判断，不依赖 Google 的 DOM） */
 export function nearAnyHandle(p: Px, handles: readonly Px[], radius = HANDLE_RADIUS_PX): boolean {
   return handles.some((h) => Math.hypot(h.x - p.x, h.y - p.y) < radius);
 }

@@ -200,6 +200,13 @@ describe('MapPage（屏 5 圈地块）', () => {
       expect(p.maps.surface.vertices).toEqual(RECT);
     });
 
+    it('A11 「Lokasi saya」在地图下面的面板里，不盖在地图上（右上角留给把手）', async () => {
+      const p = await setup();
+      const btn = p.q('#locate-me')!;
+      expect(btn.closest('.map-frame')).toBeNull();
+      expect(btn.closest('.map-panel')).not.toBeNull();
+    });
+
     it('A11/G1 定位失败：固定的人话，不暴露原始错误；点了「Cuba lagi」再读一次', async () => {
       const p = await setup();
       p.geo.locate.mockRejectedValueOnce(new GeoError('denied'));

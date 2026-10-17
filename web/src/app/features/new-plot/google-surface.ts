@@ -3,10 +3,10 @@ import type { MapSurface, MapSurfaceHandlers } from './map-surface';
 import { Px, TapTracker, nearAnyHandle } from './tap';
 
 // MapSurface 的 Google Maps 实现：自持顶点数组 + google.maps.Polygon + 可拖动 Marker，点按自己判断。
-// 做法与原因都在 specs/screen-5-map/spec.md「决定」与 specs/_facts.md F-043…F-046：
+// 做法与原因：
 // - 不用 Google 的 Drawing Library（已下线）；也不用 Terra Draw（没有撤销、收尾手势难发现、依赖 Google 内部 DOM）
-// - 不用 map 的 click 事件（会吞快速的第二下，F-045）：在地图元素上看 pointerdown／pointerup
-// - 把手是 44×44 的 SVG 图标 Marker；google.maps.Marker 已被 Google 标为弃用但仍可用，没有下线日期（F-043 实测可用）
+// - 不用 map 的 click 事件（会吞快速的第二下，浏览器里实测过）：在地图元素上看 pointerdown／pointerup
+// - 把手是 44×44 的 SVG 图标 Marker；google.maps.Marker 已被 Google 标为弃用但仍可用，没有下线日期（实测可用）
 // 这个文件只能在真实浏览器里验证（jsdom 没有 Google Maps），见 plan.md T10。
 
 /** 半岛马来西亚全景：没有任何点、也没有定位时的初始视野 */
@@ -188,7 +188,7 @@ export class GoogleSurface implements MapSurface {
     });
   }
 
-  /** 点按 = 单指按下与抬起离得近、时间短（TapTracker）；多指（缩放）、拖动、鼠标右键都不算（F-045） */
+  /** 点按 = 单指按下与抬起离得近、时间短（TapTracker）；多指（缩放）、拖动、鼠标右键都不算 */
   private listenForTaps(): void {
     const el = this.el;
     const input = (e: PointerEvent) => ({
@@ -208,7 +208,7 @@ export class GoogleSurface implements MapSurface {
       if ((e.target as Element | null)?.closest?.('button, a, [role="button"]')) return;
       const rect = el.getBoundingClientRect();
       const px = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-      // 点在已有把手上是选它，不放新点（几何判断，不依赖 Google 的 DOM，F-046）
+      // 点在已有把手上是选它，不放新点（几何判断，不依赖 Google 的 DOM）
       if (nearAnyHandle(px, this.handlePixels())) return;
       const p = this.toLngLat(px);
       if (p) this.handlers.onTap(p);

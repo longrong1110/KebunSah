@@ -142,6 +142,12 @@ label {
   border-color: var(--bad);
 }
 
+// 占位文字的对比度：浏览器默认的占位色在深色模式下只有约 3.6:1（要 4.5:1），统一用 --muted
+.field::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
 .code-field {
   text-align: center;
   letter-spacing: 0.4em;
@@ -765,7 +771,8 @@ a.plot-card:hover {
   height: 48px;
   border-radius: 50%;
   background: var(--tone, var(--muted));
-  color: #fff;
+  // 浅色模式是白字（与原来一致）；深色模式状态色是亮色，白字只有 1.9:1，改用深色字（--on-palm）
+  color: var(--on-palm);
   font-size: 1.5rem;
   font-weight: 700;
 }
@@ -1115,8 +1122,9 @@ a.plot-card:hover {
 
 .coop-tablebar {
   display: flex;
+  flex-wrap: wrap; // 窄屏换行：不换行时「行数＋两个导出按钮＋提示」比 375 px 宽，把整页撑出横向滚动条
   align-items: center;
-  gap: 12px;
+  gap: 8px 12px;
   margin-bottom: 8px;
 }
 
@@ -1836,7 +1844,7 @@ a.plot-card:hover {
   z-index: 2;
   top: 12px;
   left: 12px;
-  max-width: calc(100% - 156px);
+  max-width: calc(100% - 24px);
   padding: 6px 14px;
   border: 2px solid var(--ink);
   border-radius: 999px;
@@ -1848,24 +1856,15 @@ a.plot-card:hover {
   pointer-events: none;
 }
 
+// 「Lokasi saya」放在地图下面、提示文字旁，不盖在地图上（原来在右上角，会挡住那里的把手）
 .map-locate {
-  position: absolute;
-  z-index: 2;
-  top: 12px;
-  right: 12px;
+  align-self: flex-start;
   min-height: 48px;
-  padding: 6px 14px;
-  border: 2px solid var(--line);
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--ink);
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
+  padding: 8px 18px;
+  font-size: 1rem;
 }
 
 .map-locate:disabled {
-  opacity: 0.6;
   cursor: progress;
 }
 

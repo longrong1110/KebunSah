@@ -54,19 +54,6 @@
         <div class="area-badge" id="area-badge">{{ b }}</div>
       }
 
-      @if (current() === 'map' && view() === 'ready') {
-        <button
-          type="button"
-          class="map-locate"
-          id="locate-me"
-          [disabled]="locating()"
-          (click)="locateMe()"
-        >
-          <span aria-hidden="true">📍</span>
-          {{ locating() ? t().newPlot.map.locating : t().newPlot.map.myLocation }}
-        </button>
-      }
-
       @switch (view()) {
         @case ('loading') {
           <div class="map-state" id="map-loading" role="status">
@@ -91,6 +78,20 @@
       <p class="hint" id="map-hint">{{ t().newPlot.map.hint[current()] }}</p>
 
       @switch (current()) {
+        @case ('map') {
+          @if (view() === 'ready') {
+            <button
+              type="button"
+              class="btn btn-quiet map-locate"
+              id="locate-me"
+              [disabled]="locating()"
+              (click)="locateMe()"
+            >
+              <span aria-hidden="true">📍</span>
+              {{ locating() ? t().newPlot.map.locating : t().newPlot.map.myLocation }}
+            </button>
+          }
+        }
         @case ('walk') {
           <button
             type="button"

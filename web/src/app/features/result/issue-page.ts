@@ -16,7 +16,8 @@ import {
 } from './assessment';
 import { gapView } from './gap-view';
 import { parseRing, toSvgPoints } from './polygon';
-import { pageState, watchPlotAssessment } from './result-data';
+import { pageState } from '../plots/plot-watch';
+import { watchPlotAssessment } from './result-data';
 
 // 屏 10「问题详情」（线框 docs/ui/screen-10.png）：数字对照、可能原因、建议，不责怪用户。
 // 只读，也还没有能「修复」的东西：重画需要屏 5 和保存多边形的接口，上传需要上传接口，都没有。
@@ -43,7 +44,7 @@ export class IssuePage {
   });
 
   private readonly data = watchPlotAssessment(this.plotId);
-  protected readonly state = computed(() => pageState(this.data.plot(), this.data.assessments()));
+  protected readonly state = computed(() => pageState(this.data.plot(), [this.data.assessments()]));
 
   /**
    * ready 时：找得到这个事项 → { found: true, ... }；找不到（已解决、没有评估、key 写错）→ { found: false }。

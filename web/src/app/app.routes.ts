@@ -8,34 +8,40 @@ export const routes: Routes = [
   {
     path: 'login',
     canActivate: [redirectIfAuthed],
+    data: { titleKey: 'login' },
     loadComponent: () => import('./features/login/login').then((m) => m.Login),
   },
   {
     path: '',
     pathMatch: 'full',
     canActivate: [requireAuth],
+    data: { titleKey: 'plots' },
     loadComponent: () => import('./features/plots/plots-page').then((m) => m.PlotsPage),
   },
   {
     path: 'plots/new',
     pathMatch: 'full',
     canActivate: [requireAuth],
+    data: { titleKey: 'newDocs' },
     loadComponent: () => import('./features/new-plot/documents-page').then((m) => m.DocumentsPage),
   },
   {
     path: 'plots/new/camera/:doc',
     canActivate: [requireAuth],
+    data: { titleKey: 'camera' },
     loadComponent: () => import('./features/new-plot/camera-page').then((m) => m.CameraPage),
   },
   {
     path: 'plots/new/map',
     canActivate: [requireAuth],
+    data: { titleKey: 'map' },
     loadComponent: () => import('./features/new-plot/map-page').then((m) => m.MapPage),
   },
   // 屏 6 的壳：屏 5「Selesai」之后进来；本体要等建地块、上传、评估的接口合同
   {
     path: 'plots/new/review',
     canActivate: [requireAuth],
+    data: { titleKey: 'review' },
     loadComponent: () =>
       import('./features/new-plot/review-placeholder').then((m) => m.ReviewPlaceholder),
   },
@@ -44,21 +50,24 @@ export const routes: Routes = [
     path: 'plots/:id',
     pathMatch: 'full',
     canActivate: [requireAuth],
+    data: { titleKey: 'result' },
     loadComponent: () => import('./features/result/result-page').then((m) => m.ResultPage),
   },
   // 屏 10 问题详情：:key 是缺口的 gapCode（同码多个文件时带 docType）
   {
     path: 'plots/:id/issue/:key',
     canActivate: [requireAuth],
+    data: { titleKey: 'issue' },
     loadComponent: () => import('./features/result/issue-page').then((m) => m.IssuePage),
   },
   // 屏 7 评估中：转圈＋分步进度，可离开；现在从屏 9 的「Lihat kemajuan」进入（屏 6「开始检查」做好后由它跳转）
   {
     path: 'plots/:id/checking',
     canActivate: [requireAuth],
+    data: { titleKey: 'checking' },
     loadComponent: () => import('./features/checking/checking-page').then((m) => m.CheckingPage),
   },
-  // 导出档案（A4 版面，浏览器打印成 PDF）：从看板里选中地块后进入
+  // 导出档案（A4 版面，浏览器打印成 PDF）：从看板里选中地块后进入。不写 titleKey：这一页自己写带地块号的标题
   {
     path: 'plots/:id/dossier',
     canActivate: [requireAuth],
@@ -68,6 +77,7 @@ export const routes: Routes = [
   {
     path: 'coop',
     canActivate: [requireAuth],
+    data: { titleKey: 'coop' },
     loadComponent: () => import('./features/coop/coop-page').then((m) => m.CoopPage),
   },
   { path: '**', redirectTo: '' },

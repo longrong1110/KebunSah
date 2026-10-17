@@ -17,7 +17,8 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import type { Load } from '../../core/load-state';
 import { LangButton } from '../../shared/lang-button';
 import { buildDossier, SVG_HEIGHT, SVG_WIDTH } from './dossier';
-import { dossierState, watchDossier } from './dossier-data';
+import { pageState } from '../plots/plot-watch';
+import { watchDossier } from './dossier-data';
 
 const docOf = <T>(l: Load<DocState<T>> | null): T | null =>
   l?.kind === 'data' ? l.value.data : null;
@@ -45,7 +46,7 @@ export class DossierPage {
   private readonly data = watchDossier(this.plotId);
 
   protected readonly state = computed(() =>
-    dossierState(this.data.plot(), [
+    pageState(this.data.plot(), [
       this.data.assessments(),
       this.data.documents(),
       this.data.title(),
@@ -90,11 +91,15 @@ export class DossierPage {
   protected readonly svgHeight = SVG_HEIGHT;
 
   constructor() {
-    // Chrome 存成 PDF 时拿页面标题当文件名；离开页面还原
+    // Chrome 存成 PDF 时拿页面标题当文件名；离开页面还原。
+    // 这条路由没有 titleKey（见 app.routes.ts），标题由本页自己写：读到之前、地块不存在、出错时写通用标题，
+    // 免得标签上还挂着上一页的名字；读到之后换成带地块号的
     const previous = this.titleService.getTitle();
     effect(() => {
       const v = this.view();
-      if (v) this.titleService.setTitle(`KebunSah dossier — ${v.header.heading}`);
+      this.titleService.setTitle(
+        v ? `KebunSah dossier — ${v.header.heading}` : `${this.t().dossier.title} — KebunSah`,
+      );
     });
     inject(DestroyRef).onDestroy(() => this.titleService.setTitle(previous));
   }

@@ -23,7 +23,7 @@ import { MapsError, MapsService, type MapsErrorKey } from './maps.service';
 
 // 屏 5「圈地块」（线框 docs/ui/screen-05.png）：在 Google 卫星图上点出每个角、拖动调整，实时看到公顷数；
 // 备选「Jalan sudut」（走到角点用 GPS 记）与「Satu titik」（只记一个点，手填面积，4 公顷以下）。
-// 结果存在本机内存里（DraftService），不调任何接口：新建地块与上传还要等合同。设计与决定见 specs/screen-5-map/spec.md。
+// 结果存在本机内存里（DraftService），不调任何接口：新建地块与上传还要等合同。设计与决定见 web/README.md「已知限制」里屏 5 的几条。
 // 顶点数组（DraftService）是唯一事实来源；地图（MapSurface）只负责显示并把点按、拖动报告回来。
 
 type View = 'loading' | 'ready' | 'failed';
