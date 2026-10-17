@@ -47,3 +47,22 @@ class Clock:
 
     def __call__(self) -> datetime:
         return self.t
+
+
+class ScriptedExtractor:
+    """按证件类型返回预设字段；值是异常实例就抛。calls 记录被调用的证件类型。"""
+
+    def __init__(self, script: dict):
+        self.script = script
+        self.calls: list[str] = []
+
+    def extract(self, doc_type: str, image: bytes, mime_type: str):
+        from worker.gemini import ExtractionResult
+        from worker.fields import normalize_field
+
+        self.calls.append(doc_type)
+        item = self.script.get(doc_type)
+        if isinstance(item, Exception):
+            raise item
+        fields = {k: normalize_field(k, v[0], v[0], v[1]) for k, v in (item or {}).items()}
+        return ExtractionResult(fields=fields, model="fake-extractor", seconds=0.01, usage={"promptTokens": 1, "outputTokens": 1})
