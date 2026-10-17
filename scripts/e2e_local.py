@@ -20,6 +20,9 @@ from pathlib import Path
 
 import httpx
 
+for _stream in (sys.stdout, sys.stderr):  # Windows 控制台默认不是 UTF-8，中文会抛 UnicodeEncodeError
+    _stream.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = Path(__file__).resolve().parents[1]
 for sub in ("core", "api", "ai-worker"):
     sys.path.insert(0, str(ROOT / sub))

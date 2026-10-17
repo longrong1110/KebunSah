@@ -128,3 +128,21 @@ def build_facts(store, plot_id, plot, operator_name, docs) -> tuple[PlotFacts, d
 - §5 流水线 ①–⑥：Task 5–7；降级与并发残留在 Task 7；森林用预先算好的数据（Task 6，视频里如实说明）。
 - §7 测试：`core/` 已有；`api/` 每接口 401/403/404/409/422 在各任务的测试里；emulator 与 Gemini 冒烟在 Task 9。
 - 范围外（与 spec §1 一致）：dashboard、export、report、voice、向量检索、Cloud Tasks、服务端 PDF；`titles`/`mpobLicences`/`mspoCertificates` 的回写本轮不做（前端读的是 `plots` 与 `documents.fields`）。
+
+## 执行结果（2026-10-17 晚，分支 `be/api`）
+
+任务 1–9 完成；任务 10 的共管文件部分拆到了另外两个分支（见下）。`pytest` 760 个通过（`core/` 433 + 种子 200 块地的事实拼装 + API + 适配器）；`pytest -m emulator` 4 个通过（Firestore 与 Auth 模拟器：带点的键局部更新、`in` 查询、集合组查找、从 `/api/me` 到 `assess` 再到 `PATCH …/fields` 的整条流程）。真起了 uvicorn + 模拟器，用 `scripts/e2e_local.py` 和 `seed/photos` 的照片走了一遍：没有 Gemini key 时三份文件抽取失败，评估降级为 `needs_review`、流程不崩（降级路径在真服务器上验证过）。
+
+**没有验证的**：
+- **真的 Gemini 抽取**——没有 key。`GeminiExtractor` / `GeminiExplainer` 只用假客户端测过；模型 id 默认 `gemini-3.5-flash`（官方文档页上写的稳定版），用 `scripts/gemini_smoke.py --list-models` 核对，再跑 `scripts/gemini_smoke.py` 看 9 张照片的逐字段准确率。
+- **GCS 签名网址**（`GcsBlobs`）、`Dockerfile` 构建、`deploy.yaml`——没有 GCP 项目、Docker 没启动。
+- `contract/schema.sql` 的改动——Docker 没启动，SQL 没跑过。
+
+**与 spec 的差别**：
+- `PATCH …/fields` 的格式错误返回 `400`（合同提议），其余校验错误 `422`。
+- 新增 `GET /healthz`；`documents` 文档多写一个 `documentId`。
+- 森林初筛是固定的演示数据（`precomputed-demo`），Earth Engine 没接。
+- `titles` / `mpobLicences` / `mspoCertificates` 的回写没做；MSPO 成员关系靠证书号在 `mspoCertificates/*/members` 里按姓名查。
+- 自己注册的园主（`POST /api/me`）`coopId` 为空，合作社看板看不到他们的地块；演示用种子里预建的账号。
+
+**分支**（都未推送）：`be/api`（本计划的全部代码）；`be/infra`（`pr.yaml` 改 pytest、`deploy.yaml` 改成单个服务，共管文件，要甲 Approve）；`be/contract-doc-type`（`rule_results.doc_type`，要甲 Approve）。

@@ -55,7 +55,7 @@ def test_get_set_update_and_not_found(fs, root):
 
 
 def test_dotted_keys_update_in_place_without_creating_a_nested_twin(fs, root):
-    path = f"{root}/plots/p1/documents/d1"
+    path = f"{root}/p1/documents/d1"
     fs.set(path, {"fields": {"land_title.lot_no": {"rawText": "12", "confidence": 0.5}}})
     fs.update_nested(path, ("fields", "land_title.lot_no", "confidence"), 0.9)
     fs.update_nested(path, ("fields", "land_title.lot_no", "confirmedValue"), "13")
