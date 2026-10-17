@@ -283,15 +283,18 @@ CREATE TABLE rule_results (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   assessment_id uuid NOT NULL REFERENCES assessments(id) ON DELETE CASCADE,
   rule_code text NOT NULL CHECK (rule_code ~ '^CC-[0-9]{2}$'),
+  doc_type text CHECK (doc_type IN ('land_title','mpob_licence','mspo_cert','mspo_member_list')),
   result text NOT NULL CHECK (result IN ('pass','warn','fail','needs_review')),
   expected_value text,
   actual_value text,
   params_used jsonb,
   evidence jsonb,
   detail text,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (assessment_id, rule_code)
+  created_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- CC-02（有效期）每份文件一条，所以同一次评估里同一个规则编号可以出现多次，靠 doc_type 区分；其余规则 doc_type 为 NULL。
+CREATE UNIQUE INDEX rule_results_uq ON rule_results (assessment_id, rule_code, COALESCE(doc_type, ''));
 
 -- 缺口清单（第 1 批）：还差什么才能变绿：缺哪份文件、哪里不一致、建议怎么补。
 CREATE TABLE gaps (
@@ -532,6 +535,7 @@ COMMENT ON TABLE assessments IS '评估';
 COMMENT ON COLUMN rule_results.id IS '[系] 主键';
 COMMENT ON COLUMN rule_results.assessment_id IS '[系] 属于哪次评估';
 COMMENT ON COLUMN rule_results.rule_code IS '[约] 队友文档的规则编号：CC-01 面积、CC-02 有效期、CC-03 姓名（CC-04、CC-05 的内容我没看到）';
+COMMENT ON COLUMN rule_results.doc_type IS '[系] 这条结果针对哪份文件。只有 CC-02（每份文件一条）和缺文件的行带；其余规则为 NULL。取值同 gaps.doc_type';
 COMMENT ON COLUMN rule_results.result IS '[约] 通过、警告、不通过、需人工复核';
 COMMENT ON COLUMN rule_results.expected_value IS '[系] 期望值（如地契面积）';
 COMMENT ON COLUMN rule_results.actual_value IS '[系] 实际值（如多边形面积）';
