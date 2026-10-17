@@ -15,3 +15,5 @@
 | `/api/voice` | POST | 语音问答 | 本轮不做 | — | — |
 
 评估结果不走接口返回：前端实时订阅 Firestore 的 `assessments` 和 `plots.status`。
+
+> **2026-10-17：后端已按 PR #14／#23 的提议实现**，请求、响应、错误码、鉴权（`Authorization: Bearer <Firebase ID token>`）的实际形状以 `api/README.md` 和 `api/tests/` 为准；与提议的差别：`POST /api/me`（首次登录建档）是新增的，`POST …/documents` 多了可选的 `pageNo`（默认 1），`PATCH …/fields` 的格式错误返回 400。`GET /api/plots` 和 `/api/coop/*` 没做。
