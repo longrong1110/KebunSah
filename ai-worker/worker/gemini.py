@@ -3,7 +3,7 @@
 - 证件上的文字一律当数据，不当指令（提示词里写明；输出还要过 Pydantic schema，键必须在白名单里）。
 - 读出的值在 fields.normalize_field 里再校验一遍（日期、面积、单位），认不出的压低置信度，交给屏 8 请用户确认。
 - 不抽身份证号：规则用不到，少一份个人信息进库。
-- 超时与 429/5xx 退避重试交给 SDK 的 HttpOptions（默认 40 秒、最多 3 次尝试）。
+- 超时与 5xx 重试交给 SDK 的 HttpOptions（默认 40 秒、最多 3 次尝试）；429（配额）按服务端说的等待时间重试，见 gemini_call.py。
 """
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ from typing import Any, Protocol
 from pydantic import BaseModel, ValidationError
 
 from .fields import ALLOWED_KEYS, normalize_field
+from .gemini_call import generate_with_retry
 
 
 class ExtractionError(Exception):
@@ -117,7 +118,7 @@ class GeminiExtractor:
             temperature=0.0,
             http_options=types.HttpOptions(
                 timeout=int(self.timeout_s * 1000),
-                retry_options=types.HttpRetryOptions(attempts=3, http_status_codes=[429, 500, 502, 503, 504])))
+                retry_options=types.HttpRetryOptions(attempts=3, http_status_codes=[500, 502, 503, 504])))
 
     def extract(self, doc_type: str, image: bytes, mime_type: str) -> ExtractionResult:
         if doc_type not in PROMPTS:
@@ -127,8 +128,8 @@ class GeminiExtractor:
             from google.genai import types
 
             client = self._client_or_create()
-            response = client.models.generate_content(
-                model=self.model,
+            response = generate_with_retry(
+                client, model=self.model,
                 contents=[types.Part.from_bytes(data=image, mime_type=mime_type), f"{PROMPTS[doc_type]}\n{_COMMON}"],
                 config=self._config())
             parsed = _Extraction.model_validate(json.loads(response.text))

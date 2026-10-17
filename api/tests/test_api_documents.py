@@ -78,3 +78,20 @@ def test_access_rules(client):
     assert _register(client, pid, uid="officer-1").status_code == 201
     assert _register(client, "nope").status_code == 404
     assert client.post(f"/api/plots/{pid}/documents", json={}).status_code == 401
+
+
+def test_pages_of_one_document_coexist_and_only_the_same_page_is_superseded(client, store):
+    pid = _plot(client)
+    p1 = _register(client, pid).json()["documentId"]
+    p2 = _register(client, pid, pageNo=2).json()["documentId"]
+    assert store.get(f"plots/{pid}/documents/{p1}")["isCurrent"] is True
+    assert store.get(f"plots/{pid}/documents/{p2}")["pageNo"] == 2
+    p2b = _register(client, pid, pageNo=2).json()["documentId"]
+    assert store.get(f"plots/{pid}/documents/{p1}")["isCurrent"] is True
+    assert store.get(f"plots/{pid}/documents/{p2}")["isCurrent"] is False
+    assert store.get(f"plots/{pid}/documents/{p2b}")["isCurrent"] is True
+
+
+@pytest.mark.parametrize("page", [0, 5, -1])
+def test_page_number_out_of_range_is_422(client, page):
+    assert _register(client, _plot(client), pageNo=page).status_code == 422

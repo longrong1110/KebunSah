@@ -16,6 +16,8 @@ from pydantic import BaseModel, ValidationError
 from kebunsah_core.grading import Gap, summarize
 from kebunsah_core.rules import RuleResult
 
+from .gemini_call import generate_with_retry
+
 MAX_TEXT = 300
 
 
@@ -95,14 +97,14 @@ class GeminiExplainer:
                 "gaps": [{"index": i, "gapCode": g.gap_code, "severity": g.severity, "docType": g.doc_type}
                          for i, g in enumerate(gaps)],
             }
-            response = self._client_or_create().models.generate_content(
-                model=self.model, contents=json.dumps(payload, ensure_ascii=False),
+            response = generate_with_retry(
+                self._client_or_create(), model=self.model, contents=json.dumps(payload, ensure_ascii=False),
                 config=types.GenerateContentConfig(
                     system_instruction=SYSTEM, response_mime_type="application/json", response_schema=_Explanation,
                     temperature=0.2,
                     http_options=types.HttpOptions(
                         timeout=int(self.timeout_s * 1000),
-                        retry_options=types.HttpRetryOptions(attempts=3, http_status_codes=[429, 500, 502, 503, 504]))))
+                        retry_options=types.HttpRetryOptions(attempts=3, http_status_codes=[500, 502, 503, 504]))))
             parsed = _Explanation.model_validate(json.loads(response.text))
         except (ValidationError, json.JSONDecodeError, TypeError) as exc:
             base.fallback_reason = f"unusable answer: {exc}"

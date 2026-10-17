@@ -55,7 +55,8 @@ def main() -> int:
     if args.list_models:
         from google import genai
 
-        for m in genai.Client(api_key=key).models.list():
+        client = genai.Client(api_key=key)  # 要一直拿着引用，否则列表还没读完客户端就被回收关闭了
+        for m in client.models.list():
             print(m.name)
         return 0
 

@@ -28,16 +28,18 @@ for sub in ("core", "api", "ai-worker"):
     sys.path.insert(0, str(ROOT / sub))
 
 PHOTOS = ROOT / "seed" / "photos"
-SQUARE = {"type": "Polygon", "coordinates": [[[101.149037, 4.309105], [101.150963, 4.309105], [101.150963, 4.310895],
-                                                [101.149037, 4.310895], [101.149037, 4.309105]]]}
-UPLOADS = [("land_title", "title-3-handwritten-area.jpg"), ("mpob_licence", "licence-1-clear.jpg"),
-           ("mspo_cert", "mspo-cert-1-clear.jpg")]
+# 约 3.1 公顷，和 title-1 的 3.04 公顷接近（CC-01 通过）
+SQUARE = {"type": "Polygon", "coordinates": [[[101.149176, 4.309234], [101.150824, 4.309234], [101.150824, 4.310766],
+                                                [101.149176, 4.310766], [101.149176, 4.309234]]]}
+# 种子里「黄色演示地块」的照片组合：地契第 1 页（面积）+ 第 2 页（持有人 AHMAD ZAKI BIN ROSLI）+ MPOB 执照 + MSPO 证书
+UPLOADS = [("land_title", 1, "title-1-clear.jpg"), ("land_title", 2, "title-2-proprietor.jpg"),
+           ("mpob_licence", 1, "licence-1-clear.jpg"), ("mspo_cert", 1, "mspo-cert-1-clear.jpg")]
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--api", default="http://127.0.0.1:8000")
-    parser.add_argument("--name", default="TAN AH KOW")
+    parser.add_argument("--name", default="AHMAD ZAKI BIN ROSLI")
     args = parser.parse_args()
     auth_host = os.environ.get("FIREBASE_AUTH_EMULATOR_HOST", "127.0.0.1:9099")
     os.environ.setdefault("FIRESTORE_EMULATOR_HOST", "127.0.0.1:8080")
@@ -59,9 +61,10 @@ def main() -> int:
     plot_id = step("POST /api/plots", api.post("/api/plots", json={}), 201)["plotId"]
     saved = step("PATCH /api/plots/{id}", api.patch(f"/api/plots/{plot_id}", json={"geometryType": "polygon", "polygon": SQUARE}), 200)
     print(f"   后端重算面积 {saved['areaHaComputed']} ha")
-    for doc_type, photo in UPLOADS:
-        reg = step(f"POST …/documents ({doc_type})",
-                   api.post(f"/api/plots/{plot_id}/documents", json={"docType": doc_type, "contentType": "image/jpeg", "source": "gallery"}), 201)
+    for doc_type, page, photo in UPLOADS:
+        reg = step(f"POST …/documents ({doc_type} p{page})",
+                   api.post(f"/api/plots/{plot_id}/documents",
+                            json={"docType": doc_type, "pageNo": page, "contentType": "image/jpeg", "source": "gallery"}), 201)
         up = reg["upload"]
         put = httpx.put(up["url"], content=(PHOTOS / photo).read_bytes(), headers=up["headers"], timeout=30)
         print(f"{'PUT 照片 ' + photo:<28} {put.status_code}")

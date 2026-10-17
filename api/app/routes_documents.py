@@ -7,7 +7,7 @@ from typing import Any, Literal
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from kebunsah_core.units import fmt_fixed
 from worker.fields import ALLOWED_KEYS, DATE_KEYS, NAME_KEYS, clean_name, parse_date, parse_number, parse_unit
@@ -27,6 +27,7 @@ class RegisterDocument(BaseModel):
     docType: Literal["land_title", "mpob_licence", "mspo_cert"]
     contentType: Literal["image/jpeg"]
     source: Literal["camera", "gallery"]
+    pageNo: int = Field(default=1, ge=1, le=4)  # 一份证件多页（地契正面、背面）；不传就是第 1 页
 
 
 @router.post("/api/plots/{plot_id}/documents", status_code=201)
@@ -34,14 +35,14 @@ def register_document(plot_id: str, body: RegisterDocument, user: User = Depends
                       deps: Deps = Depends(get_deps)):
     load_plot(deps.store, user, plot_id)
     now = deps.now()
-    # 同一块地同一种证件重拍：旧的作废（不删），新的接替
+    # 同一块地同一种证件的同一页重拍：旧的作废（不删），新的接替
     for old_id, old in deps.store.list(f"plots/{plot_id}/documents", [("docType", "==", body.docType)]):
-        if old.get("isCurrent") is not False:
+        if old.get("isCurrent") is not False and (old.get("pageNo") or 1) == body.pageNo:
             deps.store.update(f"plots/{plot_id}/documents/{old_id}", {"isCurrent": False})
     doc_id = deps.new_id()
     storage_path = f"plots/{plot_id}/documents/{doc_id}.jpg"
     deps.store.set(f"plots/{plot_id}/documents/{doc_id}", {
-        "documentId": doc_id, "plotId": plot_id, "docType": body.docType, "pageNo": 1, "isCurrent": True,
+        "documentId": doc_id, "plotId": plot_id, "docType": body.docType, "pageNo": body.pageNo, "isCurrent": True,
         "storagePath": storage_path, "mimeType": body.contentType, "sha256": None, "source": body.source,
         "uploadedBy": user.uid, "capturedAt": now, "extractedAt": None, "modelVersion": None, "fields": {},
         "isSynthetic": False, "createdAt": now,

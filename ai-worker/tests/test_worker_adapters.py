@@ -116,3 +116,74 @@ def test_forest_adapters():
     assert r.risk == "low" and r.dataset == "precomputed-demo"
     u = UnavailableForest().screen(4.3, 101.1, None)
     assert u.risk == "unknown" and u.cover_2020_pct is None
+
+
+# ── 429（免费档每分钟 5 次）：按服务端说的时间等一等再试 ──
+from worker.gemini_call import generate_with_retry, retry_after_seconds  # noqa: E402
+
+
+class QuotaError(Exception):
+    code = 429
+
+
+QUOTA_TEXT = "429 RESOURCE_EXHAUSTED. You exceeded your current quota. Please retry in 41.473986172s. {'retryDelay': '41s'}"
+
+
+def test_retry_after_is_read_from_the_error():
+    assert retry_after_seconds(QuotaError(QUOTA_TEXT)) == pytest.approx(41.47, abs=0.01)
+    assert retry_after_seconds(QuotaError("{'retryDelay': '35s'}")) == 35
+    assert retry_after_seconds(QuotaError("no hint")) == 20
+    assert retry_after_seconds(RuntimeError("503 unavailable")) is None
+
+
+def _flaky_client(failures, ok_text="{}"):
+    state = {"n": 0}
+
+    def call(**kwargs):
+        state["n"] += 1
+        if state["n"] <= failures:
+            raise QuotaError(QUOTA_TEXT)
+        return SimpleNamespace(text=ok_text)
+
+    return SimpleNamespace(models=SimpleNamespace(generate_content=call)), state
+
+
+def test_quota_error_waits_then_succeeds():
+    client, state = _flaky_client(failures=2)
+    slept = []
+    out = generate_with_retry(client, sleep=slept.append, model="m")
+    assert out.text == "{}" and state["n"] == 3
+    assert slept == [pytest.approx(42.47, abs=0.01)] * 2
+
+
+def test_quota_error_gives_up_after_the_last_attempt_or_when_the_wait_is_too_long():
+    client, state = _flaky_client(failures=9)
+    with pytest.raises(QuotaError):
+        generate_with_retry(client, sleep=lambda s: None, attempts=3, model="m")
+    assert state["n"] == 3
+    client, state = _flaky_client(failures=9)
+    with pytest.raises(QuotaError):
+        generate_with_retry(client, sleep=lambda s: None, max_wait_s=10, model="m")
+    assert state["n"] == 1  # 要等的比上限长，不等了
+
+
+def test_other_errors_are_not_retried():
+    state = {"n": 0}
+
+    def call(**kwargs):
+        state["n"] += 1
+        raise RuntimeError("403 permission denied")
+
+    with pytest.raises(RuntimeError):
+        generate_with_retry(SimpleNamespace(models=SimpleNamespace(generate_content=call)), sleep=lambda s: None, model="m")
+    assert state["n"] == 1
+
+
+def test_extractor_rides_out_a_quota_error(monkeypatch):
+    import worker.gemini_call as call_module
+
+    monkeypatch.setattr(call_module.time, "sleep", lambda s: None)
+    client, state = _flaky_client(failures=1, ok_text=_extraction([
+        {"key": "mpob_licence.valid_until", "raw_text": "05/12/2026", "value": "2026-12-05", "confidence": 0.9}]))
+    out = GeminiExtractor(client=client).extract("mpob_licence", b"x", "image/jpeg")
+    assert out.fields["mpob_licence.valid_until"]["normalizedValue"] == "2026-12-05" and state["n"] == 2
