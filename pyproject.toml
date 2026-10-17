@@ -1,4 +1,6 @@
 # 只放工具配置。依赖在 requirements*.txt；代码按目录分开（core/ api/ ai-worker/），不打包成一个发行包。
 [tool.pytest.ini_options]
-pythonpath = ["core"]
-testpaths = ["core/tests"]
+pythonpath = ["core", "api", "ai-worker"]
+testpaths = ["core/tests", "api/tests", "ai-worker/tests"]
+addopts = "-m 'not emulator'"
+markers = ["emulator: 需要本机 Firestore / Auth 模拟器（pytest -m emulator），默认不跑"]
