@@ -4,7 +4,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from . import routes_me
+from . import routes_dev, routes_documents, routes_me, routes_plots
 from .deps import Deps
 from .errors import install_error_handlers
 
@@ -22,4 +22,8 @@ def create_app(deps: Deps) -> FastAPI:
         return {"ok": True}
 
     app.include_router(routes_me.router)
+    app.include_router(routes_plots.router)
+    app.include_router(routes_documents.router)
+    if deps.settings.dev_endpoints:
+        app.include_router(routes_dev.router)
     return app

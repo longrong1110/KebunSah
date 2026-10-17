@@ -7,6 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api_helpers import Clock, FakeVerifier, seed_users
+from app.blobs import LocalBlobs
 from app.config import Settings
 from app.deps import Deps
 from app.main import create_app
@@ -34,7 +35,7 @@ def make_deps(store, clock, tmp_path):
         base = dict(
             settings=Settings(blobs_mode="local", blobs_dir=str(tmp_path / "blobs"), public_base_url="http://test",
                               dev_endpoints=True, assess_as_of="2026-10-17"),
-            store=store, blobs=None, verifier=FakeVerifier(), extractor=None, explainer=None, forest=None,
+            store=store, blobs=LocalBlobs(tmp_path / "blobs", "http://test"), verifier=FakeVerifier(), extractor=None, explainer=None, forest=None,
             now=clock, new_id=lambda: f"id-{next(ids):04d}",
         )
         base.update(overrides)
