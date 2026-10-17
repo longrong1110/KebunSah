@@ -27,17 +27,26 @@ python -m pip install -r requirements-dev.txt
 python -m pytest                                          # 默认不含 emulator 标记的测试
 ```
 
-连模拟器跑完整主线（需要 Java 21+ 和 firebase-tools，见 `web/README.md`）：
+连模拟器跑完整主线（三个终端，都在仓库根目录；.env 里要有 `GEMINI_API_KEY`，复制自 `.env.example`）：
 
-```bash
-cd web && npm run emulators                               # 终端 1：Auth 9099 + Firestore 8080
-cd .. && copy .env.example .env                           # 填 GEMINI_API_KEY
-python -m uvicorn app.main:create_app_from_env --factory --port 8000    # 终端 2；PYTHONPATH=core;api;ai-worker
-python scripts/e2e_local.py                               # 终端 3：用 seed/photos 走完整条主线
-python -m pytest -m emulator                              # 对模拟器的集成测试（带点的键、集合组查询、整条流程）
-python scripts/gemini_smoke.py --list-models              # 看 key 能用哪些模型
-python scripts/gemini_smoke.py                            # 9 张仿真证件照的逐字段准确率（要 key、要花钱）
+```powershell
+# 终端 1：Auth 9099 + Firestore 8080。npm run emulators 要 Java 21+ 且全局 firebase-tools 完好；
+# 这台机器的全局 firebase-tools 缺文件，用 npx 的 14 版（Java 17 也行）：
+cd web
+node -e "require('child_process')" ; node scripts/emulators.mjs   # 只为生成 web/.emulators.json，起不来就 Ctrl+C
+npx -y firebase-tools@14 emulators:start --only auth,firestore --project demo-kebunsah --config "$PWD\.emulators.json"
+
+# 终端 2：灌种子（每次模拟器重启后都要重灌一次），然后起 API
+cd seed; $env:FIRESTORE_EMULATOR_HOST="127.0.0.1:8080"; $env:FIREBASE_AUTH_EMULATOR_HOST="127.0.0.1:9099"; node load-emulator.mjs
+cd ..; .venv\Scripts\python.exe scriptsun_api.py
+
+# 终端 3：用 seed/photos 走完整条主线（约 30 秒），也可以 -m emulator 跑集成测试
+.venv\Scripts\python.exe scripts\e2e_local.py
+.venv\Scripts\python.exe -m pytest -m emulator
 ```
+
+Gemini 相关：`python scripts/gemini_smoke.py --list-models` 看 key 能用哪些模型；`python scripts/gemini_smoke.py` 跑 9 张仿真证件照的逐字段对照（2026-10-17 实测 16/16 个字段全对）。
+**免费档每个模型每分钟只许 5 次请求**，一次评估要调 4 次（3 份证件 + 1 次说明）：遇到 429 会按服务端给的等待时间重试（`worker/gemini_call.py`），但一分钟内连评估两次会明显变慢；演示前建议给 AI Studio 项目开计费。
 
 不想起模拟器时设 `STORE_BACKEND=memory`，API 用内存存储（重启就清空）。
 

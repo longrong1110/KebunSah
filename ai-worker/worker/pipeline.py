@@ -56,8 +56,8 @@ class _Run:
         self.flush()
         return time.monotonic()
 
-    def finish(self, key: str, t0: float, status: str, detail: str, **extra: Any) -> None:
-        ms = int((time.monotonic() - t0) * 1000)
+    def finish(self, key: str, t0: float, status: str, detail: str, *, ms: int | None = None, **extra: Any) -> None:
+        ms = int((time.monotonic() - t0) * 1000) if ms is None else ms
         self.progress[key] = "done" if status in {"ok", "degraded"} else "failed"
         self.steps.append({"step": key, "status": status, "at": _iso(self.deps.now()), "ms": ms, "detail": detail, **extra})
         log.info("assessment step", extra={"assessment": self.path, "step": key, "status": status, "ms": ms, "detail": detail})
@@ -158,17 +158,18 @@ def _run(deps: Deps, plot_id: str, path: str, run: _Run) -> None:
 
     # 森林初筛与抽取并行（它们互不依赖）
     with ThreadPoolExecutor(max_workers=1) as pool:
-        def screen() -> tuple[ForestResult, str, float]:
+        def screen() -> tuple[ForestResult, str, int]:
             t = time.monotonic()
             try:
-                return deps.forest.screen(plot.get("centroidLat"), plot.get("centroidLng"), ring), "ok", t
+                result, note = deps.forest.screen(plot.get("centroidLat"), plot.get("centroidLng"), ring), "ok"
             except Exception as exc:
                 log.warning("forest screening failed", extra={"error": str(exc)})
-                return UnavailableForest().screen(0, 0, None), f"degraded: {type(exc).__name__}: {exc}"[:200], t
+                result, note = UnavailableForest().screen(0, 0, None), f"degraded: {type(exc).__name__}: {exc}"[:200]
+            return result, note, int((time.monotonic() - t) * 1000)
 
         forest_future = pool.submit(screen)
         docs = _read_documents(deps, plot_id, run)
-        forest, forest_note, forest_t0 = forest_future.result()
+        forest, forest_note, forest_ms = forest_future.result()
 
     t0 = run.start("check")
     as_of = deps.settings.assess_as_of or deps.now().astimezone(MYT).date().isoformat()
@@ -183,8 +184,9 @@ def _run(deps: Deps, plot_id: str, path: str, run: _Run) -> None:
     forest_ok = forest.risk != "unknown"
     if not forest_ok and status == "green":
         status = "needs_review"  # 森林没查成，不能当作没有毁林
-    run.finish("forest", forest_t0, "ok" if forest_ok else "degraded",
-               f"risk={forest.risk}, dataset={forest.dataset}" + ("" if forest_note == "ok" else f" ({forest_note})"))
+    run.finish("forest", time.monotonic(), "ok" if forest_ok else "degraded",
+               f"risk={forest.risk}, dataset={forest.dataset}" + ("" if forest_note == "ok" else f" ({forest_note})"),
+               ms=forest_ms)
 
     t0 = run.start("actions")
     try:

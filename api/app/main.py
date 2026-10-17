@@ -1,6 +1,7 @@
 """FastAPI 应用。create_app(deps) 供测试注入假依赖；create_app_from_env() 按环境变量组装线上 / 本地真实依赖。"""
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 
@@ -46,10 +47,20 @@ def load_dotenv(path: str | Path = ".env") -> None:
         os.environ.setdefault(key.strip(), value.strip().strip("\"'"))
 
 
+def _load_params(store):
+    """规则阈值：库里有 config/ruleParams 就用它，没有或读不到就用默认值（读不到不应该拦住服务启动）。"""
+    from kebunsah_core.params import DEFAULT_PARAMS, params_from_config
+
+    try:
+        return params_from_config(store.get("config/ruleParams"))
+    except Exception:
+        logging.getLogger("kebunsah").warning("could not read config/ruleParams; using default thresholds", exc_info=True)
+        return DEFAULT_PARAMS
+
+
 def create_app_from_env() -> FastAPI:
     """uvicorn app.main:create_app_from_env --factory。本地连模拟器，线上连真服务，只靠环境变量切换。"""
     load_dotenv()
-    from kebunsah_core.params import params_from_config
     from worker.explain import GeminiExplainer, TemplateExplainer
     from worker.forest import PrecomputedForest
     from worker.gemini import GeminiExtractor
@@ -73,5 +84,5 @@ def create_app_from_env() -> FastAPI:
     deps = Deps(
         settings=settings, store=store, blobs=blobs, verifier=FirebaseTokenVerifier(settings.project_id),
         extractor=GeminiExtractor(settings.gemini_api_key, settings.gemini_extract_model, settings.gemini_timeout_s),
-        explainer=explainer, forest=PrecomputedForest(), params=params_from_config(store.get("config/ruleParams")))
+        explainer=explainer, forest=PrecomputedForest(), params=_load_params(store))
     return create_app(deps)
