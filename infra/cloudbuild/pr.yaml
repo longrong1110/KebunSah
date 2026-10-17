@@ -1,13 +1,14 @@
 # PR 检查：跑测试和构建，不部署。在 GitHub 上设为合并前必须通过。
-# 各目录还没有代码时自动跳过，骨架阶段也是绿的。
+# 后端是 Python：core/、api/、ai-worker/ 的测试一起跑（pytest 配置在仓库根的 pyproject.toml）。
+# 需要本机 Firestore 模拟器的集成测试（-m emulator）默认不跑；要 Gemini key 的冒烟（scripts/gemini_smoke.py）也不进检查。
 steps:
-  - id: api-test
-    name: mcr.microsoft.com/dotnet/sdk:8.0
+  - id: backend-test
+    name: python:3.11
     entrypoint: bash
     args:
       - -c
       - |
-        if ls api/*.sln api/*.csproj >/dev/null 2>&1; then cd api && dotnet test; else echo "api: 还没有代码，跳过"; fi
+        pip install --quiet -r requirements-dev.txt && python -m pytest -q
   - id: web-build
     name: node:24
     entrypoint: bash

@@ -1,30 +1,35 @@
-# 合并到 main 后部署：两个 Cloud Run 服务 + Firebase Hosting。
-# 前提：asia-southeast1 已建 Docker 仓库 kebunsah，api/ 与 ai-worker/ 各有 Dockerfile，web/ 已建好 Angular 工程。
+# 合并到 main 后部署：一个 Cloud Run 服务（kebunsah-api，评估在进程内异步跑）+ Firebase Hosting。
+# 前提：asia-southeast1 已建 Docker 仓库 kebunsah；仓库根有 Dockerfile（构建上下文是仓库根）；web/ 已建好 Angular 工程。
+# 后端要的配置（下面三个 _ 开头的替换值在触发器里改成真实值；GEMINI_API_KEY 放 Secret Manager，名字 gemini-api-key）：
+#   _BUCKET        存证件照的 Cloud Storage bucket（bucket 要配 CORS 允许浏览器 PUT；服务账号要对自己有 Service Account Token Creator）
+#   _CORS_ORIGINS  Firebase Hosting 的网址，逗号分隔
+# 返回 202 之后评估还要在后台跑，所以必须 --no-cpu-throttling（否则响应一返回 CPU 就被压住）。
 substitutions:
   _REGION: asia-southeast1
   _REPO: asia-southeast1-docker.pkg.dev/${PROJECT_ID}/kebunsah
+  _BUCKET: ${PROJECT_ID}.firebasestorage.app
+  _CORS_ORIGINS: https://${PROJECT_ID}.web.app
 steps:
   - id: api-build
     name: gcr.io/cloud-builders/docker
-    args: [build, -t, '${_REPO}/api:${SHORT_SHA}', ./api]
+    args: [build, -t, '${_REPO}/api:${SHORT_SHA}', .]
   - id: api-push
     name: gcr.io/cloud-builders/docker
     args: [push, '${_REPO}/api:${SHORT_SHA}']
   - id: api-deploy
     name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: gcloud
-    args: [run, deploy, kebunsah-api, '--image=${_REPO}/api:${SHORT_SHA}', '--region=${_REGION}']
-
-  - id: ai-build
-    name: gcr.io/cloud-builders/docker
-    args: [build, -t, '${_REPO}/ai-worker:${SHORT_SHA}', ./ai-worker]
-  - id: ai-push
-    name: gcr.io/cloud-builders/docker
-    args: [push, '${_REPO}/ai-worker:${SHORT_SHA}']
-  - id: ai-deploy
-    name: gcr.io/google.com/cloudsdktool/cloud-sdk
-    entrypoint: gcloud
-    args: [run, deploy, kebunsah-ai, '--image=${_REPO}/ai-worker:${SHORT_SHA}', '--region=${_REGION}', --no-allow-unauthenticated]
+    args:
+      - run
+      - deploy
+      - kebunsah-api
+      - '--image=${_REPO}/api:${SHORT_SHA}'
+      - '--region=${_REGION}'
+      - --allow-unauthenticated  # 浏览器直接调，身份靠 Firebase ID token（API 自己校验）
+      - --no-cpu-throttling
+      - --min-instances=1
+      - '--set-env-vars=^@^BLOBS_MODE=gcs@STORAGE_BUCKET=${_BUCKET}@CORS_ORIGINS=${_CORS_ORIGINS}@DEV_ENDPOINTS=false@GOOGLE_CLOUD_PROJECT=${PROJECT_ID}'
+      - '--set-secrets=GEMINI_API_KEY=gemini-api-key:latest'
 
   - id: web-build
     name: node:24
@@ -37,4 +42,4 @@ steps:
     args: [-c, 'npx firebase-tools deploy --only hosting --project ${PROJECT_ID}']
 options:
   logging: CLOUD_LOGGING_ONLY
-  dynamicSubstitutions: true  # 让 _REPO 能引用 ${PROJECT_ID}
+  dynamicSubstitutions: true  # 让 _REPO 等能引用 ${PROJECT_ID}

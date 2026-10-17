@@ -11,7 +11,7 @@ Google Cloud AI Builder Cup 2026 参赛项目。原型提交截止 **2026-10-18*
 | `web/` | Angular PWA：手机端屏 1–10、合作社看板 → Firebase Hosting | 前端 |
 | `seed/` | 200 个模拟地块、仿真证件照、本地 PostgreSQL（`seed/db`，设计图落地，App 不读它） | 前端 |
 | `api/` | Python FastAPI → Cloud Run `kebunsah-api` | 后端 |
-| `ai-worker/` | Gemini 抽取、规则引擎、Earth Engine → Cloud Run `kebunsah-ai` | 后端 |
+| `ai-worker/` | 评估流水线（Gemini 抽取、规则、森林初筛、缺口说明）；和 `api/` 打在同一个镜像、同一个 Cloud Run 服务 `kebunsah-api` 里 | 后端 |
 | `core/` | 共用核心：规则、定级、几何、姓名相似度（纯 Python，不依赖云服务，API 与评估流水线共用） | 后端 |
 | `contract/` | 字段、状态值、接口、示例 JSON | 两人共管 |
 | `infra/` | Firestore 规则、Cloud Build 流水线 | 两人共管 |
@@ -49,7 +49,7 @@ Google Cloud AI Builder Cup 2026 参赛项目。原型提交截止 **2026-10-18*
 | **Firebase Spark** | 免费。Firestore 存 1 GiB、每天读 5 万／写 2 万；Hosting 存 10 GB、每天传输 360 MB | 不要 | 前端 Hosting、Firestore（200 个模拟地块绰绰有余） |
 | **Firebase Blaze** | 包含 Spark 的免费额度，超出才计费；合格的新用户有 $300 试用金 | **要** | Spark **没有**的下面这些都要它：Cloud Storage、Cloud Functions、手机号短信登录 |
 | **Google Cloud 试用** | $300、90 天，不扣费 | **要**（只做 $0–1 预授权）。资格：从没付过费给 Google Cloud、Google Maps Platform 或 Firebase | 开通 Blaze 和计费账号的最现实方式 |
-| **Cloud Run**（`kebunsah-api`、`kebunsah-ai`） | 每月 200 万次请求、36 万 GB 秒内存、18 万 vCPU 秒 | **要**计费账号 | 后端 API 与 AI 服务；Cloud Build 每月 2,500 分钟、Artifact Registry 0.5 GB、Secret Manager 6 个版本也在免费额度内 |
+| **Cloud Run**（`kebunsah-api`） | 每月 200 万次请求、36 万 GB 秒内存、18 万 vCPU 秒 | **要**计费账号 | 后端 API 与 AI 服务；Cloud Build 每月 2,500 分钟、Artifact Registry 0.5 GB、Secret Manager 6 个版本也在免费额度内 |
 | **Cloud Storage**（证件照） | Blaze 上有免费额度，但**只覆盖美国三个区域**（us-central1／us-west1／us-east1）；放 `asia-southeast1` 要按量付费，几十张照片费用很小但不是零 | 要（Blaze） | 存证件照（前端用签名网址或约定路径上传） |
 | **手机号短信 OTP** | Spark 上不可用，按发送的短信计费 | 要（Blaze） | 登录。可用 Firebase 控制台的「测试手机号」（固定验证码、不发短信）绕开；**前端没在 Spark 上验证过** |
 | **Gemini**（评估必需） | Vertex AI 的免费额度页面没给数字；AI Studio 的 Gemini API 有免费档，页面没给数字，且**试用金不能付 AI Studio 的费用** | Vertex AI 要计费账号 | 读证件照、解释、定级。走 Vertex AI 还是 AI Studio 请后端定 |
@@ -79,7 +79,7 @@ Google Cloud AI Builder Cup 2026 参赛项目。原型提交截止 **2026-10-18*
 | --- | --- | --- | --- | --- |
 | 1 | **后端 API 与 AI 服务** | `api/`、`ai-worker/` 只有 README。要做：`POST/GET /api/plots`、`PATCH /api/plots/{id}`、`POST /api/plots/{id}/documents`、`POST /api/plots/{id}/assess`；Gemini 抽取（三种文件，带置信度）、规则引擎（面积 CC-01、有效期 CC-02、姓名 CC-03）、写出 `assessments`／`gaps`／`plots.status`。**时间不够的最低限度版本**：一个脚本把 `seed/photos/` 的仿真证件照交给 Gemini 抽取、核对规则、写出评估，先让「用了 Gemini」成立 | 队友 | 合同 #14／#23 |
 | 2 | **审并 Approve [#14](https://github.com/longrong1110/KebunSah/pull/14)、[#23](https://github.com/longrong1110/KebunSah/pull/23)** | 无回应。#14 是评估文档形状、鉴权、`assess`、屏 8 字段确认；#23 是建地块、保存位置与面积、登记文件，堆叠在 #14 上，先审 #14。不同意的地方直接在 PR 里改，以你们为准 | 队友 | — |
-| 3 | **线上项目与部署（公开网址）** | 没有 Firebase／GCP 项目。要：建项目开计费（哪些要钱见上面「三、要付费或要账号的云服务」）、开 Firestore／Auth／Storage、`web/src/environments/environment.ts` 填 Firebase Web 配置和正式 Maps key、Hosting 发布前端、Cloud Run 发布 `kebunsah-api`／`kebunsah-ai`、把 `seed/` 灌进线上 Firestore（要服务账号，**不进仓库**） | 有卡的人开通计费账号；**Hosting 部署归接手前端的人**（`docs/PLAN.md` 里 Hosting 归前端），Cloud Run 归后端 | 上面「三」里的决定 |
+| 3 | **线上项目与部署（公开网址）** | 没有 Firebase／GCP 项目。要：建项目开计费（哪些要钱见上面「三、要付费或要账号的云服务」）、开 Firestore／Auth／Storage、`web/src/environments/environment.ts` 填 Firebase Web 配置和正式 Maps key、Hosting 发布前端、Cloud Run 发布 `kebunsah-api`、把 `seed/` 灌进线上 Firestore（要服务账号，**不进仓库**） | 有卡的人开通计费账号；**Hosting 部署归接手前端的人**（`docs/PLAN.md` 里 Hosting 归前端），Cloud Run 归后端 | 上面「三」里的决定 |
 | 4 | **前端接线：屏 6 本体、建地块、上传、开始评估** | 现在屏 6 只是壳（`web/src/app/features/new-plot/review-placeholder.ts`）。批准后要做：建地块 → `PATCH` 保存屏 5 的多边形／点（草稿已在 `DraftService`，面积由后端重算）→ 每份文件取签名网址并 `PUT` 直传 → `POST /assess` → 跳屏 7（`/plots/:id/checking` 已有）；加载态和错误态；屏 9 里「Belum mula」状态补「开始检查」按钮。**粗估 1 天** | 前端接手人 | #1、#2 |
 | 5 | **端到端联调** | 用 5 份仿真证件照跑完整链路（联调 #1），再按演示脚本彩排（联调 #2）；跑通打标签 `v0.1-e2e` | 两人 | #1、#4 |
 
@@ -88,7 +88,7 @@ Google Cloud AI Builder Cup 2026 参赛项目。原型提交截止 **2026-10-18*
 | # | 事项 | 备注 |
 | --- | --- | --- |
 | 6 | **收紧 `infra/firestore.rules`**（若用 Storage 还要 `storage.rules`） | 现在任何登录用户都能读全部集合，包括 `persons` 的 `icHash`／`icLast4`。至少改成只能读本合作社；看板用 collection group 读评估，所以评估文档要带 `coopId`（#14 的提议）。`docs/PLAN.md` 把 Firestore 规则归在前端名下，但它是共管文件，改动要对方 Approve（两人共审） |
-| 7 | **接上 PR 检查（Cloud Build）** | `infra/cloudbuild/pr.yaml` 的后端步骤还是 `dotnet test`，后端是 Python，要换成 pytest；GitHub 上 PR 页面现在看不到任何检查 |
+| 7 | **接上 PR 检查（Cloud Build）** | `infra/cloudbuild/pr.yaml` 的后端步骤已改成跑 pytest；但 Cloud Build 触发器还没接到 GitHub，PR 页面现在看不到任何检查（要有 GCP 项目才能接） |
 | 8 | **谁创建 `users/{uid}`、谁写 `lastLoginAt`** | 前端只读，只能是后端；线上 Auth 不能预设 uid（首次登录建档或用 Admin SDK 预建）。现在没有档案的账号首页显示「Profil anda belum dibuat.」 |
 | 9 | **森林初筛（Earth Engine）** | 先让 1 块地查通；1–2 块演示地块的坐标要落在真实有森林变化的区域，种子里的森林数据只是占位 |
 | 10 | **换正式 Maps key** | 现在是 Google Demo key，只适合原型，用量上限不明；限制 HTTP 来源（`localhost:4200` 和 Hosting 网址），只开 Maps JavaScript API |
@@ -214,5 +214,5 @@ curl http://127.0.0.1:9099/emulator/v1/projects/demo-kebunsah/verificationCodes
 
 ## 发布流水线
 
-PR → Cloud Build 检查（**目前没接到 GitHub**；`pr.yaml` 的后端步骤还是 `dotnet test` 骨架，后端是 Python，要换成 pytest；前端是 `ng build`）→ 合并 main → Cloud Build 部署（`infra/cloudbuild/deploy.yaml`）：
-镜像推 Artifact Registry，部署两个 Cloud Run 服务，前端发布到 Firebase Hosting。区域 `asia-southeast1`。
+PR → Cloud Build 检查（**目前没接到 GitHub**；`pr.yaml` 后端跑 pytest、前端跑 `ng build`）→ 合并 main → Cloud Build 部署（`infra/cloudbuild/deploy.yaml`）：
+镜像推 Artifact Registry，部署一个 Cloud Run 服务 `kebunsah-api`（评估在进程内异步跑，所以带 `--no-cpu-throttling`），前端发布到 Firebase Hosting。区域 `asia-southeast1`。
