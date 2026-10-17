@@ -33,7 +33,7 @@ python -m pytest                                          # 默认不含 emulato
 # 终端 1：Auth 9099 + Firestore 8080。npm run emulators 要 Java 21+ 且全局 firebase-tools 完好；
 # 这台机器的全局 firebase-tools 缺文件，用 npx 的 14 版（Java 17 也行）：
 cd web
-node -e "require('child_process')" ; node scripts/emulators.mjs   # 只为生成 web/.emulators.json，起不来就 Ctrl+C
+node scripts/emulators.mjs        # 这一步会先生成 web/.emulators.json；全局 firebase 坏了会报错，不用管，接着跑下一行
 npx -y firebase-tools@14 emulators:start --only auth,firestore --project demo-kebunsah --config "$PWD\.emulators.json"
 
 # 终端 2：灌种子（每次模拟器重启后都要重灌一次），然后起 API
