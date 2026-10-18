@@ -3,7 +3,8 @@
 # 后端要的配置（下面三个 _ 开头的替换值在触发器里改成真实值；GEMINI_API_KEY 放 Secret Manager，名字 gemini-api-key）：
 #   _BUCKET        存证件照的 Cloud Storage bucket（bucket 要配 CORS 允许浏览器 PUT；服务账号要对自己有 Service Account Token Creator）
 #   _CORS_ORIGINS  Firebase Hosting 的网址，逗号分隔
-# 返回 202 之后评估还要在后台跑，所以必须 --no-cpu-throttling（否则响应一返回 CPU 就被压住）。
+# 返回 202 之后评估还要在后台跑，所以必须 --no-cpu-throttling（否则响应一返回 CPU 就被压住）；
+# 这样按实例存活时间计费（含请求结束后到缩回零之间的空闲时间），所以 min-instances 保持 0。
 substitutions:
   _REGION: asia-southeast1
   _REPO: asia-southeast1-docker.pkg.dev/${PROJECT_ID}/kebunsah
@@ -27,7 +28,8 @@ steps:
       - '--region=${_REGION}'
       - --allow-unauthenticated  # 浏览器直接调，身份靠 Firebase ID token（API 自己校验）
       - --no-cpu-throttling
-      - --min-instances=1
+      - --min-instances=0  # 常驻一个实例要按秒一直计费，远超免费额度；原型不常驻，代价是闲置后第一次请求慢几秒（冷启动）
+      - --max-instances=3  # 流量突增时的费用上限
       - '--set-env-vars=^@^BLOBS_MODE=gcs@STORAGE_BUCKET=${_BUCKET}@CORS_ORIGINS=${_CORS_ORIGINS}@DEV_ENDPOINTS=false@GOOGLE_CLOUD_PROJECT=${PROJECT_ID}'
       - '--set-secrets=GEMINI_API_KEY=gemini-api-key:latest'
 
