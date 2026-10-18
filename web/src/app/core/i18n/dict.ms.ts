@@ -273,7 +273,7 @@ export const ms = {
     waiting: 'Menunggu talian',
     failed: 'Gagal dihantar',
     card: (docs: number, ha: string | null) =>
-      `Tanah baharu · ${docs} gambar${ha ? ` · ${ha} ha` : ''}`,
+      `Tanah baharu · ${docs} gambar${ha ? ` · ${ha} ha` : ''}`,
     waitingNote: 'Disimpan dalam telefon ini. Akan dihantar secara automatik apabila ada talian.',
     failedNote: 'Pelayan tidak menerima data ini. Buang dan tambah semula tanah ini.',
     sendNow: 'Hantar sekarang',

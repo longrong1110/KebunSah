@@ -271,7 +271,7 @@ export const en: Dict = {
     waiting: 'Waiting for a connection',
     failed: 'Could not be sent',
     card: (docs: number, ha: string | null) =>
-      `New land · ${docs} ${docs === 1 ? 'photo' : 'photos'}${ha ? ` · ${ha} ha` : ''}`,
+      `New land · ${docs} ${docs === 1 ? 'photo' : 'photos'}${ha ? ` · ${ha} ha` : ''}`,
     waitingNote: 'Saved on this phone. It will be sent automatically when you are back online.',
     failedNote: 'The server did not accept this data. Remove it and add the land again.',
     sendNow: 'Send now',
