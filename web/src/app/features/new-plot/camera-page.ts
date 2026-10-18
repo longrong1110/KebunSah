@@ -21,7 +21,7 @@ import {
   type CameraErrorKey,
   type CameraHandle,
 } from './camera.service';
-import { DraftService, isDocType, type DocSource, type DocType } from './draft.service';
+import { DraftService, isDraftKey, type DocSource, type DraftKey } from './draft.service';
 import { ImageProblem, compressFile, renderJpeg, type ImageProblemKey } from './image';
 
 // 打开之前：opening；首帧到达：live；点了快门：processing；拍完/选完：preview；打不开：error
@@ -45,7 +45,7 @@ export class CameraPage {
   private readonly video = viewChild<ElementRef<HTMLVideoElement>>('video');
   protected readonly t = inject(I18nService).t;
 
-  protected readonly docType = signal<DocType | null>(null);
+  protected readonly docType = signal<DraftKey | null>(null);
   protected readonly docName = computed(() => {
     const type = this.docType();
     return type ? this.t().newPlot.docs[type] : '';
@@ -71,7 +71,7 @@ export class CameraPage {
 
   constructor() {
     const raw = this.route.snapshot.paramMap.get('doc');
-    if (!isDocType(raw)) {
+    if (!isDraftKey(raw)) {
       // 非法的文档类型：回屏 3
       void this.router.navigate(['/plots/new'], {
         replaceUrl: true,

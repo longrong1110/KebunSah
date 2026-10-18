@@ -11,6 +11,14 @@ export type DocType = (typeof DOC_TYPES)[number];
 export const isDocType = (v: unknown): v is DocType =>
   typeof v === 'string' && (DOC_TYPES as readonly string[]).includes(v);
 
+/**
+ * 地契第 2 页（登记持有人的那一页）：可选，不拦「下一步」。提交时登记成 land_title 的第 2 页（pageNo = 2）。
+ * 不放进 DOC_TYPES：屏 3 的三张必拍卡片、「都处理完才能继续」都只看那三张。
+ */
+export const PAGE2_KEY = 'land_title_p2' as const;
+export type DraftKey = DocType | typeof PAGE2_KEY;
+export const isDraftKey = (v: unknown): v is DraftKey => isDocType(v) || v === PAGE2_KEY;
+
 /** documents.source 里的两个相关取值 */
 export type DocSource = 'camera' | 'gallery';
 
@@ -19,11 +27,14 @@ export type DraftDoc =
   | { status: 'skipped' }
   | { status: 'captured'; blob: Blob; url: string; source: DocSource };
 
-const fresh = (): Record<DocType, DraftDoc> => ({
+const fresh = (): Record<DraftKey, DraftDoc> => ({
   land_title: { status: 'pending' },
   mspo_cert: { status: 'pending' },
   mpob_licence: { status: 'pending' },
+  [PAGE2_KEY]: { status: 'pending' },
 });
+
+const ALL_KEYS: readonly DraftKey[] = [...DOC_TYPES, PAGE2_KEY];
 
 const freshGeometry = (): GeometryDraft => ({
   tab: 'map',
@@ -35,7 +46,7 @@ const freshGeometry = (): GeometryDraft => ({
 
 @Injectable({ providedIn: 'root' })
 export class DraftService {
-  private readonly docs = signal<Record<DocType, DraftDoc>>(fresh());
+  private readonly docs = signal<Record<DraftKey, DraftDoc>>(fresh());
   private readonly geo = signal<GeometryDraft>(freshGeometry());
 
   /** 外勤替成员新建时，草稿属于哪位成员（带回 ?member，提交时作为 memberId） */
@@ -45,7 +56,7 @@ export class DraftService {
   readonly plotId = signal<string | null>(null);
 
   /** 提交进度之二：已经传到后端的那张照片（按 Blob 本身认，重拍之后是另一个 Blob，会重新上传） */
-  readonly uploaded = new Map<DocType, Blob>();
+  readonly uploaded = new Map<DraftKey, Blob>();
 
   /** 三份文档的当前状态，按固定顺序 */
   readonly entries = computed(() => DOC_TYPES.map((type) => ({ type, doc: this.docs()[type] })));
@@ -60,9 +71,12 @@ export class DraftService {
     () => DOC_TYPES.find((t) => this.docs()[t].status === 'pending') ?? null,
   );
 
-  doc(type: DocType): DraftDoc {
+  doc(type: DraftKey): DraftDoc {
     return this.docs()[type];
   }
+
+  /** 地契第 2 页的状态（可选；没拍就是 pending） */
+  readonly page2 = computed(() => this.docs()[PAGE2_KEY]);
 
   // ---- 屏 5：圈地块。几何只存中性的 [经度, 纬度]，以后接 API 时再映射成合同字段 ----
 
@@ -130,7 +144,7 @@ export class DraftService {
 
   /** 离开流程（回到 /）：清空草稿并撤销所有预览 URL */
   reset(): void {
-    for (const t of DOC_TYPES) this.release(this.docs()[t]);
+    for (const t of ALL_KEYS) this.release(this.docs()[t]);
     this.docs.set(fresh());
     this.geo.set(freshGeometry());
     this.memberId.set(null);
@@ -139,12 +153,18 @@ export class DraftService {
   }
 
   /** 屏 4 点了「Guna gambar」：这份文档变已拍；重拍则替换并撤销旧的预览 URL */
-  capture(type: DocType, blob: Blob, source: DocSource): void {
+  capture(type: DraftKey, blob: Blob, source: DocSource): void {
     this.release(this.docs()[type]);
     this.docs.update((d) => ({
       ...d,
       [type]: { status: 'captured', blob, url: URL.createObjectURL(blob), source },
     }));
+  }
+
+  /** 撤掉已拍的（地契第 2 页用：拍错了、不想要了）：回到没拍的状态 */
+  clear(type: DraftKey): void {
+    this.release(this.docs()[type]);
+    this.docs.update((d) => ({ ...d, [type]: { status: 'pending' } }));
   }
 
   /** 没有这份文档：跳过。之后由后端评估给出缺口清单，不会卡住 */

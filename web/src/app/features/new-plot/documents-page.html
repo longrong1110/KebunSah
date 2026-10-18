@@ -70,6 +70,50 @@
       }
     </ul>
 
+    @if (titleTaken()) {
+      <ul class="doc-list doc-list--extra" id="page2-list">
+        <li class="doc-card" [class.doc-card--done]="page2().status === 'captured'">
+          <button type="button" class="doc-card__main" id="doc-land_title_p2" (click)="openPage2()">
+            <span class="doc-card__thumb">
+              @if (page2(); as p) {
+                @if (p.status === 'captured') {
+                  <img [src]="p.url" [alt]="t().newPlot.thumbAlt(t().newPlot.docs.land_title_p2)" />
+                } @else {
+                  <span aria-hidden="true">📷</span>
+                }
+              }
+            </span>
+            <span class="doc-card__text">
+              <strong>{{
+                page2().status === 'captured'
+                  ? t().newPlot.docs.land_title_p2
+                  : t().newPlot.page2.add
+              }}</strong>
+              <span>{{
+                page2().status === 'captured' ? t().newPlot.taken : t().newPlot.tapToTake
+              }}</span>
+            </span>
+            @if (page2().status === 'captured') {
+              <span class="chip tone-ok">
+                <span aria-hidden="true">✓</span><span>{{ t().newPlot.ready }}</span>
+              </span>
+            }
+          </button>
+          @if (page2().status === 'captured') {
+            <button
+              type="button"
+              class="chip-btn"
+              id="remove-land_title_p2"
+              (click)="removePage2()"
+            >
+              {{ t().newPlot.page2.remove }}
+            </button>
+          }
+        </li>
+      </ul>
+      <p class="hint" id="page2-hint">{{ t().newPlot.page2.hint }}</p>
+    }
+
     <p class="hint">{{ t().newPlot.noDocsHint }}</p>
 
     @if (notice(); as n) {

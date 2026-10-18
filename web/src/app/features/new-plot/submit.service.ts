@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiError, ApiService, type GeometryBody } from '../../core/api/api.service';
-import { DOC_TYPES, DraftService, type DocType } from './draft.service';
+import { DOC_TYPES, DraftService, PAGE2_KEY, type DocType, type DraftKey } from './draft.service';
 import { toGeoJsonPolygon, type PlotGeometry } from './geometry';
 
 // 屏 6「开始检查」：把草稿交给后端——建地块 → 保存位置与面积 → 登记并直传每份照片 → 触发评估。
@@ -48,23 +48,29 @@ export class SubmitService {
     onProgress({ step: 'area', done: 0, total: 0 });
     await this.api.saveGeometry(plotId, geometryBody(geometry));
 
-    const todo = DOC_TYPES.flatMap((type) => {
-      const doc = this.draft.doc(type);
-      return doc.status === 'captured' && this.draft.uploaded.get(type) !== doc.blob
-        ? [{ type, blob: doc.blob, source: doc.source }]
+    // 三份必拍的文件（第 1 页）＋可选的地契第 2 页（登记成 land_title 的 pageNo = 2）
+    const slots: { key: DraftKey; type: DocType; pageNo: number }[] = [
+      ...DOC_TYPES.map((type) => ({ key: type, type, pageNo: 1 })),
+      { key: PAGE2_KEY, type: 'land_title', pageNo: 2 },
+    ];
+    const todo = slots.flatMap(({ key, type, pageNo }) => {
+      const doc = this.draft.doc(key);
+      return doc.status === 'captured' && this.draft.uploaded.get(key) !== doc.blob
+        ? [{ key, type, pageNo, blob: doc.blob, source: doc.source }]
         : [];
     });
     let done = 0;
     onProgress({ step: 'docs', done, total: todo.length });
     await Promise.all(
-      todo.map(async ({ type, blob, source }) => {
+      todo.map(async ({ key, type, pageNo, blob, source }) => {
         const reg = await this.api.registerDocument(plotId, {
-          docType: type satisfies DocType,
+          docType: type,
           contentType: 'image/jpeg',
           source,
+          ...(pageNo > 1 ? { pageNo } : {}),
         });
         await this.api.uploadPhoto(reg.upload, blob);
-        this.draft.uploaded.set(type, blob);
+        this.draft.uploaded.set(key, blob);
         onProgress({ step: 'docs', done: ++done, total: todo.length });
       }),
     );

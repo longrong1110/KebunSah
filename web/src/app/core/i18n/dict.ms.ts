@@ -101,6 +101,12 @@ export const ms = {
       land_title: 'Geran tanah',
       mspo_cert: 'Sijil MSPO',
       mpob_licence: 'Lesen MPOB',
+      land_title_p2: 'Geran tanah · halaman 2',
+    },
+    page2: {
+      add: 'Tambah halaman 2 geran (pilihan)',
+      hint: 'Halaman yang menyenaraikan pemilik berdaftar. Jika geran anda meletakkan pemilik di halaman kedua, tambahkannya supaya kami dapat menyemak nama.',
+      remove: 'Buang',
     },
     tapToTake: 'Ketik untuk ambil gambar',
     taken: 'Sudah diambil',

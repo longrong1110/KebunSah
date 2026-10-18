@@ -352,3 +352,54 @@ def test_summary_model_is_the_gemini_model_when_gemini_wrote_it(store, make_deps
     a = latest(store, pid)[1]
     assert a["summaryModel"] == "gemini-test" and a["result"] == "yellow"  # 执照临期的缺口让 Gemini 写了说明
     assert a["summaryText"] == "Lesen anda hampir tamat."
+
+
+class _PagedExtractor:
+    """按图片内容区分页：第 1 页只有面积和 Lot，第 2 页只有持有人（像 seed/photos 里分两页的地契）；别的证件照常"""
+
+    def __init__(self):
+        self.calls = []
+
+    def extract(self, doc_type, image, mime_type):
+        from worker.fields import normalize_field
+        from worker.gemini import ExtractionResult
+
+        self.calls.append((doc_type, image))
+        if doc_type == "land_title" and image.endswith(b"PAGE1"):
+            raw = {"land_title.area_value": ("4.20", 0.95), "land_title.area_unit": ("Hektar", 0.95), "land_title.lot_no": ("1052", 0.9)}
+        elif doc_type == "land_title" and image.endswith(b"PAGE2"):
+            raw = {"land_title.proprietor_1_name": ("TAN AH KOW", 0.95)}
+        else:
+            raw = GOOD[doc_type]
+        return ExtractionResult(fields={k: normalize_field(k, v[0], v[0], v[1]) for k, v in raw.items()}, model="fake")
+
+
+def _register_and_upload(client, pid, doc_type, content, page=None):
+    body = {"docType": doc_type, "contentType": "image/jpeg", "source": "camera", **({"pageNo": page} if page else {})}
+    r = client.post(f"/api/plots/{pid}/documents", headers=bearer("smallholder-1"), json=body)
+    assert r.status_code == 201, r.text
+    assert client.put(r.json()["upload"]["url"].removeprefix("http://test"), content=content).status_code == 200
+    return r.json()["documentId"]
+
+
+def test_a_two_page_land_title_is_read_as_one_document(world, store):
+    extractor = _PagedExtractor()
+    client, _, _ = world(extractor=extractor)
+    pid = make_plot(client, upload=("mpob_licence", "mspo_cert"))
+    _register_and_upload(client, pid, "land_title", b"\xff\xd8PAGE1")
+    _register_and_upload(client, pid, "land_title", b"\xff\xd8PAGE2", page=2)
+    assess(client, pid)
+    _, a = latest(store, pid)
+    assert a["runStatus"] == "done" and a["result"] == "green", a["gaps"]  # 面积在第 1 页、持有人在第 2 页，合起来才都通过
+    docs = [d for _, d in store.list(f"plots/{pid}/documents") if d["docType"] == "land_title"]
+    assert sorted(d["pageNo"] for d in docs) == [1, 2] and all(d["isCurrent"] for d in docs)
+    assert sum(1 for t, _ in extractor.calls if t == "land_title") == 2
+
+
+def test_page_one_alone_asks_for_the_owner_page(world, store):
+    client, _, _ = world(extractor=_PagedExtractor())
+    pid = make_plot(client, upload=("mpob_licence", "mspo_cert"))
+    _register_and_upload(client, pid, "land_title", b"\xff\xd8PAGE1")
+    assess(client, pid)
+    _, a = latest(store, pid)
+    assert a["result"] == "needs_review" and ("missing_doc", "land_title") in [(g["gapCode"], g["docType"]) for g in a["gaps"]]

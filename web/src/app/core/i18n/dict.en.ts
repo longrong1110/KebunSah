@@ -100,6 +100,12 @@ export const en: Dict = {
       land_title: 'Land title',
       mspo_cert: 'MSPO certificate',
       mpob_licence: 'MPOB licence',
+      land_title_p2: 'Land title · page 2',
+    },
+    page2: {
+      add: 'Add page 2 of the title (optional)',
+      hint: 'The page that lists the registered owner. If your title has the owner on a second page, add it so we can check the name.',
+      remove: 'Remove',
     },
     tapToTake: 'Tap to take a photo',
     taken: 'Taken',

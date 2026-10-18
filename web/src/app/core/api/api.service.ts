@@ -88,7 +88,13 @@ export class ApiService {
   /** 登记一份文件，拿到 15 分钟有效的上传网址 */
   registerDocument(
     plotId: string,
-    body: { docType: DocKind; contentType: 'image/jpeg'; source: 'camera' | 'gallery' },
+    body: {
+      docType: DocKind;
+      contentType: 'image/jpeg';
+      source: 'camera' | 'gallery';
+      /** 一份证件的第几页（1–4）；不写就是第 1 页 */
+      pageNo?: number;
+    },
   ): Promise<{ documentId: string; upload: UploadTarget }> {
     return this.request('POST', `/api/plots/${encodeURIComponent(plotId)}/documents`, body);
   }
