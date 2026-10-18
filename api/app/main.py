@@ -8,7 +8,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from . import routes_assess, routes_dev, routes_documents, routes_me, routes_plots
+from . import routes_assess, routes_dev, routes_documents, routes_manage, routes_me, routes_plots, routes_voice
 from .deps import Deps
 from .errors import install_error_handlers
 
@@ -29,6 +29,8 @@ def create_app(deps: Deps) -> FastAPI:
     app.include_router(routes_plots.router)
     app.include_router(routes_documents.router)
     app.include_router(routes_assess.router)
+    app.include_router(routes_manage.router)
+    app.include_router(routes_voice.router)
     if deps.settings.dev_endpoints:
         app.include_router(routes_dev.router)
     return app
@@ -78,6 +80,7 @@ def create_app_from_env() -> FastAPI:
     """uvicorn app.main:create_app_from_env --factory。本地连模拟器，线上连真服务，只靠环境变量切换。"""
     load_dotenv()
     from worker.explain import GeminiExplainer, TemplateExplainer
+    from worker.voice import GeminiVoice
     from worker.forest import PrecomputedForest
     from worker.gemini import GeminiExtractor
 
@@ -100,5 +103,7 @@ def create_app_from_env() -> FastAPI:
     deps = Deps(
         settings=settings, store=store, blobs=blobs, verifier=FirebaseTokenVerifier(settings.project_id),
         extractor=GeminiExtractor(settings.gemini_api_key, _models(settings.gemini_extract_model), settings.gemini_timeout_s),
-        explainer=explainer, forest=_forest(settings), params=_load_params(store))
+        explainer=explainer, forest=_forest(settings), params=_load_params(store),
+        voice=(GeminiVoice(settings.gemini_api_key, _models(settings.gemini_explain_model), settings.gemini_timeout_s)
+               if settings.gemini_api_key else None))
     return create_app(deps)

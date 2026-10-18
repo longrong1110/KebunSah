@@ -34,6 +34,12 @@ class Store(Protocol):
     def find_in_group(self, group: str, doc_id: str) -> tuple[str, dict] | None:
         """在所有叫 group 的子集合里按文档 id 找，返回 (完整路径, 数据)。"""
 
+    def delete(self, path: str) -> None:
+        """删除这一篇文档（不存在也不报错），不动它的子集合。"""
+
+    def delete_tree(self, path: str) -> None:
+        """删除这一篇文档，连同它下面所有子集合里的文档。"""
+
 
 def matches(data: dict, where: Where) -> bool:
     for field, op, value in where:
@@ -100,3 +106,12 @@ class MemoryStore:
                 if len(parts) >= 2 and parts[-2] == group and parts[-1] == doc_id:
                     return path, copy.deepcopy(doc)
         return None
+
+    def delete(self, path: str) -> None:
+        with self._lock:
+            self._docs.pop(path, None)
+
+    def delete_tree(self, path: str) -> None:
+        with self._lock:
+            for key in [k for k in self._docs if k == path or k.startswith(path + "/")]:
+                del self._docs[key]

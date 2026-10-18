@@ -16,6 +16,9 @@ class Blobs(Protocol):
 
     def read_bytes(self, path: str) -> bytes: ...
 
+    def delete(self, path: str) -> None:
+        """删除这个对象；本来就不存在也不报错。"""
+
 
 class LocalBlobs:
     """开发用：文件放在本地目录里。对前端看起来和签名网址一样（PUT 到一个 URL）。"""
@@ -43,6 +46,9 @@ class LocalBlobs:
 
     def read_bytes(self, path: str) -> bytes:
         return self._resolve(path).read_bytes()
+
+    def delete(self, path: str) -> None:
+        self._resolve(path).unlink(missing_ok=True)
 
     def write(self, path: str, data: bytes) -> None:
         target = self._resolve(path)
@@ -81,3 +87,11 @@ class GcsBlobs:
 
     def read_bytes(self, path: str) -> bytes:
         return self._bucket.blob(path).download_as_bytes()
+
+    def delete(self, path: str) -> None:
+        from google.api_core.exceptions import NotFound
+
+        try:
+            self._bucket.blob(path).delete()
+        except NotFound:
+            pass

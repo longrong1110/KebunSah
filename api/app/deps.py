@@ -20,6 +20,7 @@ if TYPE_CHECKING:  # 只为类型提示，避免循环 import
     from worker.explain import Explainer
     from worker.forest import Forest
     from worker.gemini import Extractor
+    from worker.voice import Voice
 
 
 def utcnow() -> datetime:
@@ -42,6 +43,7 @@ class Deps:
     params: Params = DEFAULT_PARAMS
     now: Callable[[], datetime] = field(default=utcnow)
     new_id: Callable[[], str] = field(default=new_id)
+    voice: "Voice | None" = None  # 语音问答；没配 Gemini 密钥时是 None，接口回 503
 
 
 def get_deps(request: Request) -> Deps:

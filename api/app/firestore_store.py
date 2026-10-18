@@ -55,3 +55,10 @@ class FirestoreStore:
                 data = self.get(ref.reference.path)
                 return (ref.reference.path, data) if data is not None else None
         return None
+
+    def delete(self, path: str) -> None:
+        self.db.document(path).delete()
+
+    def delete_tree(self, path: str) -> None:
+        # recursive_delete 会连子集合一起删（google-cloud-firestore ≥ 2.11）
+        self.db.recursive_delete(self.db.document(path))
