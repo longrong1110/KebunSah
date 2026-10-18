@@ -187,3 +187,30 @@ def test_extractor_rides_out_a_quota_error(monkeypatch):
         {"key": "mpob_licence.valid_until", "raw_text": "05/12/2026", "value": "2026-12-05", "confidence": 0.9}]))
     out = GeminiExtractor(client=client).extract("mpob_licence", b"x", "image/jpeg")
     assert out.fields["mpob_licence.valid_until"]["normalizedValue"] == "2026-12-05" and state["n"] == 2
+
+
+class ServerError(Exception):
+    def __init__(self, code):
+        super().__init__(f"{code} UNAVAILABLE. This model is currently experiencing high demand.")
+        self.code = code
+
+
+def test_server_side_unavailable_is_retried_with_backoff():
+    assert retry_after_seconds(ServerError(503), 1) == 4
+    assert retry_after_seconds(ServerError(503), 2) == 8
+    assert retry_after_seconds(ServerError(503), 9) == 12
+    assert retry_after_seconds(ServerError(500), 1) == 4
+    assert retry_after_seconds(RuntimeError("403 permission denied")) is None
+
+    state = {"n": 0}
+
+    def call(**kwargs):
+        state["n"] += 1
+        if state["n"] < 3:
+            raise ServerError(503)
+        return SimpleNamespace(text="{}")
+
+    slept = []
+    client = SimpleNamespace(models=SimpleNamespace(generate_content=call))
+    assert generate_with_retry(client, sleep=slept.append, model="m").text == "{}"
+    assert slept == [5.0, 9.0] and state["n"] == 3
