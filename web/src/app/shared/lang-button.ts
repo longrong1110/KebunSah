@@ -12,7 +12,7 @@ import { I18nService } from '../core/i18n/i18n.service';
       [attr.aria-label]="i18n.t().lang.code + ' — ' + i18n.t().lang.switchLabel"
       (click)="i18n.toggle()"
     >
-      <span aria-hidden="true">🌐</span> {{ i18n.t().lang.code }}
+      <span class="ic ic-globe" aria-hidden="true"></span> {{ i18n.t().lang.code }}
     </button>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

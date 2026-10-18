@@ -108,7 +108,7 @@
           [attr.aria-pressed]="torchOn()"
           (click)="toggleTorch()"
         >
-          <span aria-hidden="true">⚡</span>
+          <span class="ic ic-bolt" aria-hidden="true"></span>
           <span>{{ torchOn() ? t().camera.torchOn : t().camera.torchOff }}</span>
         </button>
       } @else {

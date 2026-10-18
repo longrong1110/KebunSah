@@ -15,6 +15,7 @@ import { NotConfiguredError } from '../../core/firebase/firebase';
 import type { Dict } from '../../core/i18n/dict.ms';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { normalizePhone } from '../../core/phone';
+import { BrandMark } from '../../shared/brand-mark';
 import { LangButton } from '../../shared/lang-button';
 
 type Step = 'phone' | 'code';
@@ -23,6 +24,15 @@ type Step = 'phone' | 'code';
 export type LoginErrorKey = keyof Dict['login']['errors'];
 
 const RESEND_SECONDS = 30;
+
+/** 评审试用：Firebase 控制台里登记的测试号（不发真短信，验证码固定 123456）。点一下填进输入框 */
+export const DEMO_NUMBERS = [
+  { role: 'smallholder', phone: '+60 10-000 0011' },
+  { role: 'smallholderYellow', phone: '+60 10-000 0012' },
+  { role: 'smallholderRed', phone: '+60 10-000 0013' },
+  { role: 'officer', phone: '+60 10-000 0001' },
+  { role: 'admin', phone: '+60 10-000 0002' },
+] as const;
 
 function errorKeyFor(err: unknown): LoginErrorKey {
   if (err instanceof NotConfiguredError) return 'notConfigured';
@@ -50,7 +60,7 @@ function errorKeyFor(err: unknown): LoginErrorKey {
 // 屏 1 登录（线框 docs/ui/screen-01.png）：两步，手机号 → 验证码；右上角常驻语言按钮。
 @Component({
   selector: 'app-login',
-  imports: [LangButton],
+  imports: [BrandMark, LangButton],
   templateUrl: './login.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -63,6 +73,8 @@ export class Login {
   private readonly injector = inject(Injector);
   private readonly i18n = inject(I18nService);
   protected readonly t = this.i18n.t;
+
+  protected readonly demoNumbers = DEMO_NUMBERS;
 
   readonly step = signal<Step>('phone');
   readonly phone = signal('');
@@ -82,6 +94,13 @@ export class Login {
       this.stopCooldown();
       this.auth.resetFlow();
     });
+  }
+
+  /** 点一个试用号：填进输入框（验证码是 123456，页面上写着） */
+  useDemo(phone: string): void {
+    this.phone.set(phone);
+    this.error.set(null);
+    this.focusField();
   }
 
   onPhone(event: Event): void {

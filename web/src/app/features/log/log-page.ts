@@ -31,7 +31,7 @@ const LOOK: Record<StepStatus, { tone: 'ok' | 'warn' | 'bad'; icon: string }> = 
           [attr.aria-label]="t().common.back"
           (click)="back()"
         >
-          ←
+          <span class="ic ic-back" aria-hidden="true"></span>
         </button>
         <h1 class="topbar__title">{{ t().log.title }}</h1>
         <app-lang-button />
@@ -47,7 +47,7 @@ const LOOK: Record<StepStatus, { tone: 'ok' | 'warn' | 'bad'; icon: string }> = 
           }
           @case ('offline') {
             <p id="offline" class="error" role="alert">
-              <span aria-hidden="true">⚠</span> {{ t().plots.offline }}
+              <span class="ic ic-alert" aria-hidden="true"></span> {{ t().plots.offline }}
             </p>
             <button type="button" class="btn" id="retry" (click)="data.retry()">
               {{ t().common.retry }}
@@ -55,7 +55,7 @@ const LOOK: Record<StepStatus, { tone: 'ok' | 'warn' | 'bad'; icon: string }> = 
           }
           @case ('error') {
             <p id="error" class="error" role="alert">
-              <span aria-hidden="true">⚠</span> {{ t().plots.error }}
+              <span class="ic ic-alert" aria-hidden="true"></span> {{ t().plots.error }}
             </p>
             <button type="button" class="btn" id="retry" (click)="data.retry()">
               {{ t().common.retry }}

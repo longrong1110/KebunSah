@@ -7,7 +7,7 @@
       [attr.aria-label]="t().common.back"
       (click)="back()"
     >
-      ←
+      <span class="ic ic-back" aria-hidden="true"></span>
     </button>
     <h1 class="topbar__title" id="issue-title">{{ heading() }}</h1>
     <app-lang-button />
@@ -23,7 +23,7 @@
       }
       @case ('offline') {
         <p id="offline" class="error" role="alert">
-          <span aria-hidden="true">⚠</span> {{ t().plots.offline }}
+          <span class="ic ic-alert" aria-hidden="true"></span> {{ t().plots.offline }}
         </p>
         <button type="button" class="btn" id="retry" (click)="retry()">
           {{ t().common.retry }}
@@ -31,7 +31,7 @@
       }
       @case ('error') {
         <p id="error" class="error" role="alert">
-          <span aria-hidden="true">⚠</span> {{ t().plots.error }}
+          <span class="ic ic-alert" aria-hidden="true"></span> {{ t().plots.error }}
         </p>
         <button type="button" class="btn" id="retry" (click)="retry()">
           {{ t().common.retry }}
@@ -59,7 +59,7 @@
               @if (c.diff) {
                 <p class="diff-wrap">
                   <span id="diff" class="chip tone-warn">
-                    <span aria-hidden="true">⚠</span><span>{{ c.diff }}</span>
+                    <span class="ic ic-alert" aria-hidden="true"></span><span>{{ c.diff }}</span>
                   </span>
                 </p>
               }
@@ -113,7 +113,7 @@
             aria-disabled="true"
             aria-describedby="redraw-note"
           >
-            <span aria-hidden="true">↻</span> {{ t().issue.redraw }}
+            <span class="ic ic-refresh" aria-hidden="true"></span> {{ t().issue.redraw }}
           </button>
           <p id="redraw-note" class="hint hint--center">{{ t().issue.redrawSoon }}</p>
         } @else {

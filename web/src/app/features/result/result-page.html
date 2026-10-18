@@ -7,7 +7,7 @@
       [attr.aria-label]="t().common.back"
       (click)="back()"
     >
-      ←
+      <span class="ic ic-back" aria-hidden="true"></span>
     </button>
     <h1 class="topbar__title">{{ t().result.title }}</h1>
     <app-lang-button />
@@ -25,7 +25,7 @@
       }
       @case ('offline') {
         <p id="offline" class="error" role="alert">
-          <span aria-hidden="true">⚠</span> {{ t().plots.offline }}
+          <span class="ic ic-alert" aria-hidden="true"></span> {{ t().plots.offline }}
         </p>
         <button type="button" class="btn" id="retry" (click)="retry()">
           {{ t().common.retry }}
@@ -33,7 +33,7 @@
       }
       @case ('error') {
         <p id="error" class="error" role="alert">
-          <span aria-hidden="true">⚠</span> {{ t().plots.error }}
+          <span class="ic ic-alert" aria-hidden="true"></span> {{ t().plots.error }}
         </p>
         <button type="button" class="btn" id="retry" (click)="retry()">
           {{ t().common.retry }}
@@ -146,14 +146,14 @@
               [attr.aria-expanded]="passedOpen()"
               (click)="passedOpen.set(!passedOpen())"
             >
-              <span aria-hidden="true">✓</span>
+              <span class="ic ic-check" aria-hidden="true"></span>
               <span class="pass-row__text">{{ t().result.passed(v.passed.length) }}</span>
-              <span aria-hidden="true">{{ passedOpen() ? '⌄' : '›' }}</span>
+              <span class="ic ic-chevron" [class.ic--rot]="passedOpen()" aria-hidden="true"></span>
             </button>
             @if (passedOpen()) {
               <ul id="passed-list" class="pass-list">
                 @for (code of v.passed; track code) {
-                  <li><span aria-hidden="true">✓</span> {{ t().result.ruleName(code) }}</li>
+                  <li><span class="ic ic-check" aria-hidden="true"></span> {{ t().result.ruleName(code) }}</li>
                 }
               </ul>
             }
@@ -168,7 +168,7 @@
           @if (v.aiNote; as n) {
             <section id="ai-note" class="ai-note" aria-labelledby="ai-note-title">
               <h2 id="ai-note-title" class="ai-note__title">
-                <span aria-hidden="true">✦</span> {{ t().result.aiNote.title }}
+                <span class="ic ic-note" aria-hidden="true"></span> {{ t().result.aiNote.title }}
               </h2>
               <p id="ai-note-text" class="ai-note__text">{{ n.text }}</p>
               <p class="hint">{{ t().result.aiNote.by(n.model) }}</p>

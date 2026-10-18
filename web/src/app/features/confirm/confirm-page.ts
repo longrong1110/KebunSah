@@ -47,7 +47,7 @@ type Photo = { status: 'loading' } | { status: 'ready'; url: string } | { status
           [disabled]="busy()"
           (click)="back()"
         >
-          ←
+          <span class="ic ic-back" aria-hidden="true"></span>
         </button>
         <h1 class="topbar__title">{{ t().confirm.title }}</h1>
         <app-lang-button />
@@ -63,7 +63,7 @@ type Photo = { status: 'loading' } | { status: 'ready'; url: string } | { status
           }
           @case ('offline') {
             <p id="offline" class="error" role="alert">
-              <span aria-hidden="true">⚠</span> {{ t().plots.offline }}
+              <span class="ic ic-alert" aria-hidden="true"></span> {{ t().plots.offline }}
             </p>
             <button type="button" class="btn" id="retry" (click)="data.retry()">
               {{ t().common.retry }}
@@ -71,7 +71,7 @@ type Photo = { status: 'loading' } | { status: 'ready'; url: string } | { status
           }
           @case ('error') {
             <p id="error" class="error" role="alert">
-              <span aria-hidden="true">⚠</span> {{ t().plots.error }}
+              <span class="ic ic-alert" aria-hidden="true"></span> {{ t().plots.error }}
             </p>
             <button type="button" class="btn" id="retry" (click)="data.retry()">
               {{ t().common.retry }}
@@ -151,7 +151,7 @@ type Photo = { status: 'loading' } | { status: 'ready'; url: string } | { status
 
             @if (errorText(); as text) {
               <p id="confirm-error" class="error" role="alert">
-                <span aria-hidden="true">⚠</span> {{ text }}
+                <span class="ic ic-alert" aria-hidden="true"></span> {{ text }}
               </p>
             }
           }

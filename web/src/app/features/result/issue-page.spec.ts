@@ -99,7 +99,8 @@ describe('IssuePage（屏 10）', () => {
         ['Dalam geran', '1.6 ha'],
         ['Lukisan anda', '2.1 ha'],
       ]);
-      expect(t.q('#diff')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('⚠+0.5 ha (31%)');
+      expect(t.q('#diff')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('+0.5 ha (31%)');
+      expect(t.q('#diff .ic-alert')).not.toBeNull(); // 图标（警示）＋文字，不只靠颜色
       expect(t.q('#diff')?.className).toContain('tone-warn');
       expect(t.q('#cause')?.textContent).toContain('Mungkin tanah yang dilukis terlalu besar');
       expect(t.q('#advice')?.textContent).toContain('Semak sempadan');

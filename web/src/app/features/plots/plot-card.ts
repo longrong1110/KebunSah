@@ -6,6 +6,7 @@ import { FirestoreReader, type DocState } from '../../core/firebase/firestore-re
 import { I18nService } from '../../core/i18n/i18n.service';
 import { docConfirmed, loadState$, type Load } from '../../core/load-state';
 import { statusOf } from '../../core/plot-status';
+import { parseRing, toSvgPoints } from '../result/polygon';
 import { plotHeading, plotSubtitle } from './plot-title';
 import type { PlotItem, TitleData } from './plot-types';
 
@@ -40,10 +41,12 @@ export class PlotCard {
     const p = this.plot().data;
     const status = statusOf(p.status);
     const { heading, loading } = plotHeading(t, p, this.title());
+    const ring = parseRing(p.polygonGeojson);
     return {
       heading,
       loading,
       subtitle: plotSubtitle(t, p, this.i18n.lang()),
+      thumb: ring ? toSvgPoints(ring, 56, 56, 7) : null,
       status,
       statusLabel: t.status[status.key],
     };

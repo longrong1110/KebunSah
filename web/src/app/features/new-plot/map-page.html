@@ -7,7 +7,7 @@
       [attr.aria-label]="t().common.back"
       (click)="back()"
     >
-      ←
+      <span class="ic ic-back" aria-hidden="true"></span>
     </button>
     <h1 class="topbar__title">{{ t().newPlot.title }}</h1>
     <app-lang-button />
@@ -62,7 +62,7 @@
         }
         @case ('failed') {
           <div class="map-state map-state--failed" id="map-failed" role="alert">
-            <p><span aria-hidden="true">⚠</span> {{ t().newPlot.map.state[failKey()] }}</p>
+            <p><span class="ic ic-alert" aria-hidden="true"></span> {{ t().newPlot.map.state[failKey()] }}</p>
             @if (canRetryMap()) {
               <button type="button" class="btn-link" id="map-retry" (click)="start()">
                 {{ t().common.retry }}
@@ -87,7 +87,7 @@
               [disabled]="locating()"
               (click)="locateMe()"
             >
-              <span aria-hidden="true">📍</span>
+              <span class="ic ic-pin" aria-hidden="true"></span>
               {{ locating() ? t().newPlot.map.locating : t().newPlot.map.myLocation }}
             </button>
           }
@@ -107,7 +107,7 @@
           }
           @if (weakGps(); as m) {
             <p class="error" id="weak-gps" role="alert">
-              <span aria-hidden="true">⚠</span> {{ t().newPlot.map.weakGps(m) }}
+              <span class="ic ic-alert" aria-hidden="true"></span> {{ t().newPlot.map.weakGps(m) }}
               <button type="button" class="btn-link" id="switch-map" (click)="select('map')">
                 {{ t().newPlot.map.switchToMap }}
               </button>
@@ -147,7 +147,7 @@
 
       @if (notice(); as n) {
         @if (n.tone === 'error') {
-          <p id="notice" class="error"><span aria-hidden="true">⚠</span> {{ n.text }}</p>
+          <p id="notice" class="error"><span class="ic ic-alert" aria-hidden="true"></span> {{ n.text }}</p>
         } @else {
           <p id="notice" class="hint">{{ n.text }}</p>
         }
@@ -155,7 +155,7 @@
 
       @if (geoError(); as g) {
         <p id="geo-error" class="error" role="alert">
-          <span aria-hidden="true">⚠</span> {{ t().newPlot.map.geo[g] }}
+          <span class="ic ic-alert" aria-hidden="true"></span> {{ t().newPlot.map.geo[g] }}
           @if (g !== 'unsupported') {
             <button type="button" class="btn-link" id="geo-retry" (click)="retryGeo()">
               {{ t().common.retry }}

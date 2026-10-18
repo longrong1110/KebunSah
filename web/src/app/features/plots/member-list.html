@@ -25,13 +25,13 @@
   }
   @case ('offline') {
     <p class="error" id="members-error" role="alert">
-      <span aria-hidden="true">⚠</span> {{ t().plots.offline }}
+      <span class="ic ic-alert" aria-hidden="true"></span> {{ t().plots.offline }}
     </p>
     <button type="button" class="btn btn-quiet" (click)="retry()">{{ t().common.retry }}</button>
   }
   @case ('error') {
     <p class="error" id="members-error" role="alert">
-      <span aria-hidden="true">⚠</span> {{ t().plots.error }}
+      <span class="ic ic-alert" aria-hidden="true"></span> {{ t().plots.error }}
     </p>
     <button type="button" class="btn btn-quiet" (click)="retry()">{{ t().common.retry }}</button>
   }

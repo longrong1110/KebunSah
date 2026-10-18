@@ -20,7 +20,7 @@
 
     @if (logoutFailed()) {
       <p id="logout-error" class="error coop-notice" role="alert">
-        <span aria-hidden="true">⚠</span> {{ t().plots.logoutFailed }}
+        <span class="ic ic-alert" aria-hidden="true"></span> {{ t().plots.logoutFailed }}
       </p>
     }
 
@@ -35,7 +35,7 @@
       @case ('offline') {
         <div class="coop-notice">
           <p id="coop-offline" class="error" role="alert">
-            <span aria-hidden="true">⚠</span> {{ t().plots.offline }}
+            <span class="ic ic-alert" aria-hidden="true"></span> {{ t().plots.offline }}
           </p>
           <button type="button" class="btn btn-quiet" id="coop-retry" (click)="retry()">
             {{ t().common.retry }}
@@ -45,7 +45,7 @@
       @case ('error') {
         <div class="coop-notice">
           <p id="coop-error" class="error" role="alert">
-            <span aria-hidden="true">⚠</span> {{ t().plots.error }}
+            <span class="ic ic-alert" aria-hidden="true"></span> {{ t().plots.error }}
           </p>
           <button type="button" class="btn btn-quiet" id="coop-retry" (click)="retry()">
             {{ t().common.retry }}

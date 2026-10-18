@@ -508,7 +508,7 @@ describe('ResultPage（屏 9）', () => {
       await t.click('#passed-toggle');
       expect(t.q('#passed-toggle')?.getAttribute('aria-expanded')).toBe('true');
       expect(t.q('#passed-list')?.textContent).toContain('Nama pemilik sepadan');
-      expect(t.q('#passed-list')?.textContent).toContain('✓');
+      expect(t.q('#passed-list .ic-check')).not.toBeNull();
 
       await t.click('#passed-toggle');
       expect(t.q('#passed-list')).toBeNull();

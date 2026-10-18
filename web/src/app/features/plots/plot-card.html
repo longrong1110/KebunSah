@@ -2,10 +2,17 @@
 <a
   class="plot-card"
   [class.plot-card--warn]="v.status.key === 'yellow'"
+  [attr.data-tone]="v.status.tone"
   [routerLink]="['/plots', plot().id]"
   queryParamsHandling="preserve"
 >
-  <span class="plot-card__pin" aria-hidden="true">📍</span>
+  <span class="plot-card__thumb" aria-hidden="true">
+    @if (v.thumb; as pts) {
+      <svg viewBox="0 0 56 56"><polygon [attr.points]="pts" /></svg>
+    } @else {
+      <span class="ic ic-pin ic--lg"></span>
+    }
+  </span>
   <div class="plot-card__body">
     @if (v.loading) {
       <span class="skeleton skeleton--title" aria-hidden="true"></span>

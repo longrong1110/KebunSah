@@ -47,7 +47,7 @@ export function submitErrorKey(err: unknown): SubmitErrorKey {
           [disabled]="busy()"
           (click)="back()"
         >
-          ←
+          <span class="ic ic-back" aria-hidden="true"></span>
         </button>
         <h1 class="topbar__title">{{ t().newPlot.title }}</h1>
         <app-lang-button />

@@ -13,7 +13,7 @@
           [attr.aria-label]="t().common.back"
           (click)="backToMembers()"
         >
-          ←
+          <span class="ic ic-back" aria-hidden="true"></span>
         </button>
       }
       <span class="spacer"></span>
@@ -36,7 +36,7 @@
         }
         @case ('offline') {
           <p id="profile-error" class="error" role="alert">
-            <span aria-hidden="true">⚠</span> {{ t().plots.offline }}
+            <span class="ic ic-alert" aria-hidden="true"></span> {{ t().plots.offline }}
           </p>
           <button type="button" class="btn btn-quiet" (click)="retryProfile()">
             {{ t().common.retry }}
@@ -44,7 +44,7 @@
         }
         @case ('error') {
           <p id="profile-error" class="error" role="alert">
-            <span aria-hidden="true">⚠</span> {{ t().plots.error }}
+            <span class="ic ic-alert" aria-hidden="true"></span> {{ t().plots.error }}
           </p>
           <button type="button" class="btn btn-quiet" (click)="retryProfile()">
             {{ t().common.retry }}
@@ -72,7 +72,7 @@
               }
               @case ('offline') {
                 <p id="plots-error" class="error" role="alert">
-                  <span aria-hidden="true">⚠</span> {{ t().plots.offline }}
+                  <span class="ic ic-alert" aria-hidden="true"></span> {{ t().plots.offline }}
                 </p>
                 <button type="button" class="btn btn-quiet" (click)="retryPlots()">
                   {{ t().common.retry }}
@@ -80,7 +80,7 @@
               }
               @case ('error') {
                 <p id="plots-error" class="error" role="alert">
-                  <span aria-hidden="true">⚠</span> {{ t().plots.error }}
+                  <span class="ic ic-alert" aria-hidden="true"></span> {{ t().plots.error }}
                 </p>
                 <button type="button" class="btn btn-quiet" (click)="retryPlots()">
                   {{ t().common.retry }}
@@ -106,7 +106,7 @@
 
       @if (logoutFailed()) {
         <p id="logout-error" class="error" role="alert">
-          <span aria-hidden="true">⚠</span> {{ t().plots.logoutFailed }}
+          <span class="ic ic-alert" aria-hidden="true"></span> {{ t().plots.logoutFailed }}
         </p>
       }
     </section>
@@ -114,7 +114,7 @@
     @if (showAdd()) {
       <footer class="bar">
         <button type="button" class="btn" id="add" (click)="add()">
-          <span aria-hidden="true">＋</span> {{ t().plots.add }}
+          <span class="ic ic-plus" aria-hidden="true"></span> {{ t().plots.add }}
         </button>
       </footer>
     }

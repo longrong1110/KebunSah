@@ -1,10 +1,11 @@
-<main class="screen">
-  <header class="topbar">
-    <app-lang-button />
+<main class="screen login">
+  <header class="login__hero">
+    <div class="login__bar"><app-lang-button /></div>
+    <span class="lockup brand"><app-brand-mark /><span>KebunSah</span></span>
+    <p class="login__tagline">{{ t().login.tagline }}</p>
   </header>
 
   <section class="content">
-    <p class="brand">KebunSah</p>
     @let key = error();
 
     @if (step() === 'phone') {
@@ -53,10 +54,28 @@
     <div role="alert">
       @if (key) {
         <p id="error" class="error">
-          <span aria-hidden="true">⚠</span> {{ t().login.errors[key] }}
+          <span class="ic ic-alert" aria-hidden="true"></span> {{ t().login.errors[key] }}
         </p>
       }
     </div>
+
+    @if (step() === 'phone') {
+      <details class="demo">
+        <summary>{{ t().login.demo.title }}</summary>
+        <p class="hint">{{ t().login.demo.intro }}</p>
+        <ul class="demo__list">
+          @for (d of demoNumbers; track d.phone) {
+            <li>
+              <button type="button" class="demo__item" (click)="useDemo(d.phone)">
+                <span class="demo__role">{{ t().login.demo.roles[d.role] }}</span>
+                <span class="demo__phone">{{ d.phone }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+        <p class="hint">{{ t().login.demo.code }}</p>
+      </details>
+    }
   </section>
 
   <footer class="bar">
