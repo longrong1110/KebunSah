@@ -12,22 +12,22 @@ export const DEMO_ADMIN_UID = 'demo-admin-1';
 // 规则阈值，取自 contract/schema.sql 的 rule_params（basis：law / mpob / team）
 export const RULE_PARAMS = {
   'CC-01': {
-    area_tolerance_pct: { value: 10, unit: '%', basis: 'team', note: '允许的面积差：地契面积的 10% 与 0.1 公顷取较大者（队友文档）' },
-    area_tolerance_min_ha: { value: 0.1, unit: 'ha', basis: 'team', note: '同上，下限 0.1 公顷' },
-    area_fail_over_pct: { value: 50, unit: '%', basis: 'team', note: '超出 50% 直接不通过（队友文档）' },
+    area_tolerance_pct: { value: 10, unit: '%', basis: 'team', note: 'Allowed area difference: the larger of 10% of the title area and 0.1 ha (team document)' },
+    area_tolerance_min_ha: { value: 0.1, unit: 'ha', basis: 'team', note: 'As above: lower bound of 0.1 ha' },
+    area_fail_over_pct: { value: 50, unit: '%', basis: 'team', note: 'More than 50% over the title area fails outright (team document)' },
   },
   'CC-02': {
-    expiry_warn_days: { value: 90, unit: 'days', basis: 'team', note: '距到期不足 90 天给警告（队友文档）' },
+    expiry_warn_days: { value: 90, unit: 'days', basis: 'team', note: 'Warn when fewer than 90 days remain before expiry (team document)' },
   },
   'CC-03': {
-    name_similarity_min: { value: 0.85, unit: 'ratio', basis: 'team', note: '姓名相似度不低于 0.85 算同一人（队友文档）' },
+    name_similarity_min: { value: 0.85, unit: 'ratio', basis: 'team', note: 'A name similarity of at least 0.85 counts as the same person (team document)' },
   },
   EXTRACT: {
-    confidence_min: { value: 0.7, unit: 'ratio', basis: 'team', note: '读出置信度低于 0.7 要请用户确认（队友文档）' },
+    confidence_min: { value: 0.7, unit: 'ratio', basis: 'team', note: 'A read confidence below 0.7 needs the user to confirm (team document)' },
   },
   PLOT: {
-    point_max_ha: { value: 4, unit: 'ha', basis: 'law', note: 'EUDR：小于 4 公顷可只给一个点；恰好 4 公顷各来源写法不一，保守按多边形' },
-    smallholder_max_ha: { value: 40.46, unit: 'ha', basis: 'mpob', note: 'MPOB 小园主执照：100 英亩（40.46 公顷）以下' },
+    point_max_ha: { value: 4, unit: 'ha', basis: 'law', note: 'EUDR: plots under 4 ha may be given as a single point; sources differ on exactly 4 ha, so it is treated conservatively as a polygon' },
+    smallholder_max_ha: { value: 40.46, unit: 'ha', basis: 'mpob', note: 'MPOB smallholder licence: up to 100 acres (40.46 ha)' },
   },
 };
 

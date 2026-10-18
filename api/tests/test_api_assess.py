@@ -251,3 +251,28 @@ def test_officer_can_assess_members_plot(world, store):
     pid = make_plot(client, uid="officer-1")
     assert assess(client, pid, "officer-1").status_code == 202
     assert latest(store, pid)[1]["result"] == "green"
+
+
+def _cjk_in(value, path=""):
+    import re
+
+    cjk = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff\u3000-\u303f\uff00-\uffef]")
+    if isinstance(value, str):
+        if cjk.search(value):
+            yield path, value
+    elif isinstance(value, dict):
+        for k, v in value.items():
+            yield from _cjk_in(v, f"{path}.{k}")
+    elif isinstance(value, (list, tuple)):
+        for v in value:
+            yield from _cjk_in(v, f"{path}[]")
+
+
+@pytest.mark.parametrize("script", [GOOD, {**GOOD, "mpob_licence": ExtractionError("quota exceeded")}, {}])
+def test_nothing_the_pipeline_stores_contains_chinese(world, store, script):
+    """评估跑完（正常、有一份抽取失败、什么都读不出）之后，库里没有任何中文：文案一律马来语／英语。"""
+    client, _, _ = world(script=script)
+    pid = make_plot(client)
+    assess(client, pid)
+    offenders = [(p, v) for path, doc in store._docs.items() for p, v in _cjk_in(doc, path)]
+    assert offenders == [], offenders[:5]
