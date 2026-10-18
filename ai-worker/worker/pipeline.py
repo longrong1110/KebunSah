@@ -71,6 +71,7 @@ def _read_documents(deps: Deps, plot_id: str, run: _Run) -> list[tuple[str, dict
     current = [(i, d) for i, d in store.list(f"plots/{plot_id}/documents") if d.get("isCurrent") is not False]
     stats = {"extracted": 0, "reused": 0, "failed": 0, "missing": 0, "needs_review": 0}
     models: set[str] = set()
+    reasons: list[str] = []  # 失败原因（日志和 steps[] 里要看得到，不然只知道「失败了」）
 
     def process(item: tuple[str, dict]) -> str:
         doc_id, doc = item
@@ -89,11 +90,13 @@ def _read_documents(deps: Deps, plot_id: str, run: _Run) -> list[tuple[str, dict
             result = deps.extractor.extract(doc["docType"], image, doc.get("mimeType") or "image/jpeg")
         except WrongDocument as exc:
             store.update(path, {"extractionStatus": "needs_review", "extractedAt": deps.now()})
-            log.warning("wrong document", extra={"document": doc_id, "error": str(exc)})
+            log.warning("wrong document %s: %s", doc_id, exc)
+            reasons.append(f"{doc.get('docType')}: {exc}")
             return "needs_review"
         except Exception as exc:  # 抽取失败只影响这份文件
             store.update(path, {"extractionStatus": "failed", "extractedAt": deps.now()})
-            log.warning("extraction failed", extra={"document": doc_id, "error": str(exc)})
+            log.warning("extraction failed for %s (%s): %s", doc_id, doc.get("docType"), exc)
+            reasons.append(f"{doc.get('docType')}: {exc}")
             return "failed"
         for key, value in result.fields.items():  # 键含点：逐项局部更新，不改键名
             store.update_nested(path, ("fields", key), value)
@@ -113,7 +116,8 @@ def _read_documents(deps: Deps, plot_id: str, run: _Run) -> list[tuple[str, dict
                if d.get("isCurrent") is not False and (d.get("fields") or d.get("extractionStatus") in {"failed", "needs_review"})]
     degraded = stats["failed"] or stats["needs_review"]
     run.finish("read", t0, "degraded" if degraded else "ok",
-               ", ".join(f"{k}={v}" for k, v in stats.items() if v) or "no documents", models=sorted(models))
+               (", ".join(f"{k}={v}" for k, v in stats.items() if v) or "no documents")
+               + (f" | first error: {reasons[0][:200]}" if reasons else ""), models=sorted(models))
     return present
 
 

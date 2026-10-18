@@ -9,13 +9,14 @@ from __future__ import annotations
 
 import json
 import time
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
 from pydantic import BaseModel, ValidationError
 
 from .fields import ALLOWED_KEYS, normalize_field
-from .gemini_call import generate_with_retry
+from .gemini_call import generate_with_fallback
 
 
 class ExtractionError(Exception):
@@ -94,9 +95,11 @@ PROMPTS: dict[str, str] = {
 
 
 class GeminiExtractor:
-    def __init__(self, api_key: str | None = None, model: str = "gemini-3.5-flash", timeout_s: float = 40.0,
-                 client: Any = None):
-        self.model = model
+    def __init__(self, api_key: str | None = None, model: str | Sequence[str] = "gemini-3.5-flash",
+                 timeout_s: float = 40.0, client: Any = None):
+        # 可以给一串模型（按顺序备选）：当前模型额度用完或不可用时换下一个
+        self.models = [model] if isinstance(model, str) else list(model)
+        self.model = self.models[0]
         self.timeout_s = timeout_s
         self._client = client
         self._api_key = api_key
@@ -128,8 +131,8 @@ class GeminiExtractor:
             from google.genai import types
 
             client = self._client_or_create()
-            response = generate_with_retry(
-                client, model=self.model,
+            response, used = generate_with_fallback(
+                client, self.models,
                 contents=[types.Part.from_bytes(data=image, mime_type=mime_type), f"{PROMPTS[doc_type]}\n{_COMMON}"],
                 config=self._config())
             parsed = _Extraction.model_validate(json.loads(response.text))
@@ -148,6 +151,6 @@ class GeminiExtractor:
                 out[f.key] = normalize_field(f.key, f.raw_text, f.value, f.confidence)
         usage = getattr(response, "usage_metadata", None)
         return ExtractionResult(
-            fields=out, model=self.model, seconds=round(time.monotonic() - started, 2),
+            fields=out, model=used, seconds=round(time.monotonic() - started, 2),
             usage={"promptTokens": int(getattr(usage, "prompt_token_count", 0) or 0),
                    "outputTokens": int(getattr(usage, "candidates_token_count", 0) or 0)})

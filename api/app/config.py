@@ -18,8 +18,9 @@ class Settings:
     bucket: str | None = None
     public_base_url: str = "http://127.0.0.1:8000"  # local 模式下，上传网址指向本服务
     gemini_api_key: str | None = None
-    gemini_extract_model: str = "gemini-3.5-flash"
-    gemini_explain_model: str = "gemini-3.5-flash"
+    # 模型 id，可以用逗号写一串备选：第一个额度用完或不可用时自动换下一个（免费档每个模型每天只许约 20 次请求）
+    gemini_extract_model: str = "gemini-3.5-flash,gemini-3.7-flash,gemini-3.8-flash,gemini-3.1-flash-lite"
+    gemini_explain_model: str = "gemini-3.5-flash,gemini-3.1-flash-lite,gemini-3.5-flash-lite"
     gemini_timeout_s: float = 40.0
     cors_origins: tuple[str, ...] = ("http://localhost:4200", "http://127.0.0.1:4200")
     stale_after_s: int = 600  # 超过这么久没结束的 queued / running 当残留
@@ -37,8 +38,8 @@ class Settings:
             bucket=os.environ.get("STORAGE_BUCKET"),
             public_base_url=os.environ.get("PUBLIC_BASE_URL", "http://127.0.0.1:8000").rstrip("/"),
             gemini_api_key=os.environ.get("GEMINI_API_KEY") or None,
-            gemini_extract_model=os.environ.get("GEMINI_EXTRACT_MODEL", "gemini-3.5-flash"),
-            gemini_explain_model=os.environ.get("GEMINI_EXPLAIN_MODEL", "gemini-3.5-flash"),
+            gemini_extract_model=os.environ.get("GEMINI_EXTRACT_MODEL", cls.gemini_extract_model),
+            gemini_explain_model=os.environ.get("GEMINI_EXPLAIN_MODEL", cls.gemini_explain_model),
             gemini_timeout_s=float(os.environ.get("GEMINI_TIMEOUT_S", "40")),
             cors_origins=tuple(o.strip() for o in origins.split(",") if o.strip()) if origins else cls.cors_origins,
             stale_after_s=int(os.environ.get("ASSESS_STALE_S", "600")),

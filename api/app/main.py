@@ -47,6 +47,11 @@ def load_dotenv(path: str | Path = ".env") -> None:
         os.environ.setdefault(key.strip(), value.strip().strip("\"'"))
 
 
+def _models(spec: str) -> list[str]:
+    """GEMINI_*_MODEL 可以写成逗号分隔的一串备选模型"""
+    return [m.strip() for m in spec.split(",") if m.strip()]
+
+
 def _load_params(store):
     """规则阈值：库里有 config/ruleParams 就用它，没有或读不到就用默认值（读不到不应该拦住服务启动）。"""
     from kebunsah_core.params import DEFAULT_PARAMS, params_from_config
@@ -79,10 +84,10 @@ def create_app_from_env() -> FastAPI:
         blobs = GcsBlobs(settings.bucket)
     else:
         blobs = LocalBlobs(settings.blobs_dir, settings.public_base_url)
-    explainer = (GeminiExplainer(settings.gemini_api_key, settings.gemini_explain_model, settings.gemini_timeout_s)
+    explainer = (GeminiExplainer(settings.gemini_api_key, _models(settings.gemini_explain_model), settings.gemini_timeout_s)
                  if settings.gemini_api_key else TemplateExplainer())
     deps = Deps(
         settings=settings, store=store, blobs=blobs, verifier=FirebaseTokenVerifier(settings.project_id),
-        extractor=GeminiExtractor(settings.gemini_api_key, settings.gemini_extract_model, settings.gemini_timeout_s),
+        extractor=GeminiExtractor(settings.gemini_api_key, _models(settings.gemini_extract_model), settings.gemini_timeout_s),
         explainer=explainer, forest=PrecomputedForest(), params=_load_params(store))
     return create_app(deps)

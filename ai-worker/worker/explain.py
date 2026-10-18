@@ -8,6 +8,7 @@ from __future__ import annotations
 import copy
 import json
 import time
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
@@ -16,7 +17,7 @@ from pydantic import BaseModel, ValidationError
 from kebunsah_core.grading import Gap, summarize
 from kebunsah_core.rules import RuleResult
 
-from .gemini_call import generate_with_retry
+from .gemini_call import generate_with_fallback
 
 MAX_TEXT = 300
 
@@ -65,9 +66,10 @@ SYSTEM = (
 
 
 class GeminiExplainer:
-    def __init__(self, api_key: str | None = None, model: str = "gemini-3.5-flash", timeout_s: float = 40.0,
-                 client: Any = None):
-        self.model = model
+    def __init__(self, api_key: str | None = None, model: str | Sequence[str] = "gemini-3.5-flash",
+                 timeout_s: float = 40.0, client: Any = None):
+        self.models = [model] if isinstance(model, str) else list(model)
+        self.model = self.models[0]
         self.timeout_s = timeout_s
         self._client = client
         self._api_key = api_key
@@ -97,8 +99,8 @@ class GeminiExplainer:
                 "gaps": [{"index": i, "gapCode": g.gap_code, "severity": g.severity, "docType": g.doc_type}
                          for i, g in enumerate(gaps)],
             }
-            response = generate_with_retry(
-                self._client_or_create(), model=self.model, contents=json.dumps(payload, ensure_ascii=False),
+            response, used = generate_with_fallback(
+                self._client_or_create(), self.models, contents=json.dumps(payload, ensure_ascii=False),
                 config=types.GenerateContentConfig(
                     system_instruction=SYSTEM, response_mime_type="application/json", response_schema=_Explanation,
                     temperature=0.2,
@@ -122,6 +124,6 @@ class GeminiExplainer:
         usage = getattr(response, "usage_metadata", None)
         return Explanation(
             summary_text=parsed.summary_text.strip()[:MAX_TEXT] or base.summary_text, summary_lang="ms", gaps=out,
-            model=self.model, seconds=round(time.monotonic() - started, 2),
+            model=used, seconds=round(time.monotonic() - started, 2),
             usage={"promptTokens": int(getattr(usage, "prompt_token_count", 0) or 0),
                    "outputTokens": int(getattr(usage, "candidates_token_count", 0) or 0)})

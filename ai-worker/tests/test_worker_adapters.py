@@ -214,3 +214,79 @@ def test_server_side_unavailable_is_retried_with_backoff():
     client = SimpleNamespace(models=SimpleNamespace(generate_content=call))
     assert generate_with_retry(client, sleep=slept.append, model="m").text == "{}"
     assert slept == [5.0, 9.0] and state["n"] == 3
+
+
+# ── 模型备选：当前模型额度用完／不可用／不存在时换下一个 ──
+from worker.gemini_call import generate_with_fallback, is_model_problem  # noqa: E402
+
+DAILY_QUOTA = ("429 RESOURCE_EXHAUSTED. You exceeded your current quota. Please retry in 21h23m49s. "
+               "{'retryDelay': '77029s'}")
+
+
+class DailyQuota(Exception):
+    code = 429
+
+    def __init__(self):
+        super().__init__(DAILY_QUOTA)
+
+
+class NotFound(Exception):
+    code = 404
+
+
+def _per_model_client(behaviour):
+    """behaviour: 模型名 -> 异常实例（抛）或文本（返回）"""
+    calls = []
+
+    def call(**kwargs):
+        calls.append(kwargs["model"])
+        out = behaviour[kwargs["model"]]
+        if isinstance(out, Exception):
+            raise out
+        return SimpleNamespace(text=out)
+
+    return SimpleNamespace(models=SimpleNamespace(generate_content=call)), calls
+
+
+def test_is_model_problem():
+    assert is_model_problem(DailyQuota())
+    assert is_model_problem(ServerError(503))
+    assert is_model_problem(NotFound("404 NOT_FOUND"))
+    assert not is_model_problem(RuntimeError("403 permission denied"))
+    assert not is_model_problem(ValueError("400 bad request"))
+
+
+def test_fallback_moves_on_when_the_daily_quota_is_gone():
+    client, calls = _per_model_client({"a": DailyQuota(), "b": NotFound("404 NOT_FOUND"), "c": "ok"})
+    response, used = generate_with_fallback(client, ["a", "b", "c"], sleep=lambda s: None, contents="x")
+    assert (response.text, used) == ("ok", "c") and calls == ["a", "b", "c"]  # 日额度没有等，直接换
+
+
+def test_fallback_does_not_hide_real_errors_and_raises_the_last_one():
+    client, calls = _per_model_client({"a": RuntimeError("403 permission denied"), "b": "ok"})
+    with pytest.raises(RuntimeError):
+        generate_with_fallback(client, ["a", "b"], sleep=lambda s: None, contents="x")
+    assert calls == ["a"]
+    client, calls = _per_model_client({"a": DailyQuota(), "b": DailyQuota()})
+    with pytest.raises(DailyQuota):
+        generate_with_fallback(client, ["a", "b"], sleep=lambda s: None, contents="x")
+    assert calls == ["a", "b"]
+    with pytest.raises(ValueError):
+        generate_with_fallback(client, [], contents="x")
+
+
+def test_extractor_reports_the_model_that_actually_answered():
+    client, calls = _per_model_client({
+        "m1": DailyQuota(),
+        "m2": _extraction([{"key": "mpob_licence.valid_until", "raw_text": "05/12/2026", "value": "2026-12-05", "confidence": 0.9}]),
+    })
+    out = GeminiExtractor(model=["m1", "m2"], client=client).extract("mpob_licence", b"x", "image/jpeg")
+    assert out.model == "m2" and calls == ["m1", "m2"]
+    assert out.fields["mpob_licence.valid_until"]["normalizedValue"] == "2026-12-05"
+
+
+def test_explainer_uses_the_next_model_too():
+    reply = json.dumps({"summary_text": "Ringkasan.", "gaps": [{"index": 0, "description": "d", "suggested_action": "a"}]})
+    client, calls = _per_model_client({"m1": DailyQuota(), "m2": reply})
+    out = GeminiExplainer(model=["m1", "m2"], client=client).explain("yellow", [_result()], [_gap()])
+    assert out.model == "m2" and out.fallback_reason is None and calls == ["m1", "m2"]

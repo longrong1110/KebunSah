@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import re
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from typing import Any
 
 DEFAULT_WAIT_S = 20.0
@@ -38,4 +38,25 @@ def generate_with_retry(client: Any, *, attempts: int = 4, max_wait_s: float = 6
             if wait is None or attempt == attempts or wait > max_wait_s:
                 raise
             pause(wait + 1.0)
+    raise AssertionError("unreachable")  # pragma: no cover
+
+
+def is_model_problem(exc: BaseException) -> bool:
+    """换一个模型也许就好了：额度用完（429）、服务端暂时不可用（5xx）、这个模型不存在或没权限用（404）。"""
+    code = getattr(exc, "code", None) or getattr(exc, "status_code", None)
+    return retry_after_seconds(exc) is not None or code == 404 or "NOT_FOUND" in str(exc)
+
+
+def generate_with_fallback(client: Any, models: Sequence[str], *, sleep: Callable[[float], None] | None = None,
+                           **kwargs: Any) -> tuple[Any, str]:
+    """按顺序试每个模型：一个模型重试之后仍因为额度／不可用／不存在而失败，就换下一个；别的错误（如 400、403）直接抛。
+    返回 (响应, 实际用到的模型)。免费档每个模型每天只许约 20 次请求，备选列表能让评估不被单个模型的日额度卡死。"""
+    if not models:
+        raise ValueError("no model configured")
+    for i, model in enumerate(models):
+        try:
+            return generate_with_retry(client, model=model, sleep=sleep, **kwargs), model
+        except Exception as exc:
+            if i == len(models) - 1 or not is_model_problem(exc):
+                raise
     raise AssertionError("unreachable")  # pragma: no cover
