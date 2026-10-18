@@ -20,4 +20,6 @@ export const environment: AppEnvironment = {
   // Google 官方的 Maps Demo key：只适合原型，用量上限不明，不支持正式上线；能否限制 HTTP 来源未测。
   // 演示前换成自己项目里、限制了来源的正式 key（见根 README「系统还没做的」P1 #10）。
   mapsApiKey: 'AIzaSyB-sAVDPMZKF-ujCzVBox8HBhVgKEt1Myc',
+  // 本机后端：python scripts/run_api.py（见 api/README.md）。后端的 CORS 默认放行 localhost:4200 和 127.0.0.1:4200
+  apiBaseUrl: 'http://127.0.0.1:8000',
 };

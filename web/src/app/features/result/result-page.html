@@ -87,6 +87,22 @@
             </button>
           }
 
+          @if (v.bannerKey === 'pending') {
+            <button
+              type="button"
+              class="btn progress-link"
+              id="start-check"
+              [disabled]="starting()"
+              [attr.aria-busy]="starting()"
+              (click)="startCheck()"
+            >
+              {{ t().result.startCheck }}
+            </button>
+            @if (startFailed()) {
+              <p id="start-error" class="error" role="alert">{{ t().result.startFailed }}</p>
+            }
+          }
+
           @if (v.total > 0) {
             <h2 class="section-title">{{ t().result.todo }}</h2>
             <ol id="gap-list" class="gap-list">

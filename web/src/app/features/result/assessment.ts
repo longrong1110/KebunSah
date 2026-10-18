@@ -11,6 +11,8 @@ import type { Lang } from '../../core/i18n/i18n.service';
 
 export interface RuleResultData {
   ruleCode?: string;
+  /** 这一条针对哪份文件。后端的 CC-02 每份文件写一条，带 docType；种子里的 CC-02 只有一条，没有这个字段 */
+  docType?: string | null;
   /** pass／warn／fail／needs_review（种子校验器的取值，合同未定义） */
   result?: string;
   expectedValue?: string | null;
@@ -181,6 +183,23 @@ export function parseDays(v: unknown): number | null {
 const ruleOf = (a: AssessmentData, code: string): RuleResultData | undefined =>
   a.ruleResults?.find((r) => r.ruleCode === code);
 
+/** 结果的轻重：fail 最重，pass 最轻；认不出的当 needs_review */
+const RESULT_WEIGHT: Record<string, number> = { pass: 0, warn: 1, needs_review: 2, fail: 3 };
+export const resultWeight = (r: unknown): number =>
+  typeof r === 'string' && r in RESULT_WEIGHT ? RESULT_WEIGHT[r] : RESULT_WEIGHT['needs_review'];
+
+/** 同一规则编号的所有行里最重的那个结果（后端的 CC-02 每份文件一条，不能只看第一条或只看有没有一条 pass） */
+export function worstResult(a: AssessmentData, code: string): string | undefined {
+  const rows = (a.ruleResults ?? []).filter((r) => r.ruleCode === code);
+  if (rows.length === 0) return undefined;
+  return (
+    rows.reduce(
+      (w, r) => (resultWeight(r.result) > resultWeight(w) ? r.result : w),
+      rows[0].result,
+    ) ?? undefined
+  );
+}
+
 // ---- 面积对照（屏 10） ----
 
 export interface AreaCompare {
@@ -227,13 +246,17 @@ export function gapFacts(a: AssessmentData, gap: GapItem, lang: Lang): GapFacts 
       facts.lukisan = formatArea(c.lukisan, null);
     }
   } else if (gap.known === 'expiring' || gap.known === 'expired') {
-    // CC-02 每次评估只有一条（合同 UNIQUE (assessment_id, rule_code)），却同时覆盖 MPOB 执照、MSPO 证书等多种文件：
-    // 同一评估里不止一件到期类缺口时，分不清它说的是哪一份——宁可不带数字，也不能把别的文件的天数写到这份头上
+    // 后端的 CC-02 每份文件一条、带 docType：按缺口的 docType 找到那一份的数字。
+    // 老数据（种子）CC-02 只有一条、没有 docType，却覆盖多份文件：同一评估里不止一件到期类缺口时，
+    // 分不清它说的是哪一份——宁可不带数字，也不能把别的文件的天数写到这份头上
+    const rows = (a.ruleResults ?? []).filter((r) => r.ruleCode === 'CC-02');
+    const byDoc = gap.docType ? rows.find((r) => r.docType === gap.docType) : undefined;
     const expiry = openGaps(a).filter((g) => g.known === 'expiring' || g.known === 'expired');
-    if (expiry.length <= 1) {
-      const rule = ruleOf(a, 'CC-02');
-      facts.days = parseDays(rule?.actualValue);
-      facts.date = formatIsoDay(rule?.actualValue, lang);
+    const rule =
+      byDoc ?? (expiry.length <= 1 && rows.every((r) => !r.docType) ? rows[0] : undefined);
+    if (rule) {
+      facts.days = parseDays(rule.actualValue);
+      facts.date = formatIsoDay(rule.actualValue, lang);
     }
   }
   return facts;
@@ -244,9 +267,10 @@ export function gapFacts(a: AssessmentData, gap: GapItem, lang: Lang): GapFacts 
 /** 通过的规则编号（去重，保持原顺序）。缺失的规则不算通过 */
 export function passedRules(a: AssessmentData): string[] {
   const codes = (a.ruleResults ?? [])
-    .filter((r) => r.result === 'pass' && typeof r.ruleCode === 'string' && r.ruleCode)
-    .map((r) => r.ruleCode as string);
-  return [...new Set(codes)];
+    .map((r) => r.ruleCode)
+    .filter((c): c is string => typeof c === 'string' && c !== '');
+  // 同一编号有几行（CC-02 每份文件一行）时，每一行都通过才算通过
+  return [...new Set(codes)].filter((c) => worstResult(a, c) === 'pass');
 }
 
 // ---- 森林初筛 ----

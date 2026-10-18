@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, type Provider } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { afterEach, beforeEach, vi } from 'vitest';
+import { ApiError, ApiService } from '../../core/api/api.service';
 import { stubHistory } from '../../../testing/back';
 import { FIRESTORE_FACADE } from '../../core/firebase/firestore-reader';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -13,7 +14,7 @@ import { ResultPage } from './result-page';
 @Component({ template: '' })
 class Blank {}
 
-async function setup(url = '/plots/p1') {
+async function setup(url = '/plots/p1', extra: Provider[] = []) {
   const facade = new FakeFacade();
   TestBed.configureTestingModule({
     providers: [
@@ -24,6 +25,7 @@ async function setup(url = '/plots/p1') {
         { path: 'plots/:id/checking', component: Blank },
       ]),
       { provide: FIRESTORE_FACADE, useValue: facade },
+      ...extra,
     ],
   });
   const harness = await RouterTestingHarness.create();
@@ -289,6 +291,57 @@ describe('ResultPage（屏 9）', () => {
       expect(t.q('#banner')?.getAttribute('data-banner')).toBe('yellow');
       expect(t.q('#banner')?.textContent).toContain('Beberapa perkara perlu disemak.');
       expect(t.text()).not.toMatch(/0 perkara/);
+    });
+  });
+
+  describe('「Mulakan semakan」（还没开始的地块）', () => {
+    const withApi = (assess: ReturnType<typeof vi.fn>) => [
+      { provide: ApiService, useValue: { assess } },
+    ];
+
+    it('没有评估：显示按钮；点了触发评估并进屏 7，保留 ?member', async () => {
+      const assess = vi.fn(async () => 'a-9');
+      const t = await setup('/plots/p1?member=m9', withApi(assess));
+      await t.ready(assessment(), plot({ status: 'pending' }));
+      await t.assessments([]);
+      expect(t.q('#banner')?.getAttribute('data-banner')).toBe('pending');
+      expect(t.q('#start-check')?.textContent?.trim()).toBe('Mulakan semakan');
+
+      await t.click('#start-check');
+      expect(assess).toHaveBeenCalledWith('p1');
+      expect(t.router.url).toBe('/plots/p1/checking?member=m9');
+    });
+
+    it('已有评估在跑（409）：当作成功，进屏 7', async () => {
+      const assess = vi.fn(async () => {
+        throw new ApiError(409, 'assessment_in_progress', { assessmentId: 'a-0' });
+      });
+      const t = await setup('/plots/p1', withApi(assess));
+      await t.ready(assessment(), plot({ status: 'pending' }));
+      await t.assessments([]);
+      await t.click('#start-check');
+      expect(t.router.url).toBe('/plots/p1/checking');
+    });
+
+    it('触发失败：留在本页，写明原因，按钮还能再点', async () => {
+      const assess = vi.fn(async () => {
+        throw new ApiError(422, 'geometry_missing');
+      });
+      const t = await setup('/plots/p1', withApi(assess));
+      await t.ready(assessment(), plot({ status: 'pending' }));
+      await t.assessments([]);
+      await t.click('#start-check');
+      expect(t.router.url).toBe('/plots/p1');
+      expect(t.q('#start-error')?.getAttribute('role')).toBe('alert');
+      expect((t.q('#start-check') as HTMLButtonElement).disabled).toBe(false);
+    });
+
+    it('评估在跑、已完成、失败：没有这个按钮', async () => {
+      const t = await setup();
+      await t.ready(assessment({ runStatus: 'running', result: null }));
+      expect(t.q('#start-check')).toBeNull();
+      await t.assessments([{ id: 'a1', data: assessment() }]);
+      expect(t.q('#start-check')).toBeNull();
     });
   });
 

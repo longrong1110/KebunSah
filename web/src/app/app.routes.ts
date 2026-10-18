@@ -37,13 +37,12 @@ export const routes: Routes = [
     data: { titleKey: 'map' },
     loadComponent: () => import('./features/new-plot/map-page').then((m) => m.MapPage),
   },
-  // 屏 6 的壳：屏 5「Selesai」之后进来；本体要等建地块、上传、评估的接口合同
+  // 屏 6「Semak」：屏 5「Selesai」之后进来；「开始检查」把草稿交给后端，成功去屏 7
   {
     path: 'plots/new/review',
     canActivate: [requireAuth],
     data: { titleKey: 'review' },
-    loadComponent: () =>
-      import('./features/new-plot/review-placeholder').then((m) => m.ReviewPlaceholder),
+    loadComponent: () => import('./features/new-plot/review-page').then((m) => m.ReviewPage),
   },
   // 屏 9 结果。必须排在 plots/new* 之后，'new' 才不会被当成地块 id
   {

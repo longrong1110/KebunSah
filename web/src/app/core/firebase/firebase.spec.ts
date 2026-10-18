@@ -6,6 +6,7 @@ const env = (apiKey: string, projectId: string): AppEnvironment => ({
   firebase: { apiKey, authDomain: '', projectId, appId: '' },
   emulators: null,
   mapsApiKey: '',
+  apiBaseUrl: '',
 });
 
 describe('firebaseConfigured', () => {

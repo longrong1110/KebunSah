@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map, of, switchMap } from 'rxjs';
+import { ApiError, ApiService } from '../../core/api/api.service';
 import { BackNavigator } from '../../core/back-navigator';
 import { FirestoreReader, type DocState } from '../../core/firebase/firestore-reader';
 import { formatDay } from '../../core/format';
@@ -28,7 +29,7 @@ import { watchPlotAssessment } from './result-data';
 const VISIBLE_GAPS = 3;
 
 // 屏 9「结果」（线框 docs/ui/screen-09.png）：先给结论，再列最多 2–3 件要做的事（每件一个按钮），
-// 通过的检查默认折叠，森林初筛写明「只是初筛」。只读：不写任何东西，也不调后端。
+// 通过的检查默认折叠，森林初筛写明「只是初筛」。只读：不写 Firestore；唯一调后端的地方是「还没开始」时的「开始检查」。
 // 事项的标题与说明按 gapCode 用词典生成，不显示评估文档里自带的说明文字（见 assessment.ts 的说明）。
 @Component({
   selector: 'app-result-page',
@@ -131,6 +132,30 @@ export class ResultPage {
   /** 有历史就后退（管理员从看板进来就回看板，筛选与选中的地块都在）；没有就回屏 2（保留 ?member） */
   protected back(): void {
     this.backNav.back(['/'], this.keep);
+  }
+
+  /** 「还没开始」的地块（建好了但没触发评估，例如屏 6 提交到一半失败后刷新了页面）：直接触发评估，去屏 7 */
+  protected readonly starting = signal(false);
+  protected readonly startFailed = signal(false);
+  private readonly api = inject(ApiService);
+
+  protected async startCheck(): Promise<void> {
+    const id = this.plotId();
+    if (!id || this.starting()) return;
+    this.starting.set(true);
+    this.startFailed.set(false);
+    try {
+      await this.api.assess(id);
+    } catch (err) {
+      // 已经有一次评估在跑（409）当作成功，屏 7 会接着显示它
+      if (!(err instanceof ApiError && err.status === 409)) {
+        this.startFailed.set(true);
+        this.starting.set(false);
+        return;
+      }
+    }
+    this.starting.set(false);
+    this.openChecking();
   }
 
   /** 评估还在跑：去屏 7 看分步进度 */

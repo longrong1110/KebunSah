@@ -158,8 +158,26 @@ export const en: Dict = {
     },
     review: {
       step: 'Step 3 / 3 · Review',
-      soon: 'Step 3 (review and start) is being built.',
       summary: 'Summary so far',
+      start: 'Start the check',
+      retry: 'Try again',
+      hint: 'Your documents and land boundary are sent for checking. It takes about half a minute.',
+      steps: {
+        plot: 'Setting up the land record…',
+        area: 'Saving the land boundary…',
+        docs: (done: number, total: number) => `Uploading documents (${done}/${total})…`,
+        assess: 'Starting the check…',
+      },
+      errors: {
+        network:
+          'Could not reach the server. Check your internet, then try again. Your details are still here.',
+        notConfigured: 'The checking service is not set up yet. Your details are still here.',
+        unauthenticated: 'Your session has ended. Log in again, then try once more.',
+        forbidden: 'You cannot add this land. Please contact your cooperative.',
+        geometry: 'The land boundary is not valid. Go back to the map and draw it again.',
+        generic:
+          'Something went wrong while sending. Your details are still here; please try again.',
+      },
       method: { map: 'Drawn on the map', walk: 'Walked the corners', point: 'One point' },
       area: (ha: string) => `Area: ≈ ${ha} ha`,
       declared: (ha: string) => `Declared area: ${ha} ha`,
@@ -227,6 +245,9 @@ export const en: Dict = {
     },
     todo: 'To do',
     seeProgress: 'See progress',
+    startCheck: 'Start the check',
+    startFailed:
+      'Could not start the check. Make sure the land boundary and documents were saved, then try again.',
     seeAll: (n: number) => `See all (${n})`,
     seeLess: 'Show fewer',
     passed: (n: number) => `${n} ${n === 1 ? 'check' : 'checks'} passed`,

@@ -14,6 +14,7 @@ import {
   passedRules,
   type AssessmentData,
   type AssessmentItem,
+  worstResult,
 } from './assessment';
 
 const d = (iso: string) => new Date(iso);
@@ -359,6 +360,103 @@ describe('passedRules', () => {
       }),
     ).toEqual(['CC-01', 'CC-03']);
     expect(passedRules({})).toEqual([]);
+  });
+
+  it('CC-02 每份文件一行：每一行都通过才算通过（有一行没过就不算）', () => {
+    const rows = (a: string, b: string): AssessmentData => ({
+      ruleResults: [
+        { ruleCode: 'CC-02', docType: 'mpob_licence', result: a },
+        { ruleCode: 'CC-02', docType: 'mspo_cert', result: b },
+      ],
+    });
+    expect(passedRules(rows('pass', 'pass'))).toEqual(['CC-02']);
+    expect(passedRules(rows('pass', 'warn'))).toEqual([]);
+    expect(passedRules(rows('warn', 'pass'))).toEqual([]);
+    expect(passedRules(rows('pass', 'needs_review'))).toEqual([]);
+  });
+});
+
+describe('worstResult', () => {
+  it('同一编号取最重的：fail > needs_review > warn > pass；没有这个编号是 undefined', () => {
+    const a: AssessmentData = {
+      ruleResults: [
+        { ruleCode: 'CC-02', result: 'pass' },
+        { ruleCode: 'CC-02', result: 'fail' },
+        { ruleCode: 'CC-02', result: 'warn' },
+        { ruleCode: 'CC-03', result: 'pass' },
+      ],
+    };
+    expect(worstResult(a, 'CC-02')).toBe('fail');
+    expect(worstResult(a, 'CC-03')).toBe('pass');
+    expect(worstResult(a, 'CC-01')).toBeUndefined();
+    expect(
+      worstResult(
+        {
+          ruleResults: [
+            { ruleCode: 'CC-02', result: 'warn' },
+            { ruleCode: 'CC-02', result: 'needs_review' },
+          ],
+        },
+        'CC-02',
+      ),
+    ).toBe('needs_review');
+    expect(
+      worstResult(
+        {
+          ruleResults: [
+            { ruleCode: 'CC-02', result: 'pass' },
+            { ruleCode: 'CC-02', result: 'weird' },
+          ],
+        },
+        'CC-02',
+      ),
+    ).toBe('weird');
+  });
+});
+
+describe('gapFacts：CC-02 每份文件一行（带 docType）', () => {
+  const a: AssessmentData = {
+    ruleResults: [
+      { ruleCode: 'CC-02', docType: 'mpob_licence', result: 'warn', actualValue: '49 hari' },
+      { ruleCode: 'CC-02', docType: 'mspo_cert', result: 'pass', actualValue: '865 hari' },
+    ],
+    gaps: [{ gapCode: 'expiring', docType: 'mpob_licence', severity: 'medium', status: 'open' }],
+  };
+
+  it('按缺口的 docType 取那一份的天数，不取别的文件的', () => {
+    expect(gapFacts(a, openGaps(a)[0], 'ms').days).toBe(49);
+    // 第一行是通过的证书、缺口说的是执照：不能取第一行
+    const swapped: AssessmentData = { ...a, ruleResults: [...a.ruleResults!].reverse() };
+    expect(gapFacts(swapped, openGaps(swapped)[0], 'ms').days).toBe(49);
+  });
+
+  it('不止一件到期类缺口：各取各的，不再因为分不清而丢掉数字', () => {
+    const two: AssessmentData = {
+      ruleResults: [
+        { ruleCode: 'CC-02', docType: 'mpob_licence', result: 'warn', actualValue: '49 hari' },
+        {
+          ruleCode: 'CC-02',
+          docType: 'mspo_cert',
+          result: 'fail',
+          actualValue: '2026-04-30 telah tamat',
+        },
+      ],
+      gaps: [
+        { gapCode: 'expiring', docType: 'mpob_licence', severity: 'medium', status: 'open' },
+        { gapCode: 'expired', docType: 'mspo_cert', severity: 'high', status: 'open' },
+      ],
+    };
+    const byCode = Object.fromEntries(openGaps(two).map((g) => [g.code, gapFacts(two, g, 'ms')]));
+    expect(byCode['expiring'].days).toBe(49);
+    expect(byCode['expired'].date).toBe('30 Apr 2026');
+  });
+
+  it('缺口的 docType 在行里找不到（缺文件那一类）：不猜', () => {
+    const miss: AssessmentData = {
+      ruleResults: a.ruleResults,
+      gaps: [{ gapCode: 'expiring', docType: 'land_title', severity: 'medium', status: 'open' }],
+    };
+    expect(gapFacts(miss, openGaps(miss)[0], 'ms')).toMatchObject({ days: null, date: null });
   });
 });
 

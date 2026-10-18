@@ -23,4 +23,6 @@ export interface AppEnvironment {
   emulators: EmulatorConfig | null;
   // Google Maps JavaScript API 的浏览器 key（本来就公开，不是密钥）。空 = 没配置：屏 5 的地图显示「尚未配置」，不白屏
   mapsApiKey: string;
+  // 后端 API（Cloud Run kebunsah-api）的根网址，不带结尾的斜杠。空 = 没配置：屏 6「开始检查」会提示服务尚未配置，不白屏
+  apiBaseUrl: string;
 }

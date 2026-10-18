@@ -14,6 +14,7 @@ import {
   type AssessmentData,
   type AssessmentItem,
   type BannerKey,
+  worstResult,
 } from '../result/assessment';
 import { bannerLook } from '../result/banner-look';
 import { forestLine, gapView } from '../result/gap-view';
@@ -232,7 +233,8 @@ function ruleSentence(
   code: string,
   result: RuleResult,
 ): string | null {
-  const rule = a.ruleResults?.find((r) => r.ruleCode === code);
+  const rows = (a.ruleResults ?? []).filter((r) => r.ruleCode === code);
+  let rule: (typeof rows)[number] | undefined = rows[0];
   if (code === 'CC-01') {
     const c = areaCompare(a);
     const geran = c ? formatArea(c.geran, null) : null;
@@ -240,10 +242,15 @@ function ruleSentence(
     return geran && lukisan ? t.dossier.rules.area(geran, lukisan) : null;
   }
   if (code === 'CC-02') {
-    // CC-02 每次评估只有一条，却覆盖 MPOB 执照、MSPO 证书等多份文件：到期类缺口不止一件时，
-    // 分不清数字属于哪一份，宁可不写（与 gapFacts 同一条规则）
+    // 后端的 CC-02 每份文件一条（带 docType）；种子里只有一条却覆盖多份文件。
+    // 到期类缺口不止一件时，分不清数字属于哪一份，宁可不写（与 gapFacts 同一条规则）；只有一件时取那一份的行
     const expiry = openGaps(a).filter((g) => g.known === 'expiring' || g.known === 'expired');
     if (expiry.length > 1) return null;
+    const docType = expiry[0]?.docType;
+    if (docType)
+      rule =
+        rows.find((r) => r.docType === docType) ??
+        (rows.every((r) => !r.docType) ? rows[0] : undefined);
     const days = parseDays(rule?.actualValue);
     if (days !== null) return t.dossier.rules.validityDays(days);
     const date = formatIsoDay(rule?.actualValue, lang);
@@ -262,7 +269,7 @@ function ruleRows(t: Dict, lang: Lang, a: AssessmentData): RuleRow[] {
     const code = typeof r.ruleCode === 'string' ? r.ruleCode : '';
     if (!code || seen.has(code)) continue;
     seen.add(code);
-    const result = resultOf(r.result);
+    const result = resultOf(worstResult(a, code)); // 同一编号有几行（CC-02 每份文件一行）时取最重的
     rows.push({
       code: KNOWN_RULES.includes(code) ? code : `rule-${rows.length + 1}`,
       name: t.dossier.rules.name(code),

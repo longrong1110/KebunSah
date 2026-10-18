@@ -160,8 +160,26 @@ export const ms = {
     },
     review: {
       step: 'Langkah 3 / 3 · Semak',
-      soon: 'Langkah 3 (semak dan mula) sedang disediakan.',
       summary: 'Ringkasan setakat ini',
+      start: 'Mulakan semakan',
+      retry: 'Cuba lagi',
+      hint: 'Dokumen dan sempadan tanah dihantar untuk disemak. Ia mengambil masa kira-kira setengah minit.',
+      steps: {
+        plot: 'Menyediakan rekod tanah…',
+        area: 'Menyimpan sempadan tanah…',
+        docs: (done: number, total: number) => `Memuat naik dokumen (${done}/${total})…`,
+        assess: 'Memulakan semakan…',
+      },
+      errors: {
+        network:
+          'Tiada sambungan ke pelayan. Semak internet anda, kemudian cuba lagi. Maklumat anda masih ada di sini.',
+        notConfigured: 'Perkhidmatan semakan belum disediakan. Maklumat anda masih ada di sini.',
+        unauthenticated: 'Sesi anda telah tamat. Log masuk semula, kemudian cuba lagi.',
+        forbidden: 'Anda tidak boleh menambah tanah ini. Hubungi koperasi anda.',
+        geometry: 'Sempadan tanah tidak sah. Kembali ke peta dan lukis semula.',
+        generic:
+          'Sesuatu tidak kena semasa menghantar. Maklumat anda masih ada di sini; cuba lagi.',
+      },
       method: { map: 'Dilukis di peta', walk: 'Berjalan di sudut tanah', point: 'Satu titik' },
       area: (ha: string) => `Keluasan: ≈ ${ha} ha`,
       declared: (ha: string) => `Keluasan dinyatakan: ${ha} ha`,
@@ -226,6 +244,9 @@ export const ms = {
     },
     todo: 'Perlu dibuat',
     seeProgress: 'Lihat kemajuan',
+    startCheck: 'Mulakan semakan',
+    startFailed:
+      'Tidak dapat memulakan semakan. Pastikan sempadan tanah dan dokumen telah disimpan, kemudian cuba lagi.',
     seeAll: (n: number) => `Lihat semua (${n})`,
     seeLess: 'Tunjukkan lebih sedikit',
     passed: (n: number) => `${n} semakan lulus`,

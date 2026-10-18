@@ -2,8 +2,8 @@ import { Injectable, computed, signal } from '@angular/core';
 import { GeometryDraft, LngLat, MapTab, Ring, evaluate } from './geometry';
 
 // 新建地块的"草稿"：屏 3 三份文档的状态与拍下的照片，屏 5 圈出的地块（各页签的输入与当前页签的结果）。
-// **只存在本机内存里**：刷新就没了。照片上传和新建地块都要走后端 API，而 contract/api.md 的请求与响应
-// 还没定，前端对 Firestore 只读，所以这一轮不做上传、不写库，也不自己发明接口。
+// **只存在本机内存里**：刷新就没了。屏 6「开始检查」才把它们交给后端（SubmitService）；
+// 提交到一半失败时，已经建好的地块和已传好的照片记在这里，重试不会重复建、重复传。
 
 /** 取自 contract/status.md 的 documents.doc_type（屏 3 只用前三个）；路由参数 :doc 也用原串 */
 export const DOC_TYPES = ['land_title', 'mspo_cert', 'mpob_licence'] as const;
@@ -38,8 +38,14 @@ export class DraftService {
   private readonly docs = signal<Record<DocType, DraftDoc>>(fresh());
   private readonly geo = signal<GeometryDraft>(freshGeometry());
 
-  /** 外勤替成员新建时，草稿属于哪位成员（只用来返回时带回 ?member；本轮不写库） */
+  /** 外勤替成员新建时，草稿属于哪位成员（带回 ?member，提交时作为 memberId） */
   readonly memberId = signal<string | null>(null);
+
+  /** 提交进度之一：后端已经建好的地块 id（重试不再新建）。草稿重新开始时清掉 */
+  readonly plotId = signal<string | null>(null);
+
+  /** 提交进度之二：已经传到后端的那张照片（按 Blob 本身认，重拍之后是另一个 Blob，会重新上传） */
+  readonly uploaded = new Map<DocType, Blob>();
 
   /** 三份文档的当前状态，按固定顺序 */
   readonly entries = computed(() => DOC_TYPES.map((type) => ({ type, doc: this.docs()[type] })));
@@ -128,6 +134,8 @@ export class DraftService {
     this.docs.set(fresh());
     this.geo.set(freshGeometry());
     this.memberId.set(null);
+    this.plotId.set(null);
+    this.uploaded.clear();
   }
 
   /** 屏 4 点了「Guna gambar」：这份文档变已拍；重拍则替换并撤销旧的预览 URL */

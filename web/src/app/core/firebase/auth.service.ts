@@ -45,6 +45,13 @@ export class AuthService {
     inject(DestroyRef).onDestroy(unsubscribe);
   }
 
+  /** 调后端 API 要带的 Firebase ID token；没登录返回 null。SDK 会在快过期时自动刷新。 */
+  async idToken(): Promise<string | null> {
+    if (!this.configured) return null;
+    const user = getFirebaseAuth().currentUser;
+    return user ? user.getIdToken() : null;
+  }
+
   /** 路由守卫用：等到首次登录状态确定，避免已登录刷新时闪现登录页。 */
   whenReady(): Promise<void> {
     return this.readyPromise;
