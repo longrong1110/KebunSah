@@ -5,7 +5,7 @@ import { BackNavigator } from '../../core/back-navigator';
 import { formatArea } from '../../core/format';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { LangButton } from '../../shared/lang-button';
-import { DOC_TYPES, DraftService, PAGE2_KEY } from './draft.service';
+import { DOC_TYPES, DraftService } from './draft.service';
 import { SubmitService, type SubmitProgress } from './submit.service';
 
 /** 界面文案的键：把 ApiError 的各种码归成几类，每类一句"发生了什么＋下一步" */
@@ -135,20 +135,20 @@ export class ReviewPage {
     return {
       method: r.method[g.kind === 'polygon' ? g.method : 'point'],
       area: g.kind === 'polygon' ? r.area(text) : r.declared(text),
-      docs: [
-        ...DOC_TYPES.map((type) => {
-          const status = this.draft.doc(type).status;
-          return {
-            type: type as string,
-            name: n.docs[type],
-            status: status === 'captured' ? n.taken : status === 'skipped' ? n.skipped : '—',
-          };
-        }),
-        // 可选的地契第 2 页：拍了才列
-        ...(this.draft.page2().status === 'captured'
-          ? [{ type: PAGE2_KEY as string, name: n.docs[PAGE2_KEY], status: n.taken }]
-          : []),
-      ],
+      docs: DOC_TYPES.map((type) => {
+        const doc = this.draft.doc(type);
+        return {
+          type: type as string,
+          name: n.docs[type],
+          // 拍了几张照片也写出来（一份文件可以有好几页）
+          status:
+            doc.status === 'captured'
+              ? n.photoCount(doc.pages.length)
+              : doc.status === 'skipped'
+                ? n.skipped
+                : '—',
+        };
+      }),
     };
   });
 

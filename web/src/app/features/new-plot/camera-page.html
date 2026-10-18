@@ -69,6 +69,16 @@
       <button type="button" class="btn btn--light" id="use" (click)="use()">
         {{ t().camera.use }}
       </button>
+      @if (canAddAnother()) {
+        <button
+          type="button"
+          class="btn btn-quiet btn--light-quiet"
+          id="use-more"
+          (click)="useAndTakeAnother()"
+        >
+          {{ t().camera.useAndMore }}
+        </button>
+      }
       <button type="button" class="btn btn-quiet btn--light-quiet" id="retake" (click)="retake()">
         {{ t().camera.retake }}
       </button>

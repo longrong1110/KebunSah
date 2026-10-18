@@ -35,6 +35,7 @@
             type="button"
             class="doc-card__main"
             [id]="'doc-' + e.type"
+            [disabled]="isFull(e.type)"
             (click)="open(e.type)"
           >
             <span class="doc-card__thumb">
@@ -47,7 +48,9 @@
             <span class="doc-card__text">
               <strong>{{ t().newPlot.docs[e.type] }}</strong>
               <span>{{
-                e.doc.status === 'captured' ? t().newPlot.taken : t().newPlot.tapToTake
+                e.doc.status === 'captured'
+                  ? t().newPlot.photoCount(pagesOf(e.type).length)
+                  : t().newPlot.tapToTake
               }}</span>
             </span>
             @switch (e.doc.status) {
@@ -61,6 +64,47 @@
               }
             }
           </button>
+
+          <div class="doc-actions">
+            <button
+              type="button"
+              class="btn btn-quiet doc-actions__btn"
+              [id]="'camera-' + e.type"
+              [disabled]="isFull(e.type)"
+              (click)="open(e.type)"
+            >
+              <span aria-hidden="true">📷</span> {{ t().newPlot.takePhoto }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-quiet doc-actions__btn"
+              [id]="'gallery-' + e.type"
+              [disabled]="isFull(e.type)"
+              (click)="openGallery(e.type)"
+            >
+              <span aria-hidden="true">🖼</span> {{ t().newPlot.fromGallery }}
+            </button>
+          </div>
+
+          @if (pagesOf(e.type).length > 0) {
+            <ul class="doc-pages" [id]="'pages-' + e.type">
+              @for (p of pagesOf(e.type); track p.url; let i = $index) {
+                <li class="doc-page">
+                  <img [src]="p.url" [alt]="t().newPlot.pageAlt(t().newPlot.docs[e.type], i + 1)" />
+                  <button
+                    type="button"
+                    class="doc-page__remove"
+                    [id]="'remove-' + e.type + '-' + i"
+                    [attr.aria-label]="t().newPlot.removePhoto(t().newPlot.docs[e.type], i + 1)"
+                    (click)="removePage(e.type, i)"
+                  >
+                    <span aria-hidden="true">✕</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+
           @if (e.doc.status === 'pending') {
             <button type="button" class="chip-btn" [id]="'skip-' + e.type" (click)="skip(e.type)">
               {{ t().newPlot.skip }}
@@ -69,50 +113,7 @@
         </li>
       }
     </ul>
-
-    @if (titleTaken()) {
-      <ul class="doc-list doc-list--extra" id="page2-list">
-        <li class="doc-card" [class.doc-card--done]="page2().status === 'captured'">
-          <button type="button" class="doc-card__main" id="doc-land_title_p2" (click)="openPage2()">
-            <span class="doc-card__thumb">
-              @if (page2(); as p) {
-                @if (p.status === 'captured') {
-                  <img [src]="p.url" [alt]="t().newPlot.thumbAlt(t().newPlot.docs.land_title_p2)" />
-                } @else {
-                  <span aria-hidden="true">📷</span>
-                }
-              }
-            </span>
-            <span class="doc-card__text">
-              <strong>{{
-                page2().status === 'captured'
-                  ? t().newPlot.docs.land_title_p2
-                  : t().newPlot.page2.add
-              }}</strong>
-              <span>{{
-                page2().status === 'captured' ? t().newPlot.taken : t().newPlot.tapToTake
-              }}</span>
-            </span>
-            @if (page2().status === 'captured') {
-              <span class="chip tone-ok">
-                <span aria-hidden="true">✓</span><span>{{ t().newPlot.ready }}</span>
-              </span>
-            }
-          </button>
-          @if (page2().status === 'captured') {
-            <button
-              type="button"
-              class="chip-btn"
-              id="remove-land_title_p2"
-              (click)="removePage2()"
-            >
-              {{ t().newPlot.page2.remove }}
-            </button>
-          }
-        </li>
-      </ul>
-      <p class="hint" id="page2-hint">{{ t().newPlot.page2.hint }}</p>
-    }
+    <p class="hint" id="pages-hint">{{ t().newPlot.pagesHint(maxPages) }}</p>
 
     <p class="hint">{{ t().newPlot.noDocsHint }}</p>
 
@@ -130,12 +131,7 @@
     @if (!canContinue()) {
       <p id="next-help" class="hint hint--center">{{ t().newPlot.nextHelp }}</p>
     }
-    @if (firstPending()) {
-      <button type="button" class="btn-link" id="gallery" (click)="openGallery()">
-        {{ t().newPlot.gallery }}
-      </button>
-    }
   </footer>
 
-  <input #file type="file" accept="image/*" hidden (change)="onGalleryPick($event)" />
+  <input #file type="file" accept="image/*" multiple hidden (change)="onGalleryPick($event)" />
 </main>

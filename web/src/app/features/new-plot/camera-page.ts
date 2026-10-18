@@ -21,7 +21,7 @@ import {
   type CameraErrorKey,
   type CameraHandle,
 } from './camera.service';
-import { DraftService, isDraftKey, type DocSource, type DraftKey } from './draft.service';
+import { DraftService, MAX_PAGES, isDocType, type DocSource, type DocType } from './draft.service';
 import { ImageProblem, compressFile, renderJpeg, type ImageProblemKey } from './image';
 
 // 打开之前：opening；首帧到达：live；点了快门：processing；拍完/选完：preview；打不开：error
@@ -45,7 +45,7 @@ export class CameraPage {
   private readonly video = viewChild<ElementRef<HTMLVideoElement>>('video');
   protected readonly t = inject(I18nService).t;
 
-  protected readonly docType = signal<DraftKey | null>(null);
+  protected readonly docType = signal<DocType | null>(null);
   protected readonly docName = computed(() => {
     const type = this.docType();
     return type ? this.t().newPlot.docs[type] : '';
@@ -71,7 +71,7 @@ export class CameraPage {
 
   constructor() {
     const raw = this.route.snapshot.paramMap.get('doc');
-    if (!isDraftKey(raw)) {
+    if (!isDocType(raw)) {
       // 非法的文档类型：回屏 3
       void this.router.navigate(['/plots/new'], {
         replaceUrl: true,
@@ -191,12 +191,26 @@ export class CameraPage {
     }
   }
 
-  /** 「Guna gambar」：这份文档变已拍，回屏 3；走后退，历史里不留相邻两条 /plots/new，浏览器「返回」也不会又回到相机 */
+  /** 「Guna gambar」：这张照片加成这份文档的新一页，回屏 3；走后退，历史里不留相邻两条 /plots/new，浏览器「返回」也不会又回到相机 */
   protected use(): void {
     const type = this.docType();
     if (!type || !this.previewBlob) return;
-    this.draft.capture(type, this.previewBlob, this.previewSource);
+    this.draft.addPage(type, this.previewBlob, this.previewSource); // 已经满 4 页就不再加（屏 3 的拍照按钮那时是禁用的）
     this.backNav.back(['/plots/new'], { queryParamsHandling: 'preserve' });
+  }
+
+  /** 这张加进去之后还有位置放下一页吗（最多 4 页）：有才显示「Guna dan ambil lagi」 */
+  protected readonly canAddAnother = computed(() => {
+    const type = this.docType();
+    return type !== null && this.draft.pagesOf(type).length + 1 < MAX_PAGES;
+  });
+
+  /** 「Guna dan ambil lagi」：这张加成新的一页，不回屏 3，接着拍下一页（一份文件有好几页时不用来回进出相机） */
+  protected useAndTakeAnother(): void {
+    const type = this.docType();
+    if (!type || !this.previewBlob) return;
+    this.draft.addPage(type, this.previewBlob, this.previewSource);
+    this.retake();
   }
 
   /** 「Ambil semula」：回到取景，旧预览释放 */

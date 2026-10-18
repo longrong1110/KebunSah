@@ -245,6 +245,42 @@ describe('CameraPage（屏 4）', () => {
       expect(p.draft.doc('land_title').status).toBe('pending');
     });
 
+    it('「Guna dan ambil halaman lain」：这张加成新的一页，不回屏 3，回到取景接着拍', async () => {
+      const f = fakeHandle();
+      const p = await setup({ open: () => Promise.resolve(f.handle) });
+      await p.frame(3000, 4000);
+      await p.click('#shutter');
+      expect(p.q('#use-more')?.textContent).toContain('Guna dan ambil halaman lain');
+      await p.click('#use-more');
+      expect(p.draft.pagesOf('land_title')).toHaveLength(1);
+      expect(p.router.url).toBe('/plots/new/camera/land_title');
+      expect(p.q('#preview')).toBeNull();
+      expect(p.open).toHaveBeenCalledTimes(2); // 重新打开取景
+    });
+
+    it('「Guna gambar」：这张加成新的一页（已有的页不丢）', async () => {
+      const f = fakeHandle();
+      const p = await setup({ open: () => Promise.resolve(f.handle) });
+      p.draft.addPage('land_title', new Blob(['first'], { type: 'image/jpeg' }), 'gallery');
+      await p.frame(3000, 4000);
+      await p.click('#shutter');
+      await p.click('#use');
+      expect(p.draft.pagesOf('land_title')).toHaveLength(2);
+      expect(p.draft.pagesOf('land_title')[0].source).toBe('gallery');
+      expect(p.draft.pagesOf('land_title')[1].source).toBe('camera');
+    });
+
+    it('已经有 3 页：这张就是最后一页，不再提供「拍另一页」', async () => {
+      const f = fakeHandle();
+      const p = await setup({ open: () => Promise.resolve(f.handle) });
+      for (let i = 0; i < 3; i++)
+        p.draft.addPage('land_title', new Blob(['x'], { type: 'image/jpeg' }), 'camera');
+      await p.frame(3000, 4000);
+      await p.click('#shutter');
+      expect(p.q('#use')).not.toBeNull();
+      expect(p.q('#use-more')).toBeNull();
+    });
+
     it('连点快门只拍一张', async () => {
       const p = await setup();
       await p.frame();

@@ -116,14 +116,14 @@ describe('DocumentsPage（屏 3）', () => {
     expect(p.router.url).toBe('/plots/new/map?member=p9');
   });
 
-  it('已拍的卡片：显示缩略图、「Sudah diambil」和「Siap」，仍可点开重拍，但不再有「Langkau」', async () => {
+  it('已拍的卡片：显示缩略图、「1 gambar」和「Siap」，仍可点开再拍一页，但不再有「Langkau」', async () => {
     const p = await setup();
     p.draft.capture('land_title', new Blob(['x'], { type: 'image/jpeg' }), 'camera');
     await settle(p.fixture);
     const card = p.cards()[0];
     expect(card.querySelector('img')?.getAttribute('src')).toMatch(/^blob:test\//);
     expect(card.querySelector('img')?.getAttribute('alt')).toBe('Gambar Geran tanah');
-    expect(card.textContent).toContain('Sudah diambil');
+    expect(card.textContent).toContain('1 gambar');
     expect(card.textContent).toContain('Siap');
     expect(card.querySelector('.chip-btn')).toBeNull();
     await p.click('#doc-land_title');
@@ -154,9 +154,8 @@ describe('DocumentsPage（屏 3）', () => {
   });
 
   describe('相册入口', () => {
-    it('有待拍文档时显示；选好的图直接给第一张待拍的（来源 gallery），并压缩过', async () => {
+    it('没点具体哪张卡片的相册按钮时（直接选图）：给第一张待拍的（来源 gallery），并压缩过', async () => {
       const p = await setup();
-      expect(p.q('#gallery')?.textContent).toContain('Atau pilih dari galeri');
       await p.pick(imageFile());
       const doc = p.draft.doc('land_title');
       expect(doc.status).toBe('captured');
@@ -181,13 +180,6 @@ describe('DocumentsPage（屏 3）', () => {
       await p.pick(imageFile());
       expect(p.draft.doc('land_title').status).toBe('skipped');
       expect(p.draft.doc('mspo_cert').status).toBe('captured');
-    });
-
-    it('没有待拍文档时隐藏入口', async () => {
-      const p = await setup();
-      for (const t of ['land_title', 'mspo_cert', 'mpob_licence'] as const) p.draft.skip(t);
-      await settle(p.fixture);
-      expect(p.q('#gallery')).toBeNull();
     });
 
     it('选了非图片：提示「bukan gambar」，草稿不变', async () => {

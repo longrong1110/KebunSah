@@ -1,7 +1,6 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
   ElementRef,
   inject,
   signal,
@@ -11,12 +10,13 @@ import { Router } from '@angular/router';
 import { BackNavigator } from '../../core/back-navigator';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { LangButton } from '../../shared/lang-button';
-import { DraftService, PAGE2_KEY, type DocType } from './draft.service';
+import { DraftService, MAX_PAGES, type DocType } from './draft.service';
 import { ImageProblem, compressFile, type ImageProblemKey } from './image';
 
-// 屏 3「拍文件」（线框 docs/ui/screen-03.png）：地契、MSPO、MPOB 三张卡片，一次拍一份。
-// 状态只存在本机内存里（DraftService）：照片上传和新建地块都要等合同定下接口。
-// 没有的文件可以跳过，之后由后端评估给出缺口清单，不会卡住。
+// 屏 3「拍文件」（线框 docs/ui/screen-03.png）：地契、MSPO、MPOB 三张卡片。
+// 每份文件可以有好几页（最多 4 张照片：地契常常正反两页）：每张卡片自己有「拍照」和「相册」两个按钮，
+// 相册可以一次选多张，拍照拍完一张可以接着拍下一张；拍错的那一张点 ✕ 撤掉。
+// 状态只存在本机内存里（DraftService），屏 6「开始检查」才交给后端。没有的文件可以跳过，之后由后端评估给出缺口清单，不会卡住。
 @Component({
   selector: 'app-documents-page',
   imports: [LangButton],
@@ -32,16 +32,13 @@ export class DocumentsPage {
 
   protected readonly entries = this.draft.entries;
   protected readonly canContinue = this.draft.allResolved;
-  protected readonly firstPending = this.draft.firstPending;
+  protected readonly maxPages = MAX_PAGES;
 
-  /** 地契第 2 页（可选）：地契拍好了才出现；不影响「下一步」 */
-  protected readonly page2 = this.draft.page2;
-  protected readonly titleTaken = computed(
-    () => this.draft.doc('land_title').status === 'captured',
-  );
+  /** 相册选图的提示键（非图片、太大、读不出、选多了） */
+  protected readonly notice = signal<ImageProblemKey | 'tooMany' | null>(null);
 
-  /** 相册选图失败时的提示键（非图片、太大、读不出） */
-  protected readonly notice = signal<ImageProblemKey | null>(null);
+  /** 点了哪张卡片的「相册」：选好的照片加到这份文件上 */
+  private galleryTarget: DocType | null = null;
 
   // 返回／进入相邻页面时保留当前的查询参数（外勤替成员新建时带着 ?member）
   private readonly keep = { queryParamsHandling: 'preserve' } as const;
@@ -51,16 +48,23 @@ export class DocumentsPage {
     this.backNav.back(['/'], this.keep);
   }
 
+  protected pagesOf(type: DocType) {
+    return this.draft.pagesOf(type);
+  }
+
+  protected isFull(type: DocType): boolean {
+    return this.draft.pagesOf(type).length >= MAX_PAGES;
+  }
+
+  /** 打开相机：拍到的照片加成这份文件的新一页 */
   protected open(type: DocType): void {
+    if (this.isFull(type)) return;
     void this.router.navigate(['/plots/new/camera', type], this.keep);
   }
 
-  protected openPage2(): void {
-    void this.router.navigate(['/plots/new/camera', PAGE2_KEY], this.keep);
-  }
-
-  protected removePage2(): void {
-    this.draft.clear(PAGE2_KEY);
+  protected removePage(type: DocType, index: number): void {
+    this.notice.set(null);
+    this.draft.removePage(type, index);
   }
 
   protected skip(type: DocType): void {
@@ -71,22 +75,31 @@ export class DocumentsPage {
     if (this.canContinue()) void this.router.navigate(['/plots/new/map'], this.keep);
   }
 
-  protected openGallery(): void {
+  protected openGallery(type: DocType): void {
+    if (this.isFull(type)) return;
+    this.galleryTarget = type;
     this.fileInput().nativeElement.click();
   }
 
-  /** 「Atau pilih dari galeri」：对第一张待拍的文档选图，选好直接变已拍（来源 gallery） */
+  /** 从相册选了一张或多张：都加到点的那份文件上（来源 gallery），超过 4 页的不要，并说明 */
   protected async onGalleryPick(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
+    const files = Array.from(input.files ?? []);
     input.value = ''; // 允许连续两次选同一个文件
-    const type = this.draft.firstPending();
-    if (!file || !type) return;
+    const type = this.galleryTarget ?? this.draft.firstPending();
+    this.galleryTarget = null;
+    if (files.length === 0 || !type) return;
     this.notice.set(null);
-    try {
-      this.draft.capture(type, await compressFile(file), 'gallery');
-    } catch (err) {
-      this.notice.set(err instanceof ImageProblem ? err.key : 'unreadable');
+    for (const file of files) {
+      if (this.isFull(type)) {
+        this.notice.set(this.notice() ?? 'tooMany');
+        break;
+      }
+      try {
+        this.draft.addPage(type, await compressFile(file), 'gallery');
+      } catch (err) {
+        this.notice.set(this.notice() ?? (err instanceof ImageProblem ? err.key : 'unreadable'));
+      }
     }
   }
 }

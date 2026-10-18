@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiError, ApiService, type GeometryBody } from '../../core/api/api.service';
-import { DOC_TYPES, DraftService, PAGE2_KEY, type DocType, type DraftKey } from './draft.service';
+import { DOC_TYPES, DraftService } from './draft.service';
 import { toGeoJsonPolygon, type PlotGeometry } from './geometry';
 
 // 屏 6「开始检查」：把草稿交给后端——建地块 → 保存位置与面积 → 登记并直传每份照片 → 触发评估。
@@ -48,17 +48,22 @@ export class SubmitService {
     onProgress({ step: 'area', done: 0, total: 0 });
     await this.api.saveGeometry(plotId, geometryBody(geometry));
 
-    // 三份必拍的文件（第 1 页）＋可选的地契第 2 页（登记成 land_title 的 pageNo = 2）
-    const slots: { key: DraftKey; type: DocType; pageNo: number }[] = [
-      ...DOC_TYPES.map((type) => ({ key: type, type, pageNo: 1 })),
-      { key: PAGE2_KEY, type: 'land_title', pageNo: 2 },
-    ];
-    const todo = slots.flatMap(({ key, type, pageNo }) => {
-      const doc = this.draft.doc(key);
-      return doc.status === 'captured' && this.draft.uploaded.get(key) !== doc.blob
-        ? [{ key, type, pageNo, blob: doc.blob, source: doc.source }]
-        : [];
-    });
+    // 每份文件的每一页都要传：第 n 页登记成 pageNo = n（第 1 页不带，和后端的默认值一致）
+    const todo = DOC_TYPES.flatMap((type) =>
+      this.draft.pagesOf(type).flatMap((page, i) =>
+        this.draft.uploaded.get(`${type}#${i + 1}`) !== page.blob
+          ? [
+              {
+                key: `${type}#${i + 1}`,
+                type,
+                pageNo: i + 1,
+                blob: page.blob,
+                source: page.source,
+              },
+            ]
+          : [],
+      ),
+    );
     let done = 0;
     onProgress({ step: 'docs', done, total: todo.length });
     await Promise.all(
