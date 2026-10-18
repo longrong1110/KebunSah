@@ -176,3 +176,18 @@ export function toGeoJsonPolygon(ring: Ring): { type: 'Polygon'; coordinates: nu
   const pts = ring.map(([lng, lat]) => [round6(lng), round6(lat)]);
   return { type: 'Polygon', coordinates: [[...pts, pts[0]]] };
 }
+
+/**
+ * 网址参数 ?at=纬度,经度（如 3.6654,102.95906）→ [经度, 纬度]。测试和演示用的小辅助：打开屏 5 时地图直接飞到那里，
+ * 不替用户放点。格式不对、不是有限数、超出经纬度范围都返回 null（当没有这个参数）。
+ */
+export function parseAt(text: string | null | undefined): LngLat | null {
+  if (typeof text !== 'string') return null;
+  const m = /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/.exec(text);
+  if (!m) return null;
+  const lat = Number(m[1]);
+  const lng = Number(m[2]);
+  return Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
+    ? [lng, lat]
+    : null;
+}

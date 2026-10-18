@@ -4,6 +4,7 @@ import {
   Ring,
   checkRing,
   evaluate,
+  parseAt,
   parseDeclaredHa,
   ringAreaHa,
   selfIntersects,
@@ -299,5 +300,32 @@ describe('toGeoJsonPolygon', () => {
     expect(ring).toHaveLength(4);
     expect(ring[0]).toEqual([101.123457, 4.987654]);
     expect(ring[3]).toEqual(ring[0]);
+  });
+});
+
+describe('parseAt（?at=纬度,经度）', () => {
+  it('认纬度,经度，返回 [经度, 纬度]', () => {
+    expect(parseAt('3.6654,102.95906')).toEqual([102.95906, 3.6654]);
+    expect(parseAt(' 3.6654 , 102.95906 ')).toEqual([102.95906, 3.6654]);
+    expect(parseAt('-1.5,114.5')).toEqual([114.5, -1.5]);
+  });
+
+  it('格式不对、缺一半、不是数、超出范围：null', () => {
+    for (const bad of [
+      null,
+      undefined,
+      '',
+      'abc',
+      '3.6',
+      '3.6,',
+      ',102',
+      '3.6;102.9',
+      '91,10',
+      '10,181',
+      '1e3,5',
+      '3.6,102,5',
+    ]) {
+      expect(parseAt(bad as string | null | undefined), String(bad)).toBeNull();
+    }
   });
 });

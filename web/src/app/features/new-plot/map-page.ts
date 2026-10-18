@@ -10,14 +10,21 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { BackNavigator } from '../../core/back-navigator';
 import { formatArea } from '../../core/format';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { LangButton } from '../../shared/lang-button';
 import { DraftService } from './draft.service';
 import { GeoError, GeolocationService, type GeoErrorKey, type GeoFix } from './geolocation.service';
-import { GPS_WARN_M, checkRing, parseDeclaredHa, type LngLat, type MapTab } from './geometry';
+import {
+  GPS_WARN_M,
+  checkRing,
+  parseAt,
+  parseDeclaredHa,
+  type LngLat,
+  type MapTab,
+} from './geometry';
 import type { MapSurface } from './map-surface';
 import { MapsError, MapsService, type MapsErrorKey } from './maps.service';
 
@@ -39,6 +46,7 @@ type Notice = { tone: 'error' | 'hint'; text: string };
 export class MapPage {
   private readonly draft = inject(DraftService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly backNav = inject(BackNavigator);
   private readonly maps = inject(MapsService);
   private readonly geo = inject(GeolocationService);
@@ -171,9 +179,12 @@ export class MapPage {
         this.view.set('ready');
         const g = this.draft.geometryDraft();
         const mine = g.tab === 'point' ? (g.point ? [g.point] : []) : this.ring();
-        surface.fit(
-          mine.length > 0 ? mine : [...g.mapRing, ...g.walkRing, ...(g.point ? [g.point] : [])],
-        );
+        const all =
+          mine.length > 0 ? mine : [...g.mapRing, ...g.walkRing, ...(g.point ? [g.point] : [])];
+        // ?at=纬度,经度：草稿里还什么都没画时，地图直接飞到那里（测试和演示用）；已经画了东西就不动用户的视野
+        const at = parseAt(this.route.snapshot.queryParamMap.get('at'));
+        if (at && all.length === 0) surface.panTo(at, 17);
+        else surface.fit(all);
       })
       .catch((err: unknown) => {
         if (this.destroyed) return;

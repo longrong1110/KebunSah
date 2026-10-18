@@ -610,3 +610,29 @@ describe('MapPage（屏 5 圈地块）', () => {
     });
   });
 });
+
+describe('MapPage：?at=纬度,经度（测试和演示用）', () => {
+  it('草稿里什么都没画：地图直接飞到那个位置（缩放 17），不替用户放点', async () => {
+    const p = await setup({ url: '/plots/new/map?member=p9&at=3.6654,102.95906' });
+    expect(p.maps.surface.panned).toEqual([{ p: [102.95906, 3.6654], minZoom: 17 }]);
+    expect(p.maps.surface.fitted).toEqual([]);
+    expect(p.draft.geometry()).toBeNull();
+  });
+
+  it('参数不对：当没有，照常显示', async () => {
+    const p = await setup({ url: '/plots/new/map?at=abc' });
+    expect(p.maps.surface.panned).toEqual([]);
+    expect(p.maps.surface.fitted).toHaveLength(1);
+  });
+
+  it('草稿里已经画了东西：不动用户的视野，仍然是 fit 他画的', async () => {
+    const p = await setup({
+      url: '/plots/new/map?at=3.6654,102.95906',
+      preload: (d) => {
+        for (const v of RECT) d.addVertex('map', v);
+      },
+    });
+    expect(p.maps.surface.panned).toEqual([]);
+    expect(p.maps.surface.fitted).toEqual([RECT]);
+  });
+});
