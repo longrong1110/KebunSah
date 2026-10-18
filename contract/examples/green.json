@@ -1,0 +1,74 @@
+{
+  "path": "plots/90000000-0000-4000-8000-000000000001/assessments/70000000-0000-4000-8000-000000000001",
+  "data": {
+    "plotId": "90000000-0000-4000-8000-000000000001",
+    "runStatus": "done",
+    "result": "green",
+    "startedAt": "2026-10-02T01:12:00.000Z",
+    "finishedAt": "2026-10-02T01:14:00.000Z",
+    "modelVersion": "demo",
+    "rulesVersion": "rules-0.1",
+    "inputSnapshot": null,
+    "forestDataset": null,
+    "forestCover2020Pct": 0,
+    "forestLossAfter2020Ha": 0,
+    "forestRisk": "low",
+    "summaryText": "Semua semakan lulus.",
+    "summaryLang": "ms",
+    "errorMessage": null,
+    "ruleResults": [
+      {
+        "ruleCode": "CC-01",
+        "result": "pass",
+        "expectedValue": "4.2000 ha",
+        "actualValue": "4.2300 ha",
+        "paramsUsed": {
+          "tol_pct": 10,
+          "tol_min_ha": 0.1
+        },
+        "evidence": [
+          {
+            "documentId": "3982f5f4-ca73-47b1-847a-a7020bf3f657",
+            "fieldKey": "land_title.area_value"
+          }
+        ],
+        "detail": "Beza 0.03 ha, dalam had yang dibenarkan"
+      },
+      {
+        "ruleCode": "CC-02",
+        "result": "pass",
+        "expectedValue": ">= 90 hari",
+        "actualValue": "174 hari",
+        "paramsUsed": {
+          "warn_days": 90
+        },
+        "evidence": [
+          {
+            "documentId": "f4d2c708-9e06-48e5-8a3c-16be0f2595c5",
+            "fieldKey": "mpob_licence.valid_until"
+          }
+        ],
+        "detail": "Lesen MPOB tamat pada 2027-03-31"
+      },
+      {
+        "ruleCode": "CC-03",
+        "result": "pass",
+        "expectedValue": ">= 0.85",
+        "actualValue": "1.00",
+        "paramsUsed": {
+          "min_similarity": 0.85
+        },
+        "evidence": [
+          {
+            "documentId": "1d95ed9c-f00f-4513-8e7e-e6bafde62a78",
+            "fieldKey": "land_title.proprietor_1_name"
+          }
+        ],
+        "detail": "Nama pada geran, lesen dan senarai adalah sama"
+      }
+    ],
+    "gaps": [],
+    "isSynthetic": true,
+    "createdAt": "2026-10-02T01:12:00.000Z"
+  }
+}
