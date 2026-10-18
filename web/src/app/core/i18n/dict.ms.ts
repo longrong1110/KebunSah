@@ -366,6 +366,7 @@ export const ms = {
     } satisfies GapText,
   },
   issue: {
+    checkValues: 'Semak nilai',
     inGeran: 'Dalam geran',
     yourDrawing: 'Lukisan anda',
     causeTitle: 'Mungkin sebabnya',
@@ -546,6 +547,67 @@ export const ms = {
     },
     disclaimer:
       'Dokumen ini dijana oleh KebunSah sebagai bahan sokongan. Ia bukan Pernyataan Usaha Wajar (DDS) rasmi dan bukan pengesahan pematuhan. Saringan hutan hanyalah saringan awal. Semua data dibaca oleh sistem dan perlu disemak oleh manusia sebelum digunakan.',
+  },
+  confirm: {
+    title: 'Semak nilai',
+    lead: 'Kami kurang pasti tentang nilai ini. Semak setiap satu dengan dokumen anda dan betulkan jika perlu.',
+    none: 'Tiada apa-apa untuk disemak. Semuanya dibaca dengan jelas.',
+    noneHelp: 'Jika anda telah mengubah nilai tadi, anda boleh menjalankan semakan semula.',
+    weRead: (raw: string) => `Kami baca: “${raw}”`,
+    cantRead: 'Kami tidak dapat membaca yang ini. Sila taip daripada dokumen anda.',
+    field: (key: string): string => {
+      const owner = /^land_title\.proprietor_(\d+)_name$/.exec(key);
+      if (owner) return `Pemilik berdaftar ${owner[1]}`;
+      const known: Record<string, string> = {
+        'land_title.lot_no': 'Nombor lot',
+        'land_title.title_no': 'Nombor hakmilik',
+        'land_title.area_value': 'Keluasan tanah',
+        'land_title.area_unit': 'Unit keluasan (ha, ekar, mps, kps)',
+        'land_title.tenure': 'Pemilikan',
+        'land_title.lease_expiry': 'Pajakan tamat',
+        'mpob_licence.licence_no': 'Nombor lesen',
+        'mpob_licence.holder_name': 'Pemegang lesen',
+        'mpob_licence.valid_until': 'Lesen sah sehingga',
+        'mspo_cert.cert_no': 'Nombor sijil',
+        'mspo_cert.certificate_holder': 'Pemegang sijil',
+        'mspo_cert.expiry_date': 'Sijil tamat',
+      };
+      return known[key] ?? key.split('.').pop()!.replace(/_/g, ' ');
+    },
+    hint: {
+      date: 'Tulis seperti 2026-12-05 (tahun-bulan-hari).',
+      area: 'Nombor, contohnya 3.04.',
+      text: 'Taip tepat seperti dalam dokumen anda.',
+    },
+    docName: (type: string, page: number): string => {
+      const names: Record<string, string> = {
+        land_title: 'Geran tanah',
+        mpob_licence: 'Lesen MPOB',
+        mspo_cert: 'Sijil MSPO',
+        mspo_member_list: 'Senarai ahli MSPO',
+      };
+      return `${names[type] ?? type}${page > 1 ? ` · halaman ${page}` : ''}`;
+    },
+    showPhoto: 'Tunjuk gambar',
+    hidePhoto: 'Sembunyi gambar',
+    loadingPhoto: 'Memuatkan gambar…',
+    photoMissing: 'Tiada gambar untuk dokumen ini.',
+    photoAlt: (name: string) => `Gambar ${name}`,
+    save: 'Sahkan dan semak semula',
+    saving: 'Menyimpan…',
+    recheck: 'Semak semula',
+    recheckNote: 'Ini memulakan semakan baharu. Ia mengambil masa kira-kira setengah minit.',
+    back: 'Kembali',
+    errors: {
+      empty: 'Sila isi setiap nilai sebelum meneruskan.',
+      format:
+        'Satu nilai tidak dalam format yang betul. Tarikh seperti 2026-12-05 dan keluasan ialah nombor biasa seperti 3.04.',
+      network: 'Tiada sambungan ke pelayan. Semak internet anda, kemudian cuba lagi.',
+      notConfigured: 'Perkhidmatan semakan belum disediakan.',
+      unauthenticated: 'Sesi anda telah tamat. Log masuk semula, kemudian cuba lagi.',
+      forbidden: 'Anda tidak boleh mengubah tanah ini.',
+      generic: 'Sesuatu tidak kena semasa menyimpan. Sila cuba lagi.',
+    },
   },
   log: {
     title: 'Bagaimana semakan dibuat',

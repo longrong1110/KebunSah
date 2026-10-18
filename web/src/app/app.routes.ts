@@ -66,6 +66,13 @@ export const routes: Routes = [
     data: { titleKey: 'checking' },
     loadComponent: () => import('./features/checking/checking-page').then((m) => m.CheckingPage),
   },
+  // 屏 8 确认字段：只列读不准的，用户对着原件确认或改对，提交后重新评估
+  {
+    path: 'plots/:id/confirm',
+    canActivate: [requireAuth],
+    data: { titleKey: 'confirm' },
+    loadComponent: () => import('./features/confirm/confirm-page').then((m) => m.ConfirmPage),
+  },
   // 智能体日志：这块地最近一次检查每一步做了什么（steps[]），评估还在跑时一步一步出现
   {
     path: 'plots/:id/log',

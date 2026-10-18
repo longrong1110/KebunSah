@@ -83,6 +83,8 @@ export class IssuePage {
       points: ring ? toSvgPoints(ring) : null,
       checkedOn: day ? t.result.checkedOn(day) : null,
       isArea,
+      // 「读不准」类：可以去屏 8 对着原件确认
+      isLowConfidence: gap.known === 'low_confidence',
     };
   });
 
@@ -95,6 +97,13 @@ export class IssuePage {
   protected back(): void {
     const id = this.plotId();
     if (id) this.backNav.back(['/plots', id], { queryParamsHandling: 'preserve' });
+  }
+
+  /** 屏 8：确认读不准的值 */
+  protected openConfirm(): void {
+    const id = this.plotId();
+    if (id)
+      void this.router.navigate(['/plots', id, 'confirm'], { queryParamsHandling: 'preserve' });
   }
 
   protected retry(): void {

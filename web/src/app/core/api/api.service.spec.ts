@@ -125,4 +125,43 @@ describe('ApiService', () => {
       code: 'network',
     });
   });
+
+  it('确认字段：PATCH 到文件的 fields，带字段键和值', async () => {
+    fetchMock.mockResolvedValue(json(200, { documentId: 'd/1', fields: {} }));
+    const { api } = setup();
+    await api.confirmFields('d/1', { 'mpob_licence.valid_until': '2026-12-05' });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('http://api.test/api/documents/d%2F1/fields');
+    expect(init.method).toBe('PATCH');
+    expect(JSON.parse(init.body)).toEqual({ fields: { 'mpob_licence.valid_until': '2026-12-05' } });
+  });
+
+  it('确认字段被拒（400）：抛 invalid_value', async () => {
+    fetchMock.mockResolvedValue(json(400, { error: { code: 'invalid_value', message: 'x' } }));
+    const { api } = setup();
+    await expect(api.confirmFields('d1', { a: 'b' })).rejects.toMatchObject({
+      status: 400,
+      code: 'invalid_value',
+    });
+  });
+
+  it('原件网址：GET，没有请求体；照片没传上来是 404', async () => {
+    fetchMock.mockResolvedValueOnce(
+      json(200, { url: 'https://x/y.jpg', expiresAt: '2026-10-18T10:00:00Z' }),
+    );
+    const { api } = setup();
+    expect(await api.documentImage('d1')).toEqual({
+      url: 'https://x/y.jpg',
+      expiresAt: '2026-10-18T10:00:00Z',
+    });
+    expect(fetchMock.mock.calls[0][1].method).toBe('GET');
+    expect(fetchMock.mock.calls[0][1].body).toBeUndefined();
+    fetchMock.mockResolvedValueOnce(
+      json(404, { error: { code: 'image_not_found', message: 'x' } }),
+    );
+    await expect(api.documentImage('d2')).rejects.toMatchObject({
+      status: 404,
+      code: 'image_not_found',
+    });
+  });
 });

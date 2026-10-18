@@ -100,7 +100,11 @@
   <footer class="bar">
     @if (view(); as v) {
       @if (v.found) {
-        @if (v.isArea) {
+        @if (v.isLowConfidence) {
+          <button type="button" class="btn" id="confirm-values" (click)="openConfirm()">
+            {{ t().issue.checkValues }}
+          </button>
+        } @else if (v.isArea) {
           <button
             type="button"
             class="btn"

@@ -28,6 +28,7 @@ async function setup(url: string) {
         { path: '', component: Blank },
         { path: 'plots/:id', component: Blank },
         { path: 'plots/:id/issue/:key', component: IssuePage },
+        { path: 'plots/:id/confirm', component: Blank },
       ]),
       { provide: FIRESTORE_FACADE, useValue: facade },
     ],
@@ -176,6 +177,29 @@ describe('IssuePage（屏 10）', () => {
       redraw.click();
       await settle(t.fixture);
       expect(t.router.url).toBe('/plots/p1/issue/area_mismatch?member=m9');
+    });
+  });
+
+  describe('low_confidence：可以去屏 8 对着原件确认', () => {
+    it('有「Semak nilai」按钮（不再是「upload 很快就有」的说明）；点击去屏 8，保留 ?member', async () => {
+      const t = await setup('/plots/p1/issue/low_confidence?member=m9');
+      await t.ready(
+        assessment({
+          result: 'needs_review',
+          gaps: [gap('low_confidence', 'medium', 'land_title')],
+        }),
+      );
+      expect(t.q('#confirm-values')?.textContent?.trim()).toBe('Semak nilai');
+      expect(t.q('#upload-note')).toBeNull();
+      expect(t.q('#redraw')).toBeNull();
+      await t.click('#confirm-values');
+      expect(t.router.url).toBe('/plots/p1/confirm?member=m9');
+    });
+
+    it('别的事项没有这个按钮', async () => {
+      const t = await setup('/plots/p1/issue/expiring');
+      await t.ready();
+      expect(t.q('#confirm-values')).toBeNull();
     });
   });
 

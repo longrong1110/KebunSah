@@ -108,6 +108,18 @@ export class ApiService {
     if (!res.ok) throw new ApiError(res.status, 'upload_failed');
   }
 
+  /** 屏 8：用户确认（或改过）读出的字段。后端先全部校验再写，有一个不合格就一个都不写（400 invalid_value／unknown_field） */
+  async confirmFields(documentId: string, fields: Record<string, string>): Promise<void> {
+    await this.request('PATCH', `/api/documents/${encodeURIComponent(documentId)}/fields`, {
+      fields,
+    });
+  }
+
+  /** 原件照片的读取网址（15 分钟有效）；照片还没传上来（种子里的文件）抛 404 image_not_found */
+  documentImage(documentId: string): Promise<{ url: string; expiresAt: string }> {
+    return this.request('GET', `/api/documents/${encodeURIComponent(documentId)}/image`);
+  }
+
   /** 触发评估。已有评估在跑时抛 409（ApiError.extra.assessmentId 是那一条） */
   async assess(plotId: string): Promise<string> {
     const res = await this.request<{ assessmentId: string }>(
