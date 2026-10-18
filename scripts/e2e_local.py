@@ -28,12 +28,12 @@ for sub in ("core", "api", "ai-worker"):
     sys.path.insert(0, str(ROOT / sub))
 
 PHOTOS = ROOT / "seed" / "photos"
-# 约 3.1 公顷，和 title-1 的 3.04 公顷接近（CC-01 通过）
+# 约 3.1 公顷，和 yellow-1 的 3.04 公顷接近（CC-01 通过）
 SQUARE = {"type": "Polygon", "coordinates": [[[101.149176, 4.309234], [101.150824, 4.309234], [101.150824, 4.310766],
                                                 [101.149176, 4.310766], [101.149176, 4.309234]]]}
 # 种子里「黄色演示地块」的照片组合：地契第 1 页（面积）+ 第 2 页（持有人 AHMAD ZAKI BIN ROSLI）+ MPOB 执照 + MSPO 证书
-UPLOADS = [("land_title", 1, "title-1-clear.jpg"), ("land_title", 2, "title-2-proprietor.jpg"),
-           ("mpob_licence", 1, "licence-1-clear.jpg"), ("mspo_cert", 1, "mspo-cert-1-clear.jpg")]
+UPLOADS = [("land_title", 1, "yellow-1-title-page1.jpg"), ("land_title", 2, "yellow-2-title-page2.jpg"),
+           ("mpob_licence", 1, "yellow-4-licence.jpg"), ("mspo_cert", 1, "mspo-cert-clear.jpg")]
 
 
 def main() -> int:

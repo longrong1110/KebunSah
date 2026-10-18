@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<title>KebunSah 演示证件照模板</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Special+Elite&family=Courier+Prime:wght@400;700&family=Caveat:wght@500;700&family=Cormorant+Garamond:wght@500;700&display=block">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #222; }
+  .scene { position: relative; width: 1400px; height: 1900px; overflow: hidden;
+    background: #5b3f29; }
+  .wood { position: absolute; inset: 0; }
+  .paper { position: absolute; left: 200px; top: 250px; width: 1000px; height: 1400px; overflow: hidden;
+    transform-origin: 50% 50%; box-shadow: 0 34px 70px rgb(0 0 0 / 45%), 0 5px 12px rgb(0 0 0 / 38%); }
+  .paper > * { position: absolute; }
+  .fold { left: 0; right: 0; top: 50%; height: 26px; transform: translateY(-50%);
+    background: linear-gradient(180deg, transparent, rgb(0 0 0 / 7%) 45%, rgb(255 255 255 / 14%) 55%, transparent); mix-blend-mode: multiply; }
+  .fold-v { top: 0; bottom: 0; left: 33%; width: 18px;
+    background: linear-gradient(90deg, transparent, rgb(0 0 0 / 5%) 45%, rgb(255 255 255 / 10%) 55%, transparent); }
+  .stain { border-radius: 50%; mix-blend-mode: multiply; }
+  .light { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: soft-light; }
+  .vignette { position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 46%, transparent 52%, rgb(0 0 0 / 50%) 100%); }
+  .grain { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: multiply; opacity: .14; }
+
+  /* 通用的纸面文字 */
+  .serif { font-family: 'Libre Baskerville', 'Times New Roman', serif; }
+  .type { font-family: 'Special Elite', 'Courier Prime', 'Courier New', monospace; color: #1b2233; }
+  .pen { font-family: 'Caveat', 'Ink Free', cursive; color: #1b3a9a; }
+  .label { font-family: 'Libre Baskerville', serif; font-size: 22px; color: #3d3a30; }
+  .row { left: 70px; right: 70px; height: 50px; display: flex; align-items: baseline; gap: 24px;
+    border-bottom: 2px dotted rgb(60 55 40 / 55%); }
+  .row .label { width: 290px; flex: none; }
+  .row .val { font-size: 31px; letter-spacing: .5px; }
+  .sim { left: 0; right: 0; bottom: 60px; text-align: center; font-family: 'Libre Baskerville', serif;
+    font-size: 15px; color: #9c2b2b; opacity: .85; }
+  .wm { inset: -200px; opacity: .06; transform: rotate(-28deg); color: #8c1d1d; font-family: 'Libre Baskerville', serif;
+    font-weight: 700; font-size: 54px; letter-spacing: 8px; line-height: 150px; white-space: pre; mix-blend-mode: multiply; }
+  .stamp { mix-blend-mode: multiply; }
+</style>
+</head>
+<body>
+<div id="scene" class="scene"></div>
+<script>
+// ---------------------------------------------------------------- 小部件
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+/** 防伪纸的底纹：两组交错的正弦线（guilloche）＋细点 */
+function guilloche(color, id) {
+  const waves = (amp, off, step) => {
+    let d = '';
+    for (let y = 0; y <= 1400; y += step) {
+      d += `<path d="M0 ${y} ` + Array.from({ length: 21 }, (_, i) => `Q ${i * 50 + 25} ${y + (i % 2 ? -amp : amp)} ${i * 50 + 50} ${y}`).join(' ') + `" transform="translate(${off} 0)"/>`;
+    }
+    return d;
+  };
+  return `<svg width="1000" height="1400" style="position:absolute;inset:0" xmlns="http://www.w3.org/2000/svg">
+    <g fill="none" stroke="${color}" stroke-width="1.2" opacity=".22">${waves(14, 0, 28)}</g>
+    <g fill="none" stroke="${color}" stroke-width="1" opacity=".16">${waves(18, 25, 28)}</g></svg>`;
+}
+
+/** 双线边框＋四角花饰 */
+function border(color, inset = 34) {
+  const corner = (x, y, sx, sy) => `<g transform="translate(${x} ${y}) scale(${sx} ${sy})" fill="none" stroke="${color}" stroke-width="3">
+      <path d="M0 0 H62 M0 0 V62"/><path d="M12 12 H46 M12 12 V46" stroke-width="2"/><circle cx="26" cy="26" r="7"/></g>`;
+  return `<svg width="1000" height="1400" style="position:absolute;inset:0" xmlns="http://www.w3.org/2000/svg">
+    <rect x="${inset}" y="${inset}" width="${1000 - 2 * inset}" height="${1400 - 2 * inset}" fill="none" stroke="${color}" stroke-width="5"/>
+    <rect x="${inset + 12}" y="${inset + 12}" width="${1000 - 2 * inset - 24}" height="${1400 - 2 * inset - 24}" fill="none" stroke="${color}" stroke-width="1.6"/>
+    ${corner(inset + 14, inset + 14, 1, 1)}${corner(1000 - inset - 14, inset + 14, -1, 1)}
+    ${corner(inset + 14, 1400 - inset - 14, 1, -1)}${corner(1000 - inset - 14, 1400 - inset - 14, -1, -1)}</svg>`;
+}
+
+/** 圆形橡皮章（环形文字） */
+function roundStamp({ top, bottom, mid, color, size = 230, rot = -12 }) {
+  const id = 's' + Math.random().toString(36).slice(2, 8);
+  return `<svg class="stamp" width="${size}" height="${size}" viewBox="0 0 230 230" style="transform:rotate(${rot}deg)" xmlns="http://www.w3.org/2000/svg">
+    <defs><path id="${id}t" d="M 30 115 A 85 85 0 0 1 200 115"/><path id="${id}b" d="M 24 115 A 91 91 0 0 0 206 115"/>
+    <filter id="${id}f"><feTurbulence baseFrequency=".9" numOctaves="2" seed="4"/><feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.25"/><feComposite in2="SourceGraphic" operator="in"/></filter></defs>
+    <g fill="${color}" stroke="${color}" opacity=".82" style="filter:url(#${id}f)">
+      <circle cx="115" cy="115" r="108" fill="none" stroke-width="4"/><circle cx="115" cy="115" r="76" fill="none" stroke-width="2"/>
+      <text font-family="Libre Baskerville" font-weight="700" font-size="17" letter-spacing="2" stroke="none"><textPath href="#${id}t" startOffset="50%" text-anchor="middle">${esc(top)}</textPath></text>
+      <text font-family="Libre Baskerville" font-weight="700" font-size="15" letter-spacing="2" stroke="none"><textPath href="#${id}b" startOffset="50%" text-anchor="middle">${esc(bottom)}</textPath></text>
+      <text x="115" y="108" text-anchor="middle" font-family="Special Elite" font-size="20" stroke="none">${esc(mid[0])}</text>
+      <text x="115" y="134" text-anchor="middle" font-family="Special Elite" font-size="20" stroke="none">${esc(mid[1])}</text></g></svg>`;
+}
+
+/** 长方形日期章 */
+function dateStamp(line1, line2, color = '#a52a2a', rot = 4) {
+  return `<div class="stamp" style="border:4px solid ${color};color:${color};padding:10px 22px;transform:rotate(${rot}deg);opacity:.8;
+    font-family:'Special Elite',monospace;text-align:center;line-height:1.25;mix-blend-mode:multiply">
+    <div style="font-size:24px;letter-spacing:3px;font-weight:700">${esc(line1)}</div><div style="font-size:30px">${esc(line2)}</div></div>`;
+}
+
+/** 蓝色圆珠笔签名 */
+function signature(seed = 1, w = 260, h = 90) {
+  const paths = [
+    'M6 62 C 28 8, 46 8, 40 52 S 74 70, 84 26 C 90 6, 106 12, 100 44 C 98 60, 124 62, 146 30 C 156 16, 168 22, 160 46 S 200 66, 250 24',
+    'M8 52 C 30 70, 52 4, 64 40 C 70 58, 88 52, 96 22 L 104 60 C 126 66, 150 14, 168 36 S 214 60, 254 44',
+  ];
+  return `<svg width="${w}" height="${h}" viewBox="0 0 262 90" style="mix-blend-mode:multiply" xmlns="http://www.w3.org/2000/svg">
+    <path d="${paths[seed % 2]}" fill="none" stroke="#1d36a8" stroke-width="3.2" stroke-linecap="round" opacity=".85"/>
+    <path d="M10 78 C 80 84, 160 80, 240 70" fill="none" stroke="#1d36a8" stroke-width="2" stroke-linecap="round" opacity=".6"/></svg>`;
+}
+
+/** 地籍测量图（带界桩、方位角与边长、指北针） */
+function cadastral(points, bearings, lot, area, w = 860, h = 430) {
+  const poly = points.map((p) => p.join(',')).join(' ');
+  const labels = points.map((p, i) => `<g><circle cx="${p[0]}" cy="${p[1]}" r="7" fill="#fff" stroke="#233" stroke-width="2.4"/>
+      <text x="${p[0] + 12}" y="${p[1] - 10}" font-family="Special Elite" font-size="19" fill="#233">${i + 1}</text></g>`).join('');
+  const bear = bearings.map((b) => `<text x="${b[0]}" y="${b[1]}" font-family="Special Elite" font-size="16" fill="#35402f" transform="rotate(${b[3] ?? 0} ${b[0]} ${b[1]})">${esc(b[2])}</text>`).join('');
+  return `<svg width="${w}" height="${h}" viewBox="0 0 860 430" xmlns="http://www.w3.org/2000/svg">
+    <defs><pattern id="g" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" fill="none" stroke="#3a4a35" stroke-width=".6" opacity=".25"/></pattern>
+    <pattern id="h" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V10" stroke="#3b5d3b" stroke-width="1" opacity=".35"/></pattern></defs>
+    <rect x="2" y="2" width="856" height="426" fill="url(#g)" stroke="#2c3a2a" stroke-width="2.4"/>
+    <polygon points="${poly}" fill="url(#h)" stroke="#1e2d1e" stroke-width="3.2" stroke-linejoin="round"/>
+    ${labels}${bear}
+    <text x="430" y="${Math.round(points.reduce((s, p) => s + p[1], 0) / points.length)}" text-anchor="middle" font-family="Special Elite" font-size="26" fill="#1e2d1e">LOT ${esc(lot)}</text>
+    <text x="430" y="${Math.round(points.reduce((s, p) => s + p[1], 0) / points.length) + 30}" text-anchor="middle" font-family="Special Elite" font-size="22" fill="#1e2d1e">${esc(area)}</text>
+    <g transform="translate(790 70)"><circle r="30" fill="none" stroke="#233" stroke-width="2"/><path d="M0 24V-24M0 -24 -8 -8M0 -24 8 -8" stroke="#233" stroke-width="2.6" fill="none"/><text y="-36" text-anchor="middle" font-family="Special Elite" font-size="18" fill="#233">U</text></g>
+    <g transform="translate(40 396)"><path d="M0 0H160" stroke="#233" stroke-width="3"/><path d="M0 -6V6M80 -6V6M160 -6V6" stroke="#233" stroke-width="2"/><text x="0" y="-12" font-family="Special Elite" font-size="15" fill="#233">0       100 m     200 m</text></g></svg>`;
+}
+
+// ---------------------------------------------------------------- 证件
+const WATERMARK = Array.from({ length: 14 }, () => 'CONTOH · SIMULATED · CONTOH · SIMULATED · CONTOH').join('\n');
+const FOOT = '<div class="sim">Dokumen simulasi untuk demonstrasi — bukan dokumen sebenar / Simulated sample, not a real document</div>';
+
+function geran1(d) {
+  const rows = [['No. Lot', d.lotNo], ['Mukim', d.mukim], ['Daerah', d.district], ['Negeri', d.state], ['Luas Lot', d.area],
+    ['Kegunaan Tanah', 'Pertanian'], ['Tempoh Pemilikan', 'Selama-lamanya (Kekal)'], ['Tarikh Pendaftaran', d.regDate]];
+  if (d.owner) rows.push(['Pemilik Berdaftar', d.owner.name], ['No. Kad Pengenalan', d.owner.ic]);
+  const step = d.owner ? 44 : 50;
+  const rowsHtml = rows.map(([k, v], i) => `<div class="row" style="top:${446 + i * step}px;height:${step - 4}px"><span class="label">${k}</span>
+    <span class="val type" style="font-size:${d.owner && i > 7 ? 30 : 29}px;${d.owner && i > 7 ? 'font-weight:700' : ''}">${esc(v)}</span></div>`).join('');
+  const rowsEnd = 446 + rows.length * step;
+  const planH = d.owner ? 236 : 296;
+  const planW = Math.round(planH * 2);
+  const planTop = rowsEnd + 90;
+  return `
+    <div style="inset:0;background:linear-gradient(135deg,#f3ecd0,#eadfb9 55%,#efe5c3)"></div>
+    ${guilloche('#4a7a52')}${border('#2f5d3a')}
+    <div style="left:0;right:0;top:92px;text-align:center" class="serif">
+      <div style="font-size:30px;font-weight:700;letter-spacing:6px;color:#23382a">NEGERI ${esc(d.state.toUpperCase())} DARUL RIDZUAN</div>
+      <div style="font-size:19px;letter-spacing:3px;margin-top:8px;color:#4a4a3c">KANUN TANAH NEGARA 1965 · SEKSYEN 76</div>
+      <div style="font-size:128px;font-weight:700;letter-spacing:22px;line-height:1.05;margin-top:6px;color:#1f2e24;-webkit-text-stroke:1px #1f2e24">GERAN</div>
+    </div>
+    <div style="left:70px;top:372px;font-size:20px;line-height:1.5;color:#3d3a30" class="serif">Hakmilik Sementara / Pendaftaran Kekal<br>Daftar Hakmilik Tanah</div>
+    <div style="right:70px;top:352px;width:360px;border:3px solid #2a3a2c;padding:14px 18px;background:rgb(255 255 255 / 30%)">
+      <div class="label" style="font-size:18px">No. Hakmilik</div>
+      <div class="type" style="font-size:42px;font-weight:700;margin-top:4px">${esc(d.titleNo)}</div></div>
+    ${rowsHtml}
+    <div style="left:70px;right:70px;top:${rowsEnd + 8}px;font-size:19px;line-height:1.5;color:#2b2a24" class="serif"><b>Syarat Nyata:</b> <span class="type" style="font-size:20px">${esc(d.condition)}</span><br>
+      <b>Sekatan Kepentingan:</b> <span class="type" style="font-size:20px">Tiada.</span></div>
+    <div style="left:70px;top:${planTop}px;border:2px solid #2c3a2a;background:rgb(255 255 255 / 25%)">${cadastral(d.plan.points, d.plan.bearings, d.lotNo, d.area, planW, planH)}</div>
+    <div style="right:78px;top:${planTop - 14}px;width:210px">${roundStamp({ top: 'PENDAFTAR HAKMILIK', bottom: 'DAERAH ' + d.district.toUpperCase(), mid: ['CONTOH', 'SIMULASI'], color: '#2646a8', size: 210, rot: -10 })}</div>
+    <div style="right:78px;top:${planTop + planH - 60}px;width:230px;text-align:center" class="serif"><div style="height:60px">${signature(d.sig, 220, 76)}</div>
+      <div style="border-top:2px solid #333;font-size:16px;padding-top:4px;color:#444">Pendaftar Hakmilik (contoh)</div></div>
+    ${d.hand ? `<div class="pen" style="left:90px;top:${d.hand.top}px;font-size:36px;transform:rotate(${d.hand.rot}deg);mix-blend-mode:multiply">${esc(d.hand.text)}</div>` : ''}
+    <div class="wm">${WATERMARK}</div>${FOOT}`;
+}
+
+function geran2(d) {
+  const head = `<div style="inset:0;background:linear-gradient(135deg,#f3ecd0,#eadfb9 55%,#efe5c3)"></div>${guilloche('#4a7a52')}${border('#2f5d3a')}`;
+  const col = (x, w, t) => `<div class="label" style="left:${x}px;top:262px;width:${w}px;font-size:19px;font-weight:700;text-align:center">${t}</div>`;
+  const lines = [320, 380, 440, 500, 560, 640, 720, 800, 880, 960, 1040, 1120].map((y) => `<div style="left:70px;right:70px;top:${y}px;border-bottom:1.5px solid rgb(60 55 40 / 45%)"></div>`).join('');
+  const vlines = [70, 250, 700, 930].map((x) => `<div style="top:250px;height:900px;left:${x}px;border-left:1.5px solid rgb(60 55 40 / 55%)"></div>`).join('');
+  return `${head}
+    <div style="left:0;right:0;top:92px;text-align:center" class="serif">
+      <div style="font-size:30px;font-weight:700;letter-spacing:4px;color:#23382a">REKOD PEMUNYAAN</div>
+      <div style="font-size:19px;margin-top:10px;color:#4a4a3c;letter-spacing:1px">Pemunya Berdaftar, Urusniaga dan Perkara Lain Yang Menjejaskan Hakmilik</div>
+      <div class="type" style="font-size:26px;margin-top:22px">${esc(d.titleNo)} · Lot ${esc(d.lotNo)} · ${esc(d.district)}</div></div>
+    ${col(70, 180, 'No. Perserahan')}${col(250, 450, 'Butir-butir')}${col(700, 230, 'Tarikh')}
+    ${lines}${vlines}
+    <div class="type" style="left:84px;top:332px;font-size:25px">${esc(d.fileNo)}</div>
+    <div style="left:264px;top:326px;width:420px;font-size:19px;color:#3d3a30" class="serif">Pemilik Berdaftar<br><span style="font-size:17px">(Registered Proprietor)</span></div>
+    <div class="type" style="left:264px;top:392px;width:430px;font-size:29px;line-height:1.3;font-weight:700">${esc(d.name)}</div>
+    <div class="type" style="left:264px;top:444px;font-size:23px;line-height:1.35">K/P No.: ${esc(d.ic)}<br>Bahagian: 1/1 (seluruhnya)</div>
+    <div class="type" style="left:714px;top:332px;font-size:24px">${esc(d.regDate)}</div>
+    <div class="type" style="left:264px;top:572px;width:430px;font-size:21px;line-height:1.4">Kaveat — tiada<br>Gadaian — tiada<br>Pajakan — tiada</div>
+    <div class="type" style="left:264px;top:672px;width:430px;font-size:19px;line-height:1.5;opacity:.9">Cukai tanah 2025 — telah dibayar<br>Resit KPR/25/08812 · 14/03/2025<br>Cukai tanah 2024 — telah dibayar<br>Resit KPR/24/07730 · 02/03/2024</div>
+    <div class="type" style="left:714px;top:672px;font-size:19px;line-height:1.5;opacity:.9">14/03/2025<br><br>02/03/2024</div>
+    <div style="left:100px;top:800px;width:240px">${dateStamp('TELAH DIDAFTAR', d.stampDate, '#a52a2a', -3)}</div>
+    <div style="left:690px;top:830px;width:230px">${roundStamp({ top: 'PEJABAT TANAH', bottom: 'DAERAH ' + d.district.toUpperCase(), mid: ['CONTOH', 'SIMULASI'], color: '#2646a8', size: 230, rot: 8 })}</div>
+    ${d.hand ? `<div class="pen" style="left:80px;top:${d.hand.top}px;width:840px;font-size:35px;line-height:1.35;transform:rotate(${d.hand.rot}deg);mix-blend-mode:multiply">${esc(d.hand.text)}</div>` : ''}
+    <div style="left:80px;top:1190px;width:260px">${signature(d.sig)}</div>
+    <div class="serif" style="left:80px;top:1262px;font-size:17px;color:#444">Penolong Pendaftar (contoh)</div>
+    <div class="wm">${WATERMARK}</div>${FOOT}`;
+}
+
+function lesen(d) {
+  const rows = [['No. Lesen / Licence No.', d.licenceNo], ['Nama Pemegang Lesen', d.holderName], ['No. Kad Pengenalan', d.holderIc],
+    ['Jenis Lesen', 'Pekebun Kecil (SH)'], ['Lot / Premis', d.premises], ['Tarikh Dikeluarkan', d.issued]];
+  const rowsHtml = rows.map(([k, v], i) => `<div class="row" style="top:${500 + i * 64}px"><span class="label" style="font-size:21px;width:330px">${k}</span><span class="val type" style="font-size:30px">${esc(v)}</span></div>`).join('');
+  return `
+    <div style="inset:0;background:linear-gradient(160deg,#e6f0e4,#dbe9d9 50%,#e4efe2)"></div>
+    ${guilloche('#2d7a4a')}${border('#1f6b3e', 30)}
+    <div style="left:0;right:0;top:86px;text-align:center" class="serif">
+      <div style="font-size:26px;font-weight:700;letter-spacing:5px;color:#16452a">LEMBAGA MINYAK SAWIT MALAYSIA</div>
+      <div style="font-size:17px;letter-spacing:3px;margin-top:6px;color:#3a5a46">MALAYSIAN PALM OIL BOARD</div>
+      <div style="font-size:19px;margin-top:6px;color:#3a5a46;letter-spacing:1px">Akta Lembaga Minyak Sawit Malaysia · Peraturan-peraturan Perlesenan</div>
+      <div style="margin:38px auto 0;width:760px;border-top:3px solid #1f6b3e;border-bottom:3px solid #1f6b3e;padding:18px 0">
+        <div style="font-size:46px;font-weight:700;letter-spacing:4px;color:#16452a;white-space:nowrap">LESEN PEKEBUN KECIL</div>
+        <div style="font-size:21px;letter-spacing:4px;color:#3a5a46;margin-top:4px">SMALLHOLDER LICENCE</div></div></div>
+    <div class="serif" style="left:70px;right:70px;top:420px;font-size:19px;line-height:1.45;color:#3d4a40">Lesen ini dikeluarkan kepada pemegang yang dinamakan di bawah untuk membeli, menjual dan mengangkut buah kelapa sawit segar (BTS).</div>
+    ${rowsHtml}
+    <div style="left:70px;right:70px;top:900px;border:4px solid #1f6b3e;background:rgb(255 255 255 / 45%);padding:16px 30px">
+      <div class="label" style="font-size:22px">Sah Sehingga / Valid Until</div>
+      <div class="type" style="font-size:70px;font-weight:700;letter-spacing:6px;margin-top:8px;text-align:center">${esc(d.validUntil)}</div></div>
+    <div class="serif" style="left:70px;right:70px;top:1100px;font-size:17px;line-height:1.5;color:#4a4f46">Lesen ini tidak boleh dipindah milik. Pemegang lesen mesti memperbaharui lesen sebelum tarikh luput.<br>Yuran lewat dikenakan bagi pembaharuan selepas tarikh tamat.</div>
+    <div style="left:90px;top:1186px;width:260px">${signature(d.sig, 250, 86)}</div>
+    <div class="serif" style="left:90px;top:1262px;font-size:17px;color:#444;border-top:2px solid #333;width:270px;padding-top:6px">Pegawai Pelesen (contoh)</div>
+    <div style="left:400px;top:1132px;width:190px">${roundStamp({ top: 'PEJABAT WILAYAH', bottom: 'PERLESENAN · CONTOH', mid: ['CONTOH', 'SIMULASI'], color: '#1f6b3e', size: 190, rot: -8 })}</div>
+    <div style="right:96px;top:1190px;width:140px;height:140px;border-radius:50%;background:conic-gradient(from 20deg,#bfe9f4,#f7e6ff,#fff3c0,#c5f1d8,#bfe9f4);border:3px solid rgb(255 255 255 / 70%);box-shadow:inset 0 0 22px rgb(0 0 0 / 18%);display:grid;place-items:center;opacity:.9">
+      <div class="serif" style="font-size:15px;font-weight:700;text-align:center;color:#2a3a4a;line-height:1.3">HOLOGRAM<br>CONTOH<br>SIMULASI</div></div>
+    <div class="wm">${WATERMARK}</div>${FOOT}`;
+}
+
+function mspo(d) {
+  return `
+    <div style="inset:0;background:linear-gradient(145deg,#f4f0dc,#ebe6c8 55%,#f1edd3)"></div>
+    ${guilloche('#b08a2e')}
+    <svg width="1000" height="1400" style="position:absolute;inset:0" xmlns="http://www.w3.org/2000/svg">
+      <rect x="30" y="30" width="940" height="1340" fill="none" stroke="#1d6a3d" stroke-width="10"/>
+      <rect x="48" y="48" width="904" height="1304" fill="none" stroke="#b08a2e" stroke-width="3"/>
+      <rect x="58" y="58" width="884" height="1284" fill="none" stroke="#1d6a3d" stroke-width="1.5"/></svg>
+    <div style="left:0;right:0;top:100px;text-align:center" class="serif">
+      <div style="width:120px;height:120px;margin:0 auto 14px;border-radius:50%;border:4px solid #1d6a3d;display:grid;place-items:center;background:#e9f3e6">
+        <svg width="80" height="80" viewBox="0 0 80 80"><g stroke="#1d6a3d" stroke-width="3" fill="none" stroke-linecap="round"><path d="M40 70V38"/><path d="M40 38C28 34 18 26 14 14M40 38C52 34 62 26 66 14M40 44C26 44 16 38 10 30M40 44C54 44 64 38 70 30M40 38C40 26 40 18 40 8"/></g></svg></div>
+      <div style="font-size:46px;font-weight:700;letter-spacing:4px;color:#1d6a3d;white-space:nowrap">SIJIL PENSIJILAN MSPO</div>
+      <div style="font-size:23px;margin-top:6px;color:#4a4a3c;letter-spacing:2px">Malaysian Sustainable Palm Oil Certificate</div>
+      <div style="font-size:21px;margin-top:44px;color:#4a4a3c">Dengan ini disahkan bahawa</div>
+      <div style="font-size:42px;font-weight:700;margin-top:14px;color:#1f2e24">${esc(d.holder)}</div>
+      <div style="font-size:20px;margin-top:12px;color:#4a4a3c;padding:0 120px;line-height:1.5">telah memenuhi keperluan standard di bawah skim pensijilan kumpulan pekebun kecil bebas</div></div>
+    ${[['No. Sijil / Certificate No.', d.certNo], ['Unit Pensijilan', d.unit], ['Skop', 'Pekebun kecil (skim kumpulan)'], ['Tarikh Mula', d.start], ['Badan Pensijilan', d.body]]
+      .map(([k, v], i) => `<div class="row" style="top:${548 + i * 72}px;left:96px;right:96px;height:66px;align-items:flex-start;padding-top:4px"><span class="label" style="width:300px;font-size:21px">${k}</span><span class="val type" style="font-size:25px;line-height:1.2">${esc(v)}</span></div>`).join('')}
+    <div class="serif" style="left:96px;right:96px;top:914px;font-size:18px;color:#4a4a3c">Standard: MS 2530-2:2013 General Principles for Independent Smallholders</div>
+    <div style="left:96px;right:96px;top:956px;border:4px solid #1d6a3d;background:rgb(255 255 255 / 40%);padding:14px 34px">
+      <div class="label" style="font-size:22px">Tarikh Tamat / Expiry Date</div>
+      <div class="type" style="font-size:68px;font-weight:700;letter-spacing:6px;text-align:center;margin-top:8px">${esc(d.expiry)}</div></div>
+    <div style="left:410px;top:1128px;width:180px">${roundStamp({ top: 'BADAN PENSIJILAN', bottom: 'SIJIL ASAL · CONTOH', mid: ['CONTOH', 'SIMULASI'], color: '#1d6a3d', size: 180, rot: -6 })}</div>
+    <div style="left:110px;top:1168px;width:240px">${signature(1, 240, 82)}</div>
+    <div class="serif" style="left:110px;top:1244px;width:240px;border-top:2px solid #333;font-size:17px;padding-top:6px;color:#444">Pengarah (contoh)</div>
+    <div style="right:110px;top:1168px;width:240px">${signature(0, 240, 82)}</div>
+    <div class="serif" style="right:110px;top:1244px;width:240px;border-top:2px solid #333;font-size:17px;padding-top:6px;color:#444">Juruaudit (contoh)</div>
+    <div class="wm">${WATERMARK}</div>${FOOT}`;
+}
+
+const KINDS = { geran1, geran2, lesen, mspo };
+
+// ---------------------------------------------------------------- 拍照
+/** 把一张纸「放在桌上拍」：桌面木纹、透视、阴影、光线、暗角、噪点；look 控制歪斜、模糊、亮度 */
+window.renderDoc = async function (kind, data, look = {}) {
+  const { rz = 0, rx = 3, ry = 0, blur = 0, light = 1, dark = 0, stains = true, seed = 1, shadowBand = false } = look;
+  const scene = document.getElementById('scene');
+  scene.innerHTML = `
+    <svg class="wood" width="1400" height="1900" xmlns="http://www.w3.org/2000/svg"><defs>
+      <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.012 0.42" numOctaves="4" seed="${seed}"/>
+        <feColorMatrix values="0 0 0 0 0.20  0 0 0 0 0.12  0 0 0 0 0.06  0 0 0 1.4 -0.35"/></filter>
+      <linearGradient id="wg" x1="0" x2="1"><stop offset="0" stop-color="#6a4a31"/><stop offset=".5" stop-color="#5a3e28"/><stop offset="1" stop-color="#4a3322"/></linearGradient></defs>
+      <rect width="1400" height="1900" fill="url(#wg)"/><rect width="1400" height="1900" filter="url(#grain)" opacity=".9"/></svg>
+    <div class="paper" id="paper" style="transform:perspective(2400px) rotateX(${rx}deg) rotateY(${ry}deg) rotate(${rz}deg) scale(1.16);filter:blur(${blur}px) brightness(${1 - dark})">
+      ${KINDS[kind](data)}<div class="fold"></div><div class="fold-v"></div>
+      ${stains ? `<div class="stain" style="left:${60 + seed * 37 % 500}px;top:${900 + seed * 53 % 300}px;width:240px;height:200px;background:radial-gradient(closest-side,rgb(130 90 40 / 14%),transparent)"></div>
+      <div class="stain" style="right:60px;top:${120 + seed * 29 % 200}px;width:300px;height:260px;background:radial-gradient(closest-side,rgb(120 100 50 / 12%),transparent)"></div>` : ''}
+      ${shadowBand ? '<div style="inset:0;background:linear-gradient(115deg,transparent 30%,rgb(0 0 0 / 28%) 42%,rgb(0 0 0 / 28%) 52%,transparent 64%);mix-blend-mode:multiply"></div>' : ''}
+    </div>
+    <div class="light" style="background:radial-gradient(ellipse at 28% 18%,rgb(255 250 235 / ${0.55 * light}),transparent 60%),linear-gradient(200deg,rgb(255 255 255 / ${0.18 * light}),transparent 55%)"></div>
+    <div class="vignette"></div>
+    <svg class="grain" width="1400" height="1900" xmlns="http://www.w3.org/2000/svg"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="${seed + 3}"/><feColorMatrix type="saturate" values="0"/></filter><rect width="1400" height="1900" filter="url(#n)"/></svg>`;
+  await document.fonts.ready;
+  await new Promise((r) => setTimeout(r, 400));
+};
+</script>
+</body>
+</html>

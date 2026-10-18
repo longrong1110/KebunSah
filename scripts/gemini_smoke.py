@@ -1,10 +1,10 @@
-"""Gemini 冒烟：对 seed/photos 的 9 张仿真证件照真实抽取，与种子里的期望值逐字段对照，打印准确率与耗时。
-要 key、要花钱（9 次调用），所以不进 PR 检查。
+"""Gemini 冒烟：对 seed/photos 的 16 张仿真证件照真实抽取，与种子里的期望值逐字段对照，打印准确率与耗时。
+要 key、要花钱（16 次调用），所以不进 PR 检查。
 
 用法（仓库根目录）：
   python scripts/gemini_smoke.py --list-models     # 先看这个 key 能用哪些模型，核对 GEMINI_EXTRACT_MODEL
-  python scripts/gemini_smoke.py                   # 跑 9 张
-  python scripts/gemini_smoke.py title-1-clear licence-2-blurry --model gemini-3.5-flash
+  python scripts/gemini_smoke.py                   # 跑 16 张
+  python scripts/gemini_smoke.py green-3-title-single-page red-4-licence-expired --model gemini-3.5-flash
 key 从环境变量 GEMINI_API_KEY 或仓库根的 .env 读。
 """
 from __future__ import annotations
@@ -27,17 +27,24 @@ from worker.fields import effective  # noqa: E402
 from worker.gemini import ExtractionError, GeminiExtractor  # noqa: E402
 
 PHOTOS = ROOT / "seed" / "photos"
-# 期望值取自 seed/photos/README.md 与 seed/data/documents.json（演示地块）；只列有把握的字段
+# 期望值取自 seed/photos/README.md 与 seed/src/demo.mjs（演示地块）；只列有把握的字段
 EXPECTED: dict[str, tuple[str, dict[str, str]]] = {
-    "title-1-clear": ("land_title", {"land_title.lot_no": "2217", "land_title.area_value": "3.0400", "land_title.area_unit": "ha"}),
-    "title-2-proprietor": ("land_title", {"land_title.proprietor_1_name": "AHMAD ZAKI BIN ROSLI"}),
-    "title-3-handwritten-area": ("land_title", {"land_title.lot_no": "1052", "land_title.area_value": "4.2000"}),
-    "title-4-deceased-father": ("land_title", {"land_title.proprietor_1_name": "RAMAN A/L SUBRAMANIAM"}),
-    "licence-1-clear": ("mpob_licence", {"mpob_licence.licence_no": "810200000022", "mpob_licence.valid_until": "2026-12-05"}),
-    "licence-2-blurry": ("mpob_licence", {"mpob_licence.valid_until": "2026-12-05"}),
-    "licence-3-expired": ("mpob_licence", {"mpob_licence.licence_no": "810200000033", "mpob_licence.valid_until": "2026-04-30"}),
-    "mspo-cert-1-clear": ("mspo_cert", {"mspo_cert.cert_no": "MSPO 900001", "mspo_cert.expiry_date": "2029-02-28"}),
-    "mspo-cert-2-dark-tilted": ("mspo_cert", {"mspo_cert.cert_no": "MSPO 900001", "mspo_cert.expiry_date": "2029-02-28"}),
+    "green-1-title-page1": ("land_title", {"land_title.title_no": "GRN 51234", "land_title.lot_no": "1052", "land_title.area_value": "4.2000", "land_title.area_unit": "ha"}),
+    "green-2-title-page2": ("land_title", {"land_title.proprietor_1_name": "TAN AH KOW"}),
+    "green-3-title-single-page": ("land_title", {"land_title.lot_no": "1052", "land_title.area_value": "4.2000", "land_title.proprietor_1_name": "TAN AH KOW"}),
+    "green-4-licence": ("mpob_licence", {"mpob_licence.licence_no": "810200000011", "mpob_licence.holder_name": "TAN AH KOW", "mpob_licence.valid_until": "2027-03-31"}),
+    "green-extra-title-handwritten": ("land_title", {"land_title.lot_no": "1052", "land_title.area_value": "4.2000"}),
+    "yellow-1-title-page1": ("land_title", {"land_title.title_no": "HSM 2217/91", "land_title.lot_no": "2217", "land_title.area_value": "3.0400", "land_title.area_unit": "ha"}),
+    "yellow-2-title-page2": ("land_title", {"land_title.proprietor_1_name": "AHMAD ZAKI BIN ROSLI"}),
+    "yellow-3-title-single-page": ("land_title", {"land_title.lot_no": "2217", "land_title.area_value": "3.0400", "land_title.proprietor_1_name": "AHMAD ZAKI BIN ROSLI"}),
+    "yellow-4-licence": ("mpob_licence", {"mpob_licence.licence_no": "810200000022", "mpob_licence.holder_name": "AHMAD ZAKI BIN ROSLI", "mpob_licence.valid_until": "2026-12-05"}),
+    "yellow-extra-licence-blurry": ("mpob_licence", {"mpob_licence.valid_until": "2026-12-05"}),
+    "red-1-title-page1": ("land_title", {"land_title.title_no": "GRN 30977", "land_title.lot_no": "88", "land_title.area_value": "2.0000", "land_title.area_unit": "ha"}),
+    "red-2-title-page2": ("land_title", {"land_title.proprietor_1_name": "RAMAN A/L SUBRAMANIAM"}),
+    "red-3-title-single-page": ("land_title", {"land_title.lot_no": "88", "land_title.area_value": "2.0000", "land_title.proprietor_1_name": "RAMAN A/L SUBRAMANIAM"}),
+    "red-4-licence-expired": ("mpob_licence", {"mpob_licence.licence_no": "810200000033", "mpob_licence.holder_name": "MUTHU A/L RAMAN", "mpob_licence.valid_until": "2026-04-30"}),
+    "mspo-cert-clear": ("mspo_cert", {"mspo_cert.cert_no": "MSPO 900001", "mspo_cert.expiry_date": "2029-02-28"}),
+    "mspo-cert-extra-dark-tilted": ("mspo_cert", {"mspo_cert.cert_no": "MSPO 900001", "mspo_cert.expiry_date": "2029-02-28"}),
 }
 
 
@@ -61,7 +68,7 @@ def main() -> int:
         return 0
 
     names = args.photos or list(EXPECTED)
-    extractor = GeminiExtractor(api_key=key, model=args.model)
+    extractor = GeminiExtractor(api_key=key, model=[m.strip() for m in args.model.split(",") if m.strip()])
     total = right = 0
     for name in names:
         doc_type, expected = EXPECTED[name]

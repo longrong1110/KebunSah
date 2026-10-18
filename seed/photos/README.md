@@ -1,36 +1,42 @@
-# 仿真证件照（10 张）
+# 仿真证件照（16 张）
 
-地契、MPOB 执照、MSPO 证书的**自制样本照片**，给屏 3／4（拍文件）、屏 8（确认字段）、AI 读取（Gemini）和演示视频用。
+地契、MPOB 执照、MSPO 证书的**自制样本照片**，给演示视频、屏 3／4（拍文件）、屏 8（确认字段）和 Gemini 读取用。
 
-- **全部是虚构的**：姓名、身份证号、地契号、执照号、证书号都取自 `seed/data/`（虚构），每张都有对角的「SIMULATED / CONTOH」水印、「Dokumen simulasi…」页脚和「CONTOH SIMULASI」章。
-- **不仿真官方印章、徽章、条形码**，版式是按 `contract/schema.sql` 的字段和企划书 §8 里的「表格样本」画的示意，**不是**真实证件的样子（企划书也写了：真实证件我们没见过，要请合作社遮住个人信息后给几张核实）。
-- 字段值与种子里这几块演示地块的 `documents.fields` 一致，读出的结果可以直接对照。
-- 照片是「放在桌上拍的」：有桌面、阴影、光线不均、暗角、噪点，有的歪、有的模糊、有的偏暗。1200×1650，JPEG，每张 250–430 KB。
+- **全部是虚构的**：姓名、身份证号、地契号、执照号、证书号都取自 `seed/src/demo.mjs`（虚构的演示地块）。每张都有斜铺的「CONTOH · SIMULATED」水印、页脚「Dokumen simulasi…」和「CONTOH SIMULASI」章。
+- **不仿真官方徽章和条形码**：版式（防伪底纹、双线边框、测绘图、圆章、日期章、手写批注、签名、全息贴）是按这几类文件的常见版面画的示意，**不是**真实证件的样子。
+- **桌上拍照的效果**：木纹桌面、纸张折痕、污渍、透视、阴影、灯光不均、暗角、噪点；有的歪、有的模糊、有的偏暗。1400×1900，JPEG，每张 170–340 KB。
+- **已用线上同款的 Gemini 抽取实测**：16 张共 40 个字段全部读对（`python scripts/gemini_smoke.py`）。
 
-| 文件 | 内容 | 对应的种子文档 | 用来测什么 |
-| --- | --- | --- | --- |
-| `title-1-clear.jpg` | 地契第 1 页，HSM 2217/91、Lot 2217、**3.04 Hektar** | 黄色地块 `land_title` 第 1 页（`seed/p2/title-1.jpg`） | 清晰样本：地契号、Lot、面积、权属、用途 |
-| `title-2-proprietor.jpg` | 地契第 2 页，持有人 AHMAD ZAKI BIN ROSLI、K/P 800512-08-5231 | 黄色地块 `land_title` 第 2 页（`seed/p2/title-2.jpg`） | 持有人与姓名匹配（CC-03）、身份证号读出后打码 |
-| `title-3-handwritten-area.jpg` | 地契第 1 页，GRN 51234、Lot 1052、4.20 Hektar，旁边有**手写批注**「± 4.2 ha (ukur semula 2026)」，纸略歪 | 绿色地块 `land_title` 第 1 页 | 手写字与印刷字混在一起时的读取；低置信度提示 |
-| `title-4-deceased-father.jpg` | 地契第 2 页，持有人 RAMAN A/L SUBRAMANIAM（已故父亲，tanah pusaka） | 红色地块 `land_title` 第 2 页 | 姓名不符（`name_mismatch`）的场景 |
-| `licence-1-clear.jpg` | MPOB 小园主执照，810200000022，**05/12/2026** | 黄色地块 `mpob_licence` | 清晰样本：执照号、有效期（58 天后到期） |
-| `licence-2-blurry.jpg` | 同一张执照，**模糊、歪、偏暗、噪点多** | 黄色地块 `mpob_licence`（`valid_until` 置信度 0.64，由外勤确认） | 低置信度 → 屏 8「确认字段」、「重拍」提示 |
-| `licence-3-expired.jpg` | MPOB 执照，810200000033，**30/04/2026**（已过期） | 红色地块 `mpob_licence` | 已过期（`expired`）的场景 |
-| `mspo-cert-1-clear.jpg` | MSPO 团体证书，MSPO 900001，到期 28/02/2029 | MSPO 证书 `e0000000-…-000000000001` | 清晰样本：证书号、持有团体、到期日 |
-| `mspo-cert-2-dark-tilted.jpg` | 同一张证书，**偏暗、歪 3.6°、有斜向阴影带** | 同上 | 光线差、有阴影时的读取 |
-| `title-5-single-page.jpg` | 地契**单页**：HSM 2217/91、Lot 2217、**3.04 Hektar**、持有人 AHMAD ZAKI BIN ROSLI 都在同一页（由 `scripts/make_test_title.py` 生成，不是 `render.mjs` 画的） | 黄色地块（与 title-1／title-2 合起来的内容一致） | 屏 3 每种文件只能放一张照片；上面的地契分两页，单传任何一页评估都会因缺面积或缺持有人变成「需人工复核」，测试主线用这一张 |
+## 演示三块地怎么选图
+
+| 场景 | 地契 | 执照 | MSPO 证书 | 预期结果 |
+| --- | --- | --- | --- | --- |
+| **绿**：TAN AH KOW，GRN 51234、Lot 1052、4.20 公顷 | `green-3-title-single-page`（或 `green-1` + `green-2` 两页） | `green-4-licence`（31/03/2027） | `mspo-cert-clear` | 画一块约 4.2 公顷的地 → 全部通过，绿色 |
+| **黄**：AHMAD ZAKI BIN ROSLI，HSM 2217/91、Lot 2217、3.04 公顷 | `yellow-3-title-single-page`（或 `yellow-1` + `yellow-2`） | `yellow-4-licence`（05/12/2026，不到 90 天） | `mspo-cert-clear` | 执照快到期 → 黄色；画大一点（约 3.5 公顷）还会多一条「面积不符」 |
+| **红**：MUTHU A/L RAMAN，GRN 30977、Lot 88、2.00 公顷，地契在已故父亲 RAMAN A/L SUBRAMANIAM 名下 | `red-3-title-single-page`（或 `red-1` + `red-2`） | `red-4-licence-expired`（30/04/2026，已过期） | 不传 | 姓名不符、执照已过期 → 红色 |
+
+每个场景里，地契「单页」版（持有人、面积都在同一页）最省事；「两页」版用来演示一份文件可以拍多张。
+
+额外的几张：
+
+| 文件 | 用来演示 |
+| --- | --- |
+| `green-extra-title-handwritten` | 地契上有手写批注「± 4.2 ha (ukur semula 2026)」，纸略歪、略糊：印刷字和手写字混在一起 |
+| `yellow-extra-licence-blurry` | 同一张黄色执照，模糊、歪、偏暗：「重拍」提示、低置信度字段让外勤确认 |
+| `mspo-cert-extra-dark-tilted` | MSPO 证书，偏暗、歪 3.4°、有斜向阴影带：光线差也能读 |
 
 ## 重新生成
 
+模板是一份网页（`kit/template.html`）：把一张纸用 HTML／SVG／CSS 画出来，再「放到桌上拍」；数据和每张的拍照参数在 `kit/render-kit.mjs`（`SAMPLES`）。用 puppeteer-core 和 Chrome 渲染：
+
 ```bash
-node seed/photos/render.mjs      # 起本机小服务（端口 4310）
+PUPPETEER_DIR=<装了 puppeteer-core 的目录> node seed/photos/kit/render-kit.mjs            # 全部
+PUPPETEER_DIR=<…> node seed/photos/kit/render-kit.mjs red-4 mspo                        # 名字含这些片段的
 ```
 
-然后用 Chrome／Edge 打开 <http://127.0.0.1:4310/>：页面（`generate.html`）用 canvas 画出 9 张图，逐张 POST 回服务存成 `seed/photos/*.jpg`，全部存完服务自动退出。字体用系统字体（`Times New Roman`／`Courier New`／`Ink Free`），所以换一台机器画出来的字形会略有差别；随机数有固定的 seed，同一台机器上重画结果相同。
-
-样本清单、每张图的拍照效果（歪斜角度、模糊程度、亮度、噪点）都在 `render.mjs` 的 `SAMPLES` 里；要加一张就加一项。
+字体（Libre Baskerville、Special Elite、Caveat）从 Google Fonts 加载，渲染时要联网；没有网会退回系统字体，样子会差一点。要加一张就在 `SAMPLES` 里加一项。
 
 ## 没做的
 
-- 企划书 10/14 的待办还写着「其中 1–2 块地的坐标落在真实有森林变化的区域」：这要用 Earth Engine／Global Forest Watch 查真实的森林变化数据来选坐标，前端这边没有办法验证，留给队友的 Earth Engine 联调（TODO「Earth Engine 先让 1 块地查通」）。
-- 照片还**没有上传到 Storage**，也**没有接进 `documents`**：上传要走后端的签名网址（`contract/api.md` 的 `POST /api/plots/{id}/documents` 还是「待定」）。现在它们只是文件，可以在屏 3／4 用「从相册选」测，或给后端联调用。
+- 真实证件我们没见过，版式是示意；请合作社遮住个人信息后给几张核实。
+- 照片是文件，不会自动进 `documents`：演示时在屏 3 用「从相册选」上传。

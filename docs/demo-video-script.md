@@ -7,7 +7,7 @@ Target length **3:10 to 3:30**. The official pages disagree on length ("3 minute
 - [ ] **Gemini billing is on** (free tier is 20 requests per model per day; a retake can burn it). Do one dry run first.
 - [ ] Use a **phone** (or Chrome device mode at 390 x 844). Set the app language to **English** with the language button. Turn on screen recording.
 - [ ] Sign in as **+60 10-000 0012** (smallholder, yellow plots) with code `123456`. For the dashboard shot, sign in on a computer at `/coop/login` with `koperasi@kebunsah.demo` / `Koperasi-Demo-2026` (use the demo box on that page).
-- [ ] Have `seed/photos/title-1-clear.jpg`, `title-2-proprietor.jpg`, `licence-1-clear.jpg` in the phone gallery.
+- [ ] Have `seed/photos/yellow-1-title-page1.jpg`, `yellow-2-title-page2.jpg` and `yellow-4-licence.jpg` in the phone gallery (see `seed/photos/README.md` for the green and red sets). Draw a boundary of about 3 hectares so only the licence is flagged.
 - [ ] Do **not** show the Chinese docs folder or any terminal. Never show the Gemini key or `.env`.
 - [ ] The AI check takes 1 to 2 minutes: record the progress screen for about 5 seconds, then **cut** to the finished result. Or start the check before recording and open the finished plot.
 
