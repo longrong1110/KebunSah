@@ -7,11 +7,11 @@ from .store import NotFoundError, Where
 
 
 class FirestoreStore:
-    def __init__(self, project_id: str):
+    def __init__(self, project_id: str, credentials=None):
         from google.cloud import firestore
 
         self._firestore = firestore
-        self.db = firestore.Client(project=project_id)
+        self.db = firestore.Client(project=project_id, credentials=credentials)
 
     def get(self, path: str) -> dict | None:
         snap = self.db.document(path).get()
