@@ -1,8 +1,8 @@
 """把 seed/data 灌进 Firestore，并按 users 里的 uid + 手机号在 Firebase Auth 里建账号。
 给线上项目用（seed/load-emulator.mjs 故意只允许写本机模拟器）；也能对模拟器用，方便测这个脚本本身。
 
-用法（仓库根目录；线上要先 gcloud auth application-default login）：
-  线上：  python scripts/load_seed.py --project <项目ID> [--yes]
+用法（仓库根目录；线上二选一：gcloud auth application-default login，或者加 --gcloud-token 直接用 gcloud auth login 的令牌）：
+  线上：  python scripts/load_seed.py --project <项目ID> [--gcloud-token] [--yes]
   模拟器：FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 \\
           python scripts/load_seed.py --project demo-kebunsah --emulator
 
@@ -51,6 +51,43 @@ def convert(value, key: str, stamps: frozenset[str]):
     return value
 
 
+def gcloud_token() -> str:
+    """gcloud auth login 登录后的访问令牌（命令行里用 gcloud 的完整路径也行：先找 PATH，再找默认安装位置）"""
+    import shutil
+    import subprocess
+
+    exe = shutil.which("gcloud") or shutil.which("gcloud.cmd")
+    if not exe:
+        default = Path(os.environ.get("LOCALAPPDATA", "")) / "Google" / "Cloud SDK" / "google-cloud-sdk" / "bin" / "gcloud.cmd"
+        exe = str(default) if default.exists() else None
+    if not exe:
+        raise SystemExit("找不到 gcloud。先安装并 gcloud auth login。")
+    out = subprocess.run([exe, "auth", "print-access-token"], capture_output=True, text=True)
+    if out.returncode != 0 or not out.stdout.strip():
+        raise SystemExit(f"拿不到令牌：{out.stderr.strip()[:300]} 先执行 gcloud auth login。")
+    return out.stdout.strip()
+
+
+def import_auth_users_rest(project: str, token: str, users: list[dict]) -> int:
+    """用 REST 的 accounts:batchCreate 建账号（uid = users 文档 id，手机号 = phone）。已存在的跳过。返回失败个数。"""
+    import httpx
+
+    body = {"users": [{"localId": d["path"].split("/")[1], "phoneNumber": d["data"]["phone"]} for d in users]}
+    res = httpx.post(
+        f"https://identitytoolkit.googleapis.com/v1/projects/{project}/accounts:batchCreate",
+        headers={"Authorization": f"Bearer {token}", "x-goog-user-project": project}, json=body, timeout=30)
+    if res.status_code != 200:
+        print(f"  Auth：失败 HTTP {res.status_code} {res.text[:300]}")
+        return len(users)
+    errors = res.json().get("error", [])
+    existing = [e for e in errors if "exist" in (e.get("message", "")).lower()]
+    failed = [e for e in errors if e not in existing]
+    print(f"  Auth：新建 {len(users) - len(errors)}，已存在 {len(existing)}，失败 {len(failed)}")
+    for e in failed:
+        print(f"    失败：{users[e.get('index', 0)]['path']} — {e.get('message')}")
+    return len(failed)
+
+
 def load_documents() -> list[dict]:
     docs: list[dict] = []
     for f in sorted(DATA.glob("*.json")):
@@ -66,6 +103,8 @@ def main() -> int:
     parser.add_argument("--emulator", action="store_true", help="写本机模拟器（要设 FIRESTORE_EMULATOR_HOST）")
     parser.add_argument("--yes", action="store_true", help="不再问确认（线上）")
     parser.add_argument("--skip-auth", action="store_true", help="只灌 Firestore，不建 Auth 账号")
+    parser.add_argument("--gcloud-token", action="store_true",
+                        help="用 `gcloud auth print-access-token` 的令牌（不需要 application-default login；令牌约 1 小时有效）")
     args = parser.parse_args()
 
     emulator_env = bool(os.environ.get("FIRESTORE_EMULATOR_HOST"))
@@ -92,7 +131,14 @@ def main() -> int:
 
     from google.cloud import firestore
 
-    db = firestore.Client(project=args.project)
+    token = gcloud_token() if args.gcloud_token else None
+    if token:
+        from google.oauth2.credentials import Credentials
+
+        creds = Credentials(token=token, quota_project_id=args.project)
+        db = firestore.Client(project=args.project, credentials=creds)
+    else:
+        db = firestore.Client(project=args.project)
     done = 0
     for i in range(0, len(docs), BATCH):
         batch = db.batch()
@@ -114,7 +160,9 @@ def main() -> int:
         bad += not ok
         print(f"  {'一致' if ok else '不一致'}  {col}: 种子 {n}，现有 {got}")
 
-    if not args.skip_auth:
+    if not args.skip_auth and token:
+        bad += import_auth_users_rest(args.project, token, users)
+    elif not args.skip_auth:
         import firebase_admin
         from firebase_admin import auth
 
