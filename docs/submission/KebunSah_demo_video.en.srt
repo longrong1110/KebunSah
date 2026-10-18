@@ -1,0 +1,276 @@
+1
+00:00:00,049 --> 00:00:03,109
+So now this is our showcase for our
+products, KebunSah.
+
+2
+00:00:03,404 --> 00:00:06,652
+It's a product, a phone check that shows
+what is missing for EUDR.
+
+3
+00:00:07,009 --> 00:00:10,881
+So the problem we're trying to solve is,
+from 30 December 2026,
+
+4
+00:00:10,998 --> 00:00:15,174
+palm fruit sold into the EU must come from
+land with no deforestation after
+
+5
+00:00:15,255 --> 00:00:17,378
+2020 and a boundary on a map.
+
+6
+00:00:17,699 --> 00:00:22,705
+Malaysia has more than 450,000
+smallholders,
+
+7
+00:00:22,875 --> 00:00:27,077
+mostly paper titles and licences, and
+being on an official register is not proof.
+
+8
+00:00:27,132 --> 00:00:32,542
+So now we'll be using the demo account to
+showcase from the user side.
+
+9
+00:00:33,834 --> 00:00:39,345
+So you add a new land, and then either you
+can take a photo or you from a gallery
+
+10
+00:00:39,578 --> 00:00:43,433
+for a licence and the certificate and then
+the land title.
+
+11
+00:00:47,330 --> 00:00:51,965
+And then here we want to showcase if we miss
+one of the certificates, what will happen.
+
+12
+00:00:52,109 --> 00:00:53,835
+So here we're clicking Skip.
+
+13
+00:00:53,993 --> 00:00:55,336
+Okay. When I click Next.
+
+14
+00:00:55,433 --> 00:00:58,326
+So what we need to do is, we've got three
+functions.
+
+15
+00:00:58,356 --> 00:01:01,751
+First is they can draw on the map by
+multiple dots,
+
+16
+00:01:01,962 --> 00:01:07,830
+either or they walk by using the GPS, and
+then they walk around here,
+
+17
+00:01:07,860 --> 00:01:11,890
+or they just put one point here and then
+add on the area.
+
+18
+00:01:12,033 --> 00:01:15,522
+Let's say I put the multiple dots here.
+
+19
+00:01:18,601 --> 00:01:20,917
+So we're done on it. User needs to click
+Done.
+
+20
+00:01:21,129 --> 00:01:22,029
+Okay.
+
+21
+00:01:22,562 --> 00:01:26,357
+After that we will start to check in our system
+to see whether they are fulfilled or not.
+
+22
+00:01:30,456 --> 00:01:35,682
+So, here in the back end, we are using the
+Gemini API to do the comparison with
+
+23
+00:01:35,712 --> 00:01:40,705
+the Earth Engine, and then also we are
+reading the documents, checking details.
+
+24
+00:01:40,822 --> 00:01:42,634
+So now we can see the result.
+
+25
+00:01:42,698 --> 00:01:46,136
+So in here it shows the red, and then with
+the action needed.
+
+26
+00:01:46,166 --> 00:01:49,863
+So we can see, it will tell,
+
+27
+00:01:49,893 --> 00:01:52,951
+these tools will tell us what we need to
+do, what we are missing.
+
+28
+00:01:53,013 --> 00:01:55,911
+Okay, so first, the name and the land
+title do not match.
+
+29
+00:01:56,170 --> 00:01:59,445
+And then the MPOB licence is about to
+expire in 48
+
+30
+00:01:59,475 --> 00:02:02,593
+days, so it will tell us we need to go and
+renew.
+
+31
+00:02:02,656 --> 00:02:05,344
+And then we are not on the MSPO member
+list.
+
+32
+00:02:05,433 --> 00:02:07,988
+Let's say here we can go to see the
+details,
+
+33
+00:02:08,018 --> 00:02:10,817
+so it will tell us the details and then
+what we should do.
+
+34
+00:02:10,853 --> 00:02:16,297
+And then after that, if you are not sure
+what is happening now,
+
+35
+00:02:16,327 --> 00:02:18,626
+we have the chatbot in here also.
+
+36
+00:02:18,802 --> 00:02:21,370
+We can use either chat or tap to speak.
+
+37
+00:02:21,407 --> 00:02:23,961
+Okay, let's say I make an example: I use
+tap to speak.
+
+38
+00:02:24,033 --> 00:02:26,736
+Why is my land become red?
+
+39
+00:02:29,719 --> 00:02:33,381
+(App voice) Your land is marked red because
+your MPOB licence is expiring soon and there
+
+40
+00:02:33,411 --> 00:02:35,369
+is a name mismatch on your land title.
+
+41
+00:02:35,636 --> 00:02:38,709
+Also, your plot is not yet registered
+under MSPO.
+
+42
+00:02:39,002 --> 00:02:42,859
+Please check these documents with your
+local MPOB office and your cooperative.
+
+43
+00:02:42,889 --> 00:02:48,399
+And then this supports not only English,
+but Malay also.
+
+44
+00:02:48,543 --> 00:02:51,690
+So now we will go to the cooperative
+sign-in.
+
+45
+00:02:53,867 --> 00:02:56,891
+When they are signed in, so they can see.
+
+46
+00:02:57,034 --> 00:02:59,118
+This is just now what the record we are
+doing.
+
+47
+00:02:59,148 --> 00:03:02,535
+So the action needed is this red, so they
+can have their dashboard
+
+48
+00:03:02,565 --> 00:03:03,771
+to see a lot of detail on it.
+
+49
+00:03:03,801 --> 00:03:05,057
+So we choose here.
+
+50
+00:03:05,087 --> 00:03:06,477
+So what we can see is,
+
+51
+00:03:06,507 --> 00:03:10,821
+Okay, so the name, and then what is the
+summary, and then the land
+
+52
+00:03:10,851 --> 00:03:14,559
+details, and then about the locations.
+
+53
+00:03:14,596 --> 00:03:18,477
+And then the check: the area we are
+drawing is passed.
+
+54
+00:03:18,934 --> 00:03:20,103
+Then document validity.
+
+55
+00:03:20,133 --> 00:03:23,317
+So what is happening here, and then owner
+name is not passed.
+
+56
+00:03:23,407 --> 00:03:28,945
+So they can know that the small
+landholders under them, okay,
+
+57
+00:03:28,975 --> 00:03:34,392
+who are right on what status, and then the
+product of who can be used
+
+58
+00:03:34,509 --> 00:03:36,306
+So this is all for our product.
+
+59
+00:03:36,457 --> 00:03:37,017
+Thank you.
+
