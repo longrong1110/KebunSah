@@ -559,7 +559,7 @@ export const ms = {
       noIssues: 'Tiada masalah yang belum selesai.',
       shape: 'Bentuk tanah',
       shapeNote: 'Gambaran kasar, bukan peta satelit',
-      openResult: 'Buka keputusan penuh',
+      openResult: 'Buka butiran penuh',
       title: (lot: string, member: string) => `${lot} · ${member}`,
     },
     exportCsv: 'Eksport ringkasan (CSV)',

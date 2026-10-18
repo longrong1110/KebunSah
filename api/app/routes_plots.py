@@ -12,7 +12,7 @@ from kebunsah_core.geo import GeometryError, check_point, parse_polygon
 from kebunsah_core.rules import valid_area_ha
 
 from .access import load_plot
-from .auth import User, get_user
+from .auth import User, get_editor
 from .deps import Deps, get_deps
 from .errors import ApiError, forbidden, unprocessable
 
@@ -45,7 +45,7 @@ def _is_member(deps: Deps, user: User, person_id: str) -> bool:
 
 
 @router.post("/api/plots", status_code=201)
-def create_plot(body: CreatePlot | None = None, user: User = Depends(get_user), deps: Deps = Depends(get_deps)):
+def create_plot(body: CreatePlot | None = None, user: User = Depends(get_editor), deps: Deps = Depends(get_deps)):
     body = body or CreatePlot()
     if user.is_staff:
         if not body.memberId:
@@ -69,7 +69,7 @@ def create_plot(body: CreatePlot | None = None, user: User = Depends(get_user), 
 
 
 @router.patch("/api/plots/{plot_id}")
-def patch_plot(plot_id: str, body: PatchPlot, user: User = Depends(get_user), deps: Deps = Depends(get_deps)):
+def patch_plot(plot_id: str, body: PatchPlot, user: User = Depends(get_editor), deps: Deps = Depends(get_deps)):
     load_plot(deps.store, user, plot_id)
     now = deps.now()
     try:

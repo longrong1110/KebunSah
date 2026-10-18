@@ -1,10 +1,11 @@
-import { Component, type Provider } from '@angular/core';
+import { Component, signal, type Provider } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { afterEach, beforeEach, vi } from 'vitest';
 import { ApiError, ApiService } from '../../core/api/api.service';
 import { stubHistory } from '../../../testing/back';
+import { AuthService } from '../../core/firebase/auth.service';
 import { FIRESTORE_FACADE } from '../../core/firebase/firestore-reader';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { assessment, CJK, gap, plot } from '../../../testing/assessment-fixtures';
@@ -796,5 +797,44 @@ describe('ResultPage：管理这块地（补文件、重画、删除）', () => 
     expect(t.q('#add-docs')?.textContent).toContain('Add or replace documents');
     await t.click('#delete');
     expect(t.q('[role="alertdialog"]')?.textContent).toContain('Delete this land?');
+  });
+});
+
+describe('ResultPage：合作社管理员只读', () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => localStorage.clear());
+
+  const as = (uid: string): Provider[] => [
+    { provide: AuthService, useValue: { user: signal({ uid }), idToken: async () => null } },
+  ];
+
+  it('管理员：看得到结论、事项、AI 说明，但没有补文件、重画、删除、语音，也没有「开始检查」', async () => {
+    const t = await setup('/plots/p1', as('admin-1'));
+    t.facade.emitDoc('users/admin-1', { role: 'coop_admin' });
+    await t.ready();
+    expect(t.q('#banner')).not.toBeNull();
+    expect(t.q('#gap-list')).not.toBeNull();
+    for (const sel of ['.manage', '#add-docs', '#redraw', '#delete', '#mic', '.voice']) {
+      expect(t.q(sel), sel).toBeNull();
+    }
+  });
+
+  it('管理员打开还没开始检查的地块：不给「开始检查」按钮', async () => {
+    const t = await setup('/plots/p1', as('admin-1'));
+    t.facade.emitDoc('users/admin-1', { role: 'coop_admin' });
+    await t.ready(undefined, plot({ status: 'pending' }));
+    await t.assessments([]);
+    expect(t.q('#start-check')).toBeNull();
+  });
+
+  it('园主和外勤：管理区和语音照常有', async () => {
+    for (const role of ['smallholder', 'field_officer']) {
+      TestBed.resetTestingModule();
+      const t = await setup('/plots/p1', as('u-' + role));
+      t.facade.emitDoc('users/u-' + role, { role });
+      await t.ready();
+      expect(t.q('.manage'), role).not.toBeNull();
+      expect(t.q('#mic'), role).not.toBeNull();
+    }
   });
 });

@@ -87,7 +87,7 @@
             </button>
           }
 
-          @if (v.bannerKey === 'pending') {
+          @if (v.bannerKey === 'pending' && !readOnly()) {
             <button
               type="button"
               class="btn progress-link"
@@ -184,7 +184,7 @@
       }
     }
 
-    @if (view()) {
+    @if (view() && !readOnly()) {
       @if (plotId(); as pid) {
         <app-voice-panel [plotId]="pid" />
       }

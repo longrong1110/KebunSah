@@ -560,7 +560,7 @@ export const en: Dict = {
       noIssues: 'No open issues.',
       shape: 'Plot shape',
       shapeNote: 'Rough sketch, not a satellite map',
-      openResult: 'Open full result',
+      openResult: 'Open full details',
       title: (lot: string, member: string) => `${lot} · ${member}`,
     },
     exportCsv: 'Export summary (CSV)',

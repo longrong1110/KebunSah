@@ -159,6 +159,7 @@ async function setup(
         { path: 'coop', component: CoopPage },
         { path: 'plots/:id', component: Blank },
         { path: 'plots/:id/dossier', component: Blank },
+        { path: 'plots/:id/dossier', component: Blank },
       ]),
       { provide: AuthService, useValue: auth },
       { provide: FIRESTORE_FACADE, useValue: facade },
@@ -671,11 +672,11 @@ describe('CoopPage（屏 11）', () => {
       expect(t.all('.coop-row')).toHaveLength(5);
     });
 
-    it('「Buka keputusan penuh」进屏 9', async () => {
+    it('「Buka butiran penuh」进电脑版式的只读档案页（不是手机的结果页）', async () => {
       const t = await setup({ url: '/coop?plot=p1' });
       await t.ready();
       await t.click('#open-result');
-      expect(t.router.url).toBe('/plots/p1');
+      expect(t.router.url).toBe('/plots/p1/dossier');
     });
 
     it('实时更新：评估变了，表格与右栏跟着变，选中项保持', async () => {

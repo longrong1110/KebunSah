@@ -11,6 +11,7 @@ import { docConfirmed, loadState$, type Load } from '../../core/load-state';
 import { LangButton } from '../../shared/lang-button';
 import { VoicePanel } from './voice-panel';
 import { DraftService } from '../new-plot/draft.service';
+import { CurrentRole } from '../plots/current-role';
 import { plotHeading, plotSubtitle } from '../plots/plot-title';
 import type { PlotData, TitleData } from '../plots/plot-types';
 import {
@@ -81,6 +82,8 @@ export class ResultPage {
   );
 
   private readonly draft = inject(DraftService);
+  /** 合作社管理员只能看：不放出任何会改数据的入口 */
+  protected readonly readOnly = inject(CurrentRole).readOnly;
 
   protected readonly gapsExpanded = signal(false);
   protected readonly passedOpen = signal(false);

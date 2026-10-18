@@ -10,7 +10,7 @@ import logging
 from fastapi import APIRouter, Depends, Response
 
 from .access import conflict, load_document, load_plot
-from .auth import User, get_user
+from .auth import User, get_editor
 from .deps import Deps, get_deps
 from .errors import ApiError
 
@@ -40,7 +40,7 @@ def _drop_blob(deps: Deps, doc: dict) -> None:
 
 
 @router.delete("/api/plots/{plot_id}", status_code=204)
-def delete_plot(plot_id: str, user: User = Depends(get_user), deps: Deps = Depends(get_deps)):
+def delete_plot(plot_id: str, user: User = Depends(get_editor), deps: Deps = Depends(get_deps)):
     plot = load_plot(deps.store, user, plot_id)
     if plot.get("isSynthetic"):
         raise ApiError(403, "demo_data_protected", "demo plots cannot be deleted")
@@ -54,7 +54,7 @@ def delete_plot(plot_id: str, user: User = Depends(get_user), deps: Deps = Depen
 
 
 @router.delete("/api/documents/{document_id}", status_code=204)
-def delete_document(document_id: str, user: User = Depends(get_user), deps: Deps = Depends(get_deps)):
+def delete_document(document_id: str, user: User = Depends(get_editor), deps: Deps = Depends(get_deps)):
     path, doc, plot = load_document(deps.store, user, document_id)
     if plot.get("isSynthetic") or doc.get("isSynthetic"):
         raise ApiError(403, "demo_data_protected", "demo documents cannot be deleted")

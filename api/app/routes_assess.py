@@ -9,7 +9,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends
 from worker.pipeline import plot_area_ha, run_assessment
 
 from .access import conflict, load_plot
-from .auth import User, get_user
+from .auth import User, get_editor
 from .deps import Deps, get_deps
 from .errors import unprocessable
 
@@ -34,7 +34,7 @@ def _is_stale(assessment: dict, now: datetime, after_s: int) -> bool:
 
 
 @router.post("/api/plots/{plot_id}/assess", status_code=202)
-def assess(plot_id: str, background: BackgroundTasks, user: User = Depends(get_user), deps: Deps = Depends(get_deps)):
+def assess(plot_id: str, background: BackgroundTasks, user: User = Depends(get_editor), deps: Deps = Depends(get_deps)):
     plot = load_plot(deps.store, user, plot_id)
     if plot_area_ha(plot) is None:
         raise unprocessable("geometry_missing", "save the plot boundary (or a point with its area) before assessing")

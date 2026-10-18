@@ -13,7 +13,7 @@ from kebunsah_core.units import fmt_fixed
 from worker.fields import ALLOWED_KEYS, DATE_KEYS, NAME_KEYS, clean_name, parse_date, parse_number, parse_unit
 
 from .access import load_document, load_plot
-from .auth import User, get_user
+from .auth import User, get_editor, get_user
 from .deps import Deps, get_deps
 from .errors import ApiError, not_found
 
@@ -31,7 +31,7 @@ class RegisterDocument(BaseModel):
 
 
 @router.post("/api/plots/{plot_id}/documents", status_code=201)
-def register_document(plot_id: str, body: RegisterDocument, user: User = Depends(get_user),
+def register_document(plot_id: str, body: RegisterDocument, user: User = Depends(get_editor),
                       deps: Deps = Depends(get_deps)):
     load_plot(deps.store, user, plot_id)
     now = deps.now()
@@ -81,7 +81,7 @@ def _clean_confirmed(key: str, value: Any) -> str:
 
 
 @router.patch("/api/documents/{document_id}/fields")
-def confirm_fields(document_id: str, body: ConfirmFields, user: User = Depends(get_user), deps: Deps = Depends(get_deps)):
+def confirm_fields(document_id: str, body: ConfirmFields, user: User = Depends(get_editor), deps: Deps = Depends(get_deps)):
     path, doc, _ = load_document(deps.store, user, document_id)
     if not body.fields:
         raise ApiError(400, "no_fields", "fields must not be empty")

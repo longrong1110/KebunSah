@@ -24,6 +24,7 @@ import { PendingList } from '../offline/pending-list';
 import { DraftService } from '../new-plot/draft.service';
 import { MemberList } from './member-list';
 import { PlotCard } from './plot-card';
+import { CurrentRole } from './current-role';
 import { sortPlots, type PersonData, type PlotData, type UserData } from './plot-types';
 
 type Mode = 'loading' | 'offline' | 'error' | 'noprofile' | 'owner' | 'officer';
@@ -173,7 +174,9 @@ export class PlotsPage {
 
   /** 「Tambah tanah」：园主随时可见；外勤只在选了成员之后（新建要知道归属） */
   protected readonly showAdd = computed(
-    () => this.mode() === 'owner' || (this.mode() === 'officer' && !!this.memberId()),
+    () =>
+      !this.isCoopAdmin() &&
+      (this.mode() === 'owner' || (this.mode() === 'officer' && !!this.memberId())),
   );
 
   constructor() {

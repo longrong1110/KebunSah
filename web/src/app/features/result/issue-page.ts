@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DraftService } from '../new-plot/draft.service';
+import { CurrentRole } from '../plots/current-role';
 import { map } from 'rxjs';
 import { BackNavigator } from '../../core/back-navigator';
 import { formatArea, formatDay } from '../../core/format';
@@ -35,6 +36,7 @@ export class IssuePage {
   private readonly router = inject(Router);
   private readonly backNav = inject(BackNavigator);
   private readonly draft = inject(DraftService);
+  protected readonly readOnly = inject(CurrentRole).readOnly;
   private readonly i18n = inject(I18nService);
   protected readonly t = this.i18n.t;
 

@@ -72,6 +72,16 @@ def get_user(claims: dict[str, Any] = Depends(get_claims), deps: Deps = Depends(
                 person_id=doc.get("personId"), language=doc.get("language") or "ms")
 
 
+READ_ONLY_ROLES = {"coop_admin"}
+
+
+def get_editor(user: User = Depends(get_user)) -> User:
+    """会改数据的接口用这个：合作社管理员只能看（看板、档案），改数据只有园主和外勤。"""
+    if user.role in READ_ONLY_ROLES:
+        raise ApiError(403, "read_only_role", "cooperative admins can view plots but cannot change them")
+    return user
+
+
 def can_access_plot(user: User, plot: dict) -> bool:
     """园主只能碰自己的地块；外勤和合作社管理员只能碰自己合作社的。"""
     if user.is_staff:

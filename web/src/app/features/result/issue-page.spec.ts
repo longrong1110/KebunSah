@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, signal, type Provider } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { afterEach, beforeEach, vi } from 'vitest';
 import { stubHistory } from '../../../testing/back';
+import { AuthService } from '../../core/firebase/auth.service';
 import { FIRESTORE_FACADE } from '../../core/firebase/firestore-reader';
 import { DraftService } from '../new-plot/draft.service';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -21,7 +22,7 @@ import { IssuePage } from './issue-page';
 @Component({ template: '' })
 class Blank {}
 
-async function setup(url: string) {
+async function setup(url: string, extra: Provider[] = []) {
   const facade = new FakeFacade();
   TestBed.configureTestingModule({
     providers: [
@@ -34,6 +35,7 @@ async function setup(url: string) {
         { path: 'plots/:id/documents', component: Blank },
       ]),
       { provide: FIRESTORE_FACADE, useValue: facade },
+      ...extra,
     ],
   });
   const harness = await RouterTestingHarness.create();
@@ -429,5 +431,21 @@ describe('IssuePage（屏 10）', () => {
       t.fixture.destroy();
       expect(t.facade.activeCount).toBe(0);
     });
+  });
+});
+
+describe('IssuePage：合作社管理员只读', () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => localStorage.clear());
+
+  it('管理员：看得到问题的说明和对照，但没有「重画」「补文件」「确认」，只剩「返回」', async () => {
+    const t = await setup('/plots/p1/issue/area_mismatch', [
+      { provide: AuthService, useValue: { user: signal({ uid: 'admin-1' }), idToken: async () => null } },
+    ]);
+    t.facade.emitDoc('users/admin-1', { role: 'coop_admin' });
+    await t.ready(assessment({ ruleResults: areaRules }));
+    expect(t.q('#cause')).not.toBeNull();
+    for (const sel of ['#redraw', '#add-docs', '#confirm-values']) expect(t.q(sel), sel).toBeNull();
+    expect(t.q('#back-to-result')).not.toBeNull();
   });
 });

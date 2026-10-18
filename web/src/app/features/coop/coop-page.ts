@@ -324,8 +324,9 @@ export class CoopPage {
     this.go({ plot: id });
   }
 
+  /** 看板里「看这块地」：进电脑版式的只读档案页（不是手机的结果页——管理员只看，不改） */
   protected openResult(id: string): void {
-    void this.router.navigate(['/plots', id]);
+    void this.router.navigate(['/plots', id, 'dossier']);
   }
 
   /** 选中了地块才能导出档案：进 A4 版面的档案页，在那里用浏览器打印成 PDF */
