@@ -105,19 +105,13 @@
             {{ t().issue.checkValues }}
           </button>
         } @else if (v.isArea) {
-          <button
-            type="button"
-            class="btn"
-            id="redraw"
-            disabled
-            aria-disabled="true"
-            aria-describedby="redraw-note"
-          >
+          <button type="button" class="btn" id="redraw" (click)="openRedraw()">
             <span class="ic ic-refresh" aria-hidden="true"></span> {{ t().issue.redraw }}
           </button>
-          <p id="redraw-note" class="hint hint--center">{{ t().issue.redrawSoon }}</p>
         } @else {
-          <p id="upload-note" class="hint hint--center">{{ t().issue.uploadSoon }}</p>
+          <button type="button" class="btn" id="add-docs" (click)="openAddDocs()">
+            <span class="ic ic-camera" aria-hidden="true"></span> {{ t().manage.addDocs }}
+          </button>
         }
       }
     }

@@ -5,6 +5,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { afterEach, beforeEach, vi } from 'vitest';
 import { stubHistory } from '../../../testing/back';
 import { FIRESTORE_FACADE } from '../../core/firebase/firestore-reader';
+import { DraftService } from '../new-plot/draft.service';
 import { I18nService } from '../../core/i18n/i18n.service';
 import {
   assessment,
@@ -29,6 +30,8 @@ async function setup(url: string) {
         { path: 'plots/:id', component: Blank },
         { path: 'plots/:id/issue/:key', component: IssuePage },
         { path: 'plots/:id/confirm', component: Blank },
+        { path: 'plots/:id/redraw', component: Blank },
+        { path: 'plots/:id/documents', component: Blank },
       ]),
       { provide: FIRESTORE_FACADE, useValue: facade },
     ],
@@ -166,18 +169,25 @@ describe('IssuePage（屏 10）', () => {
       expect(t.q('#detail')).not.toBeNull();
     });
 
-    it('「Lukis semula」禁用并写明原因；点它不会导航（不能跳到新建地块的占位页）', async () => {
+    it('「Lukis semula」可以点：草稿清空，去重画页，带上这块地的位置（?at）和外勤的 ?member', async () => {
       const t = await setup('/plots/p1/issue/area_mismatch?member=m9');
-      await t.ready(area());
+      const draft = TestBed.inject(DraftService);
+      draft.addVertex('map', [101.1, 4.3]); // 上次新建到一半留在草稿里的东西不能带进重画
+      await t.ready(area(), plot({ centroidLat: 4.31, centroidLng: 101.15 }));
       const redraw = t.q('#redraw') as HTMLButtonElement;
-      expect(redraw.disabled).toBe(true);
-      expect(redraw.getAttribute('aria-disabled')).toBe('true');
-      expect(redraw.getAttribute('aria-describedby')).toBe('redraw-note');
-      expect(t.q('#redraw-note')?.textContent).toContain('akan tersedia tidak lama lagi');
+      expect(redraw.disabled).toBe(false);
       expect(t.q('#upload-note')).toBeNull();
       redraw.click();
       await settle(t.fixture);
-      expect(t.router.url).toBe('/plots/p1/issue/area_mismatch?member=m9');
+      expect(t.router.url).toBe('/plots/p1/redraw?member=m9&at=4.31,101.15');
+      expect(draft.geometryDraft().mapRing).toEqual([]);
+    });
+
+    it('地块没有位置：重画页不带 ?at，其余照常', async () => {
+      const t = await setup('/plots/p1/issue/area_mismatch');
+      await t.ready(area(), plot({ centroidLat: null, centroidLng: null }));
+      await t.click('#redraw');
+      expect(t.router.url).toBe('/plots/p1/redraw');
     });
   });
 
@@ -213,8 +223,18 @@ describe('IssuePage（屏 10）', () => {
       expect(t.q('#compare')).toBeNull();
       expect(t.q('#polygon-preview')).toBeNull();
       expect(t.q('#redraw')).toBeNull();
-      expect(t.q('#upload-note')?.textContent).toContain('Muat naik dokumen baharu akan tersedia');
+      expect(t.q('#add-docs')?.textContent).toContain('Tambah atau ganti dokumen');
       expect(t.q('#advice')?.textContent).toContain('Mohon pembaharuan lesen MPOB');
+    });
+
+    it('「Tambah atau ganti dokumen」：草稿清空，去补文件页，保留 ?member', async () => {
+      const t = await setup('/plots/p1/issue/expiring?member=m9');
+      const draft = TestBed.inject(DraftService);
+      draft.capture('land_title', new Blob(['x']), 'camera'); // 旧草稿里的照片不能被带进来
+      await t.ready();
+      await t.click('#add-docs');
+      expect(t.router.url).toBe('/plots/p1/documents?member=m9');
+      expect(draft.doc('land_title').status).toBe('pending');
     });
 
     it('expired：到期日按语言写出来（"2026-04-30 已过期" → 30 Apr 2026）', async () => {
@@ -383,7 +403,6 @@ describe('IssuePage（屏 10）', () => {
       expect(t.q('.compare')?.textContent).toContain('Your drawing');
       expect(t.q('#cause')?.textContent).toContain('drawn area may be too large');
       expect(t.q('#redraw')?.textContent).toContain('Draw again');
-      expect(t.q('#redraw-note')?.textContent).toContain('will be available soon');
       expect(t.text()).not.toContain('Keluasan');
     });
 

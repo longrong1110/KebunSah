@@ -37,6 +37,19 @@ export const routes: Routes = [
     data: { titleKey: 'map' },
     loadComponent: () => import('./features/new-plot/map-page').then((m) => m.MapPage),
   },
+  // 已有的地块：重画边界（屏 10 的「Lukis semula」）、补文件或换文件（结果页的「Tambah atau ganti dokumen」）
+  {
+    path: 'plots/:id/redraw',
+    canActivate: [requireAuth],
+    data: { titleKey: 'redraw' },
+    loadComponent: () => import('./features/new-plot/map-page').then((m) => m.MapPage),
+  },
+  {
+    path: 'plots/:id/documents',
+    canActivate: [requireAuth],
+    data: { titleKey: 'addDocs' },
+    loadComponent: () => import('./features/new-plot/documents-page').then((m) => m.DocumentsPage),
+  },
   // 屏 6「Semak」：屏 5「Selesai」之后进来；「开始检查」把草稿交给后端，成功去屏 7
   {
     path: 'plots/new/review',

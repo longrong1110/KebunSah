@@ -9,6 +9,7 @@ import { FIRESTORE_FACADE } from '../../core/firebase/firestore-reader';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { assessment, CJK, gap, plot } from '../../../testing/assessment-fixtures';
 import { FakeFacade, settle } from '../../../testing/fake-facade';
+import { DraftService } from '../new-plot/draft.service';
 import { ResultPage } from './result-page';
 
 @Component({ template: '' })
@@ -24,6 +25,8 @@ async function setup(url = '/plots/p1', extra: Provider[] = []) {
         { path: 'plots/:id/issue/:key', component: Blank },
         { path: 'plots/:id/checking', component: Blank },
         { path: 'plots/:id/log', component: Blank },
+        { path: 'plots/:id/documents', component: Blank },
+        { path: 'plots/:id/redraw', component: Blank },
       ]),
       { provide: FIRESTORE_FACADE, useValue: facade },
       ...extra,
@@ -684,5 +687,114 @@ describe('ResultPage：AI 说明与智能体日志入口', () => {
     expect(t.q('#see-log')?.textContent?.trim()).toBe('Lihat bagaimana semakan dibuat');
     await t.click('#see-log');
     expect(t.router.url).toBe('/plots/p1/log?member=m9');
+  });
+});
+
+describe('ResultPage：管理这块地（补文件、重画、删除）', () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => localStorage.clear());
+
+  const withApi = (deletePlot: ReturnType<typeof vi.fn>): Provider[] => [
+    { provide: ApiService, useValue: { deletePlot } },
+  ];
+
+  it('数据读到之前不显示；读到之后有三个入口', async () => {
+    const t = await setup();
+    expect(t.q('.manage')).toBeNull();
+    await t.ready();
+    expect(t.q('.manage')).not.toBeNull();
+    expect(t.q('#add-docs')?.textContent).toContain('Tambah atau ganti dokumen');
+    expect(t.q('#redraw')?.textContent).toContain('Lukis semula sempadan');
+    expect(t.q('#delete')?.textContent).toContain('Padam tanah ini');
+    expect(t.q('#delete-confirm')).toBeNull(); // 删除要先确认，一开始不显示确认框
+  });
+
+  it('补文件：草稿清空，去补文件页，保留 ?member', async () => {
+    const t = await setup('/plots/p1?member=m9');
+    const draft = TestBed.inject(DraftService);
+    draft.capture('mpob_licence', new Blob(['x']), 'camera');
+    await t.ready();
+    await t.click('#add-docs');
+    expect(t.router.url).toBe('/plots/p1/documents?member=m9');
+    expect(draft.doc('mpob_licence').status).toBe('pending');
+  });
+
+  it('重画：带上这块地的位置，草稿清空', async () => {
+    const t = await setup('/plots/p1');
+    const draft = TestBed.inject(DraftService);
+    draft.addVertex('map', [101.1, 4.3]);
+    await t.ready(assessment(), plot({ centroidLat: 4.31, centroidLng: 101.15 }));
+    await t.click('#redraw');
+    expect(t.router.url).toBe('/plots/p1/redraw?at=4.31,101.15');
+    expect(draft.geometryDraft().mapRing).toEqual([]);
+  });
+
+  it('删除：先确认；取消就收起、什么都不删', async () => {
+    const deletePlot = vi.fn(async () => undefined);
+    const t = await setup('/plots/p1', withApi(deletePlot));
+    await t.ready();
+    await t.click('#delete');
+    const dialog = t.q('[role="alertdialog"]');
+    expect(dialog?.textContent).toContain('Padam tanah ini?');
+    expect(dialog?.textContent).toContain('tidak boleh dibatalkan');
+    expect(t.q('#delete')).toBeNull();
+    await t.click('#delete-cancel');
+    expect(t.q('[role="alertdialog"]')).toBeNull();
+    expect(t.q('#delete')).not.toBeNull();
+    expect(deletePlot).not.toHaveBeenCalled();
+  });
+
+  it('确认删除：调接口，成功回地块列表（替换历史，浏览器返回不会回到已删的地）', async () => {
+    const deletePlot = vi.fn(async () => undefined);
+    const t = await setup('/plots/p1?member=m9', withApi(deletePlot));
+    await t.ready();
+    await t.click('#delete');
+    await t.click('#delete-confirm');
+    expect(deletePlot).toHaveBeenCalledWith('p1');
+    expect(t.router.url).toBe('/?member=m9');
+  });
+
+  it('删除进行中：按钮禁用，不会重复提交', async () => {
+    let finish!: () => void;
+    const deletePlot = vi.fn(() => new Promise<void>((r) => (finish = r)));
+    const t = await setup('/plots/p1', withApi(deletePlot));
+    await t.ready();
+    await t.click('#delete');
+    await t.click('#delete-confirm');
+    expect((t.q('#delete-confirm') as HTMLButtonElement).disabled).toBe(true);
+    expect((t.q('#delete-cancel') as HTMLButtonElement).disabled).toBe(true);
+    expect(t.q('#delete-confirm')?.textContent).toContain('Memadam');
+    await t.click('#delete-confirm');
+    expect(deletePlot).toHaveBeenCalledTimes(1);
+    finish();
+    await settle(t.fixture);
+  });
+
+  it.each([
+    ['demo_data_protected', 'tanah contoh'],
+    ['assessment_in_progress', 'Semakan sedang berjalan'],
+    ['network', 'Tiada sambungan'],
+    ['http_error', 'Tidak dapat memadam'],
+  ])('删除失败（%s）：说明原因，留在这页，可以再试', async (code, expected) => {
+    const deletePlot = vi.fn(async () => {
+      throw new ApiError(code === 'network' ? 0 : 409, code);
+    });
+    const t = await setup('/plots/p1', withApi(deletePlot));
+    await t.ready();
+    await t.click('#delete');
+    await t.click('#delete-confirm');
+    expect(t.q('#delete-error')?.textContent).toContain(expected);
+    expect(t.router.url).toBe('/plots/p1');
+    expect((t.q('#delete-confirm') as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('英语：入口和确认框都跟着换', async () => {
+    const t = await setup('/plots/p1');
+    await t.ready();
+    t.i18n.set('en');
+    await settle(t.fixture);
+    expect(t.q('#add-docs')?.textContent).toContain('Add or replace documents');
+    await t.click('#delete');
+    expect(t.q('[role="alertdialog"]')?.textContent).toContain('Delete this land?');
   });
 });

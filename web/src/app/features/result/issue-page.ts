@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
+import { DraftService } from '../new-plot/draft.service';
 import { map } from 'rxjs';
 import { BackNavigator } from '../../core/back-navigator';
 import { formatArea, formatDay } from '../../core/format';
@@ -33,6 +34,7 @@ export class IssuePage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly backNav = inject(BackNavigator);
+  private readonly draft = inject(DraftService);
   private readonly i18n = inject(I18nService);
   protected readonly t = this.i18n.t;
 
@@ -97,6 +99,29 @@ export class IssuePage {
   protected back(): void {
     const id = this.plotId();
     if (id) this.backNav.back(['/plots', id], { queryParamsHandling: 'preserve' });
+  }
+
+  /** 重画边界：从一张白纸开始，地图直接飞到这块地的位置；保存后重新评估（路由 plots/:id/redraw） */
+  protected openRedraw(): void {
+    const id = this.plotId();
+    if (!id) return;
+    const p = this.data.plot();
+    const d = p?.kind === 'data' ? p.value.data : null;
+    const at =
+      d?.centroidLat != null && d?.centroidLng != null ? `${d.centroidLat},${d.centroidLng}` : null;
+    this.draft.begin(null);
+    void this.router.navigate(['/plots', id, 'redraw'], {
+      queryParams: at ? { at } : {},
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  /** 补文件或换文件：拍新的，传上去，重新评估（路由 plots/:id/documents） */
+  protected openAddDocs(): void {
+    const id = this.plotId();
+    if (!id) return;
+    this.draft.begin(null);
+    void this.router.navigate(['/plots', id, 'documents'], { queryParamsHandling: 'preserve' });
   }
 
   /** 屏 8：确认读不准的值 */

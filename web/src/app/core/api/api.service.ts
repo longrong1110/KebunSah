@@ -57,6 +57,12 @@ export interface Profile {
   coopId: string | null;
 }
 
+export interface VoiceReply {
+  transcript: string;
+  answer: string;
+  lang: 'ms' | 'en';
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly auth = inject(AuthService);
@@ -133,6 +139,24 @@ export class ApiService {
       `/api/plots/${encodeURIComponent(plotId)}/assess`,
     );
     return res.assessmentId;
+  }
+
+  /** 语音问答：音频是 16 kHz 单声道 WAV 的 base64。回「听到了什么」和一两句回答（手机负责念出来） */
+  askVoice(
+    plotId: string,
+    body: { audio: string; mimeType: 'audio/wav'; lang: 'ms' | 'en' },
+  ): Promise<VoiceReply> {
+    return this.request<VoiceReply>('POST', `/api/plots/${encodeURIComponent(plotId)}/voice`, body);
+  }
+
+  /** 删掉整块地（连文件、评估）。演示用的模拟地块抛 403 demo_data_protected，评估在跑抛 409 assessment_in_progress */
+  async deletePlot(plotId: string): Promise<void> {
+    await this.request('DELETE', `/api/plots/${encodeURIComponent(plotId)}`);
+  }
+
+  /** 删掉其中一张照片 */
+  async deleteDocument(documentId: string): Promise<void> {
+    await this.request('DELETE', `/api/documents/${encodeURIComponent(documentId)}`);
   }
 
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {

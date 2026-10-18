@@ -183,5 +183,46 @@
         }
       }
     }
+
+    @if (view()) {
+      @if (plotId(); as pid) {
+        <app-voice-panel [plotId]="pid" />
+      }
+      <section class="manage" aria-labelledby="manage-title">
+        <h2 id="manage-title" class="section-title">{{ t().manage.title }}</h2>
+        <div class="manage__actions">
+          <button type="button" class="btn btn-quiet" id="add-docs" (click)="openAddDocs()">
+            <span class="ic ic-camera" aria-hidden="true"></span> {{ t().manage.addDocs }}
+          </button>
+          <button type="button" class="btn btn-quiet" id="redraw" (click)="openRedraw()">
+            <span class="ic ic-refresh" aria-hidden="true"></span> {{ t().manage.redraw }}
+          </button>
+        </div>
+
+        @if (confirmingDelete()) {
+          <div class="confirm" role="alertdialog" aria-labelledby="delete-title" aria-describedby="delete-body">
+            <h3 id="delete-title" class="confirm__title">{{ t().manage.deleteTitle }}</h3>
+            <p id="delete-body">{{ t().manage.deleteBody }}</p>
+            @if (deleteError(); as e) {
+              <p id="delete-error" class="error" role="alert">
+                <span class="ic ic-alert" aria-hidden="true"></span> {{ t().manage.deleteErrors[e] }}
+              </p>
+            }
+            <div class="confirm__row">
+              <button type="button" class="btn btn-quiet" id="delete-cancel" [disabled]="deleting()" (click)="cancelDelete()">
+                {{ t().manage.deleteCancel }}
+              </button>
+              <button type="button" class="btn btn-danger" id="delete-confirm" [disabled]="deleting()" [attr.aria-busy]="deleting()" (click)="confirmDelete()">
+                {{ deleting() ? t().manage.deleting : t().manage.deleteConfirm }}
+              </button>
+            </div>
+          </div>
+        } @else {
+          <button type="button" class="btn-link btn-link--danger" id="delete" (click)="askDelete()">
+            <span class="ic ic-trash" aria-hidden="true"></span> {{ t().manage.delete }}
+          </button>
+        }
+      </section>
+    }
   </section>
 </main>

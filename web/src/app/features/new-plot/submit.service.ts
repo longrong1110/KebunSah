@@ -7,6 +7,7 @@ import { toGeoJsonPolygon, type PlotGeometry } from './geometry';
 // 评估在后端异步跑，结果靠 Firestore 订阅（屏 7、屏 9）；这里只管把东西送过去。
 // 可以重试：已经建好的地块（draft.plotId）和已传好的照片（draft.uploaded）不会重复建、重复传；
 // 位置每次都重新保存（PATCH 本来就是覆盖，用户可能回去改过多边形）。
+// 已有的地块还有两条更短的路：只补／换文件（runDocuments）、只重画位置（runRedraw），都以重新评估收尾。
 
 export type SubmitStep = 'plot' | 'area' | 'docs' | 'assess';
 
@@ -48,7 +49,31 @@ export class SubmitService {
     onProgress({ step: 'area', done: 0, total: 0 });
     await this.api.saveGeometry(plotId, geometryBody(geometry));
 
-    // 每份文件的每一页都要传：第 n 页登记成 pageNo = n（第 1 页不带，和后端的默认值一致）
+    await this.uploadPages(plotId, onProgress);
+    await this.startAssessment(plotId, onProgress);
+    return plotId;
+  }
+
+  /** 已有地块补文件或换文件：每一页都传（同一份文件同一页，后端用新的接替旧的），再重新评估。位置不动 */
+  async runDocuments(plotId: string, onProgress: (p: SubmitProgress) => void): Promise<void> {
+    await this.uploadPages(plotId, onProgress);
+    await this.startAssessment(plotId, onProgress);
+  }
+
+  /** 已有地块重画：保存新的位置，再重新评估。文件不动 */
+  async runRedraw(plotId: string, onProgress: (p: SubmitProgress) => void): Promise<void> {
+    const geometry = this.draft.geometry();
+    if (!geometry) throw new ApiError(0, 'no_geometry');
+    onProgress({ step: 'area', done: 0, total: 0 });
+    await this.api.saveGeometry(plotId, geometryBody(geometry));
+    await this.startAssessment(plotId, onProgress);
+  }
+
+  /** 每份文件的每一页都要传：第 n 页登记成 pageNo = n（第 1 页不带，和后端的默认值一致）；传过的不重传 */
+  private async uploadPages(
+    plotId: string,
+    onProgress: (p: SubmitProgress) => void,
+  ): Promise<void> {
     const todo = DOC_TYPES.flatMap((type) =>
       this.draft.pagesOf(type).flatMap((page, i) =>
         this.draft.uploaded.get(`${type}#${i + 1}`) !== page.blob
@@ -79,7 +104,12 @@ export class SubmitService {
         onProgress({ step: 'docs', done: ++done, total: todo.length });
       }),
     );
+  }
 
+  private async startAssessment(
+    plotId: string,
+    onProgress: (p: SubmitProgress) => void,
+  ): Promise<void> {
     onProgress({ step: 'assess', done: 0, total: 0 });
     try {
       await this.api.assess(plotId);
@@ -87,6 +117,5 @@ export class SubmitService {
       // 这块地已经有一次评估在跑（上次点过、网络断了没收到回复）：当作成功，屏 7 会接着显示它
       if (!(err instanceof ApiError && err.status === 409)) throw err;
     }
-    return plotId;
   }
 }

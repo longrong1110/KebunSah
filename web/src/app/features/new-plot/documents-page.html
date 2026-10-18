@@ -9,10 +9,15 @@
     >
       <span class="ic ic-back" aria-hidden="true"></span>
     </button>
-    <h1 class="topbar__title">{{ t().newPlot.title }}</h1>
+    <h1 class="topbar__title">
+      {{ existingId ? t().manage.docs.title : t().newPlot.title }}
+    </h1>
     <app-lang-button />
   </header>
 
+  @if (existingId) {
+    <p class="step-label" id="docs-lead">{{ t().manage.docs.lead }}</p>
+  } @else {
   <div
     class="progress"
     role="progressbar"
@@ -26,6 +31,7 @@
     <span class="progress__seg"></span>
   </div>
   <p class="step-label">{{ t().newPlot.step }}</p>
+  }
 
   <section class="content content--tight">
     <ul class="doc-list">
@@ -106,7 +112,7 @@
             </ul>
           }
 
-          @if (e.doc.status === 'pending') {
+          @if (e.doc.status === 'pending' && !existingId) {
             <button type="button" class="chip-btn" [id]="'skip-' + e.type" (click)="skip(e.type)">
               {{ t().newPlot.skip }}
             </button>
@@ -116,21 +122,41 @@
     </ul>
     <p class="hint" id="pages-hint">{{ t().newPlot.pagesHint(maxPages) }}</p>
 
-    <p class="hint">{{ t().newPlot.noDocsHint }}</p>
+    @if (!existingId) {
+      <p class="hint">{{ t().newPlot.noDocsHint }}</p>
+    }
 
     @if (notice(); as n) {
       <p id="notice" class="error" role="alert">
         <span class="ic ic-alert" aria-hidden="true"></span> {{ t().camera.errors[n] }}
       </p>
     }
+    @if (sendError(); as e) {
+      <p id="send-error" class="error" role="alert">
+        <span class="ic ic-alert" aria-hidden="true"></span> {{ t().newPlot.review.errors[e] }}
+      </p>
+    }
   </section>
 
   <footer class="bar">
-    <button type="button" class="btn" id="next" [disabled]="!canContinue()" (click)="next()">
-      {{ t().newPlot.next }}
+    <button
+      type="button"
+      class="btn"
+      id="next"
+      [disabled]="!canContinue() || sending()"
+      [attr.aria-busy]="sending()"
+      (click)="next()"
+    >
+      @if (existingId) {
+        {{ sending() ? t().manage.docs.sending : t().manage.docs.send }}
+      } @else {
+        {{ t().newPlot.next }}
+      }
     </button>
     @if (!canContinue()) {
-      <p id="next-help" class="hint hint--center">{{ t().newPlot.nextHelp }}</p>
+      <p id="next-help" class="hint hint--center">
+        {{ existingId ? t().manage.docs.needOne : t().newPlot.nextHelp }}
+      </p>
     }
   </footer>
 

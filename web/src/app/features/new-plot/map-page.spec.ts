@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, type Provider } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -11,6 +11,8 @@ import { GeoError, GeolocationService } from './geolocation.service';
 import type { LngLat } from './geometry';
 import { MapPage } from './map-page';
 import { MapsService } from './maps.service';
+import { SubmitService } from './submit.service';
+import { ApiError } from '../../core/api/api.service';
 
 @Component({ template: '' })
 class Blank {}
@@ -30,7 +32,12 @@ const BOWTIE: LngLat[] = [
 ];
 
 async function setup(
-  opts: { url?: string; maps?: FakeMaps; preload?: (draft: DraftService) => void } = {},
+  opts: {
+    url?: string;
+    maps?: FakeMaps;
+    preload?: (draft: DraftService) => void;
+    providers?: Provider[];
+  } = {},
 ) {
   const maps = opts.maps ?? new FakeMaps();
   const geo = fakeGeolocation();
@@ -40,9 +47,13 @@ async function setup(
         { path: 'plots/new', component: Blank },
         { path: 'plots/new/review', component: Blank },
         { path: 'plots/new/map', component: MapPage },
+        { path: 'plots/:id/redraw', component: MapPage },
+        { path: 'plots/:id', component: Blank },
+        { path: 'plots/:id/checking', component: Blank },
       ]),
       { provide: MapsService, useValue: maps },
       { provide: GeolocationService, useValue: geo },
+      ...(opts.providers ?? []),
     ],
   });
   const draft = TestBed.inject(DraftService);
@@ -634,5 +645,86 @@ describe('MapPage：?at=纬度,经度（测试和演示用）', () => {
     });
     expect(p.maps.surface.panned).toEqual([]);
     expect(p.maps.surface.fitted).toEqual([RECT]);
+  });
+});
+
+describe('MapPage：重画模式（plots/:id/redraw）', () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => localStorage.clear());
+
+  const redrawSetup = (
+    runRedraw: ReturnType<typeof vi.fn> = vi.fn(async () => undefined),
+    url = '/plots/p1/redraw?member=p9',
+  ) =>
+    setup({ url, providers: [{ provide: SubmitService, useValue: { runRedraw } }] }).then((p) => ({
+      ...p,
+      runRedraw,
+    }));
+
+  it('标题、说明、按钮都是重画的；没有新建流程的步骤条', async () => {
+    const p = await redrawSetup();
+    expect(p.text('.topbar__title')).toBe('Lukis semula');
+    expect(p.q('#redraw-lead')?.textContent).toContain('Dokumen anda kekal');
+    expect(p.q('.progress')).toBeNull();
+    expect(p.text('#done')).toBe('Simpan dan semak semula');
+  });
+
+  it('画好点「Simpan」：保存位置并重新评估，草稿清空，去屏 7（替换历史，保留 ?member）', async () => {
+    const p = await redrawSetup();
+    await drawRect(p);
+    await p.click('#done');
+    expect(p.runRedraw).toHaveBeenCalledTimes(1);
+    expect(p.runRedraw.mock.calls[0][0]).toBe('p1');
+    expect(p.router.url).toBe('/plots/p1/checking?member=p9');
+    expect(p.draft.geometryDraft().mapRing).toEqual([]);
+  });
+
+  it('没画好之前不能保存', async () => {
+    const p = await redrawSetup();
+    expect((p.q('#done') as HTMLButtonElement).disabled).toBe(true);
+    await p.click('#done');
+    expect(p.runRedraw).not.toHaveBeenCalled();
+  });
+
+  it('保存失败：说明发生了什么，留在这页，画好的不丢，可以再点', async () => {
+    const runRedraw = vi.fn(async () => {
+      throw new ApiError(0, 'network');
+    });
+    const p = await redrawSetup(runRedraw);
+    await drawRect(p);
+    await p.click('#done');
+    expect(p.text('#save-error')).toContain('Tiada sambungan ke pelayan');
+    expect(p.router.url).toBe('/plots/p1/redraw?member=p9');
+    expect(p.draft.geometry()).not.toBeNull();
+    expect((p.q('#done') as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('保存中：按钮和「Padam titik」禁用，不会重复提交', async () => {
+    let finish!: () => void;
+    const runRedraw = vi.fn(() => new Promise<void>((r) => (finish = r)));
+    const p = await redrawSetup(runRedraw);
+    await drawRect(p);
+    await p.click('#done');
+    expect((p.q('#done') as HTMLButtonElement).disabled).toBe(true);
+    expect((p.q('#undo') as HTMLButtonElement).disabled).toBe(true);
+    expect(p.text('#done')).toBe('Menyimpan…');
+    await p.click('#done');
+    expect(runRedraw).toHaveBeenCalledTimes(1);
+    finish();
+    await p.settle();
+  });
+
+  it('返回：回这块地的结果页（没有历史时）', async () => {
+    const p = await redrawSetup();
+    await p.click('#back');
+    expect(p.router.url).toBe('/plots/p1?member=p9');
+  });
+
+  it('新建地块流程不受影响：没有 :id 时「Selesai」还是去屏 6', async () => {
+    const p = await setup();
+    await drawRect(p);
+    expect(p.text('#done')).toBe('Selesai');
+    await p.click('#done');
+    expect(p.router.url).toBe('/plots/new/review?member=p9');
   });
 });

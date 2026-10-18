@@ -27,6 +27,8 @@ import {
 } from './geometry';
 import type { MapSurface } from './map-surface';
 import { MapsError, MapsService, type MapsErrorKey } from './maps.service';
+import { submitErrorKey, type SubmitErrorKey } from './review-page';
+import { SubmitService } from './submit.service';
 
 // 屏 5「圈地块」（线框 docs/ui/screen-05.png）：在 Google 卫星图上点出每个角、拖动调整，实时看到公顷数；
 // 备选「Jalan sudut」（走到角点用 GPS 记）与「Satu titik」（只记一个点，手填面积，4 公顷以下）。
@@ -45,6 +47,7 @@ type Notice = { tone: 'error' | 'hint'; text: string };
 })
 export class MapPage {
   private readonly draft = inject(DraftService);
+  private readonly submit = inject(SubmitService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly backNav = inject(BackNavigator);
@@ -52,6 +55,11 @@ export class MapPage {
   private readonly geo = inject(GeolocationService);
   private readonly mapEl = viewChild.required<ElementRef<HTMLElement>>('mapEl');
   protected readonly t = inject(I18nService).t;
+
+  /** 「重画」模式：路由是 plots/:id/redraw，画完直接保存到这块地并重新评估；否则是新建地块流程的第 2 步 */
+  protected readonly redrawId = this.route.snapshot.paramMap.get('id');
+  protected readonly saving = signal(false);
+  protected readonly saveError = signal<SubmitErrorKey | null>(null);
 
   protected readonly tabs: readonly MapTab[] = ['map', 'walk', 'point'];
   protected readonly current = computed(() => this.draft.geometryDraft().tab);
@@ -240,12 +248,32 @@ export class MapPage {
   }
 
   protected done(): void {
-    if (this.draft.geometry()) void this.router.navigate(['/plots/new/review'], this.keep);
+    if (!this.draft.geometry()) return;
+    const id = this.redrawId;
+    if (id) void this.saveRedraw(id);
+    else void this.router.navigate(['/plots/new/review'], this.keep);
+  }
+
+  /** 重画：存新的位置、重新评估，去屏 7。失败留在这页，画好的东西不丢，可以再点 */
+  private async saveRedraw(id: string): Promise<void> {
+    if (this.saving()) return;
+    this.saving.set(true);
+    this.saveError.set(null);
+    try {
+      await this.submit.runRedraw(id, () => undefined);
+      this.draft.reset();
+      await this.router.navigate(['/plots', id, 'checking'], { ...this.keep, replaceUrl: true });
+    } catch (err) {
+      this.saveError.set(submitErrorKey(err));
+    } finally {
+      this.saving.set(false);
+    }
   }
 
   /** 有历史就后退，没有就回屏 3（保留 ?member）；各页签的输入都留在草稿里 */
   protected back(): void {
-    this.backNav.back(['/plots/new'], this.keep);
+    if (this.redrawId) this.backNav.back(['/plots', this.redrawId], this.keep);
+    else this.backNav.back(['/plots/new'], this.keep);
   }
 
   // ---- 定位（只在点按钮时才请求权限；一次一个读取，页面销毁或重复点击后丢弃晚到的结果） ----

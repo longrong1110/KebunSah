@@ -170,3 +170,73 @@ describe('SubmitService', () => {
     expect(draft.uploaded.size).toBe(0);
   });
 });
+
+
+describe('SubmitService：已有的地块', () => {
+  it('runDocuments：只传照片和重新评估，不建地块、不动位置；传过的重试时不重传', async () => {
+    const { api, draft, submit } = setup(fakeApi(), (d) => {
+      d.capture('land_title', photo(), 'camera');
+      d.addPage('land_title', photo(), 'gallery');
+    });
+    const steps: string[] = [];
+    await submit.runDocuments('plot-7', (p) => steps.push(`${p.step}:${p.done}/${p.total}`));
+    expect(api.createPlot).not.toHaveBeenCalled();
+    expect(api.saveGeometry).not.toHaveBeenCalled();
+    expect(api.registerDocument).toHaveBeenCalledTimes(2);
+    expect(api.registerDocument).toHaveBeenCalledWith(
+      'plot-7',
+      expect.objectContaining({ docType: 'land_title', pageNo: 2 }),
+    );
+    expect(api.assess).toHaveBeenCalledWith('plot-7');
+    expect(steps.at(-1)).toBe('assess:0/0');
+
+    // 重试：已经传好的不再传，评估照样触发
+    api.registerDocument.mockClear();
+    await submit.runDocuments('plot-7', () => undefined);
+    expect(api.registerDocument).not.toHaveBeenCalled();
+    expect(api.assess).toHaveBeenCalledTimes(2);
+    expect(draft.uploaded.size).toBe(2);
+  });
+
+  it('runDocuments：已经有评估在跑（409）当作成功', async () => {
+    const api = fakeApi({
+      assess: vi.fn(async () => {
+        throw new ApiError(409, 'assessment_in_progress');
+      }),
+    });
+    const { submit } = setup(api, (d) => d.capture('mpob_licence', photo(), 'camera'));
+    await expect(submit.runDocuments('p', () => undefined)).resolves.toBeUndefined();
+  });
+
+  it('runRedraw：只存新位置和重新评估，不建地块、不传照片', async () => {
+    const { api, submit } = setup();
+    await submit.runRedraw('plot-7', () => undefined);
+    expect(api.createPlot).not.toHaveBeenCalled();
+    expect(api.registerDocument).not.toHaveBeenCalled();
+    expect(api.saveGeometry).toHaveBeenCalledWith(
+      'plot-7',
+      expect.objectContaining({ geometryType: 'polygon' }),
+    );
+    expect(api.assess).toHaveBeenCalledWith('plot-7');
+  });
+
+  it('runRedraw：没画好就报 no_geometry', async () => {
+    const empty = setup(fakeApi(), (d) => d.reset());
+    await expect(empty.submit.runRedraw('p', () => undefined)).rejects.toMatchObject({
+      code: 'no_geometry',
+    });
+  });
+
+  it('runRedraw：保存失败原样抛出，不触发评估', async () => {
+    const api = fakeApi({
+      saveGeometry: vi.fn(async () => {
+        throw new ApiError(422, 'geometry_invalid');
+      }),
+    });
+    const { submit } = setup(api);
+    await expect(submit.runRedraw('p', () => undefined)).rejects.toMatchObject({
+      code: 'geometry_invalid',
+    });
+    expect(api.assess).not.toHaveBeenCalled();
+  });
+});

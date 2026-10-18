@@ -9,6 +9,8 @@ import { formatDay } from '../../core/format';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { docConfirmed, loadState$, type Load } from '../../core/load-state';
 import { LangButton } from '../../shared/lang-button';
+import { VoicePanel } from './voice-panel';
+import { DraftService } from '../new-plot/draft.service';
 import { plotHeading, plotSubtitle } from '../plots/plot-title';
 import type { PlotData, TitleData } from '../plots/plot-types';
 import {
@@ -26,6 +28,16 @@ import { forestLine, gapView } from './gap-view';
 import { pageState } from '../plots/plot-watch';
 import { watchPlotAssessment } from './result-data';
 
+export type DeleteErrorKey = 'demo' | 'running' | 'network' | 'generic';
+
+export function deleteErrorKey(err: unknown): DeleteErrorKey {
+  const code = err instanceof ApiError ? err.code : '';
+  if (code === 'demo_data_protected') return 'demo';
+  if (code === 'assessment_in_progress') return 'running';
+  if (code === 'network') return 'network';
+  return 'generic';
+}
+
 /** 先列最多这么多件要做的事，其余收起（线框：先列最多 2–3 件） */
 const VISIBLE_GAPS = 3;
 
@@ -34,7 +46,7 @@ const VISIBLE_GAPS = 3;
 // 事项的标题与说明按 gapCode 用词典生成，不显示评估文档里自带的说明文字（见 assessment.ts 的说明）。
 @Component({
   selector: 'app-result-page',
-  imports: [LangButton],
+  imports: [LangButton, VoicePanel],
   templateUrl: './result-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -67,6 +79,8 @@ export class ResultPage {
     ),
     { initialValue: null as Load<DocState<TitleData>> | null },
   );
+
+  private readonly draft = inject(DraftService);
 
   protected readonly gapsExpanded = signal(false);
   protected readonly passedOpen = signal(false);
@@ -159,6 +173,61 @@ export class ResultPage {
     }
     this.starting.set(false);
     this.openChecking();
+  }
+
+  // ---- 管理这块地：补文件、重画、删除 ----
+
+  /** 补文件或换文件：草稿从白纸开始，拍了传上去，重新评估（路由 plots/:id/documents） */
+  protected openAddDocs(): void {
+    const id = this.plotId();
+    if (!id) return;
+    this.draft.begin(null);
+    void this.router.navigate(['/plots', id, 'documents'], this.keep);
+  }
+
+  /** 重画边界：地图直接飞到这块地的位置，保存后重新评估（路由 plots/:id/redraw） */
+  protected openRedraw(): void {
+    const id = this.plotId();
+    if (!id) return;
+    const p = this.plot();
+    const at =
+      p?.centroidLat != null && p?.centroidLng != null ? `${p.centroidLat},${p.centroidLng}` : null;
+    this.draft.begin(null);
+    void this.router.navigate(['/plots', id, 'redraw'], {
+      queryParams: at ? { at } : {},
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  protected readonly confirmingDelete = signal(false);
+  protected readonly deleting = signal(false);
+  protected readonly deleteError = signal<DeleteErrorKey | null>(null);
+
+  protected askDelete(): void {
+    this.deleteError.set(null);
+    this.confirmingDelete.set(true);
+  }
+
+  protected cancelDelete(): void {
+    if (this.deleting()) return;
+    this.confirmingDelete.set(false);
+    this.deleteError.set(null);
+  }
+
+  /** 删除整块地（连照片和评估）。成功回地块列表；演示用的模拟地块、评估在跑、断网各有说明 */
+  protected async confirmDelete(): Promise<void> {
+    const id = this.plotId();
+    if (!id || this.deleting()) return;
+    this.deleting.set(true);
+    this.deleteError.set(null);
+    try {
+      await this.api.deletePlot(id);
+      await this.router.navigate(['/'], { replaceUrl: true, queryParamsHandling: 'preserve' });
+    } catch (err) {
+      this.deleteError.set(deleteErrorKey(err));
+    } finally {
+      this.deleting.set(false);
+    }
   }
 
   /** 智能体日志：这次检查每一步做了什么 */

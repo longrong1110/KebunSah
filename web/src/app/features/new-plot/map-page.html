@@ -9,10 +9,15 @@
     >
       <span class="ic ic-back" aria-hidden="true"></span>
     </button>
-    <h1 class="topbar__title">{{ t().newPlot.title }}</h1>
+    <h1 class="topbar__title">
+      {{ redrawId ? t().manage.redrawTitle : t().newPlot.title }}
+    </h1>
     <app-lang-button />
   </header>
 
+  @if (redrawId) {
+    <p class="step-label" id="redraw-lead">{{ t().manage.redrawLead }}</p>
+  } @else {
   <div
     class="progress"
     role="progressbar"
@@ -26,6 +31,7 @@
     <span class="progress__seg"></span>
   </div>
   <p class="step-label">{{ t().newPlot.map.step }}</p>
+  }
 
   <section class="content content--tight map-content">
     <div class="seg" role="tablist" [attr.aria-label]="t().newPlot.map.tabsLabel">
@@ -153,6 +159,12 @@
         }
       }
 
+      @if (saveError(); as e) {
+        <p id="save-error" class="error" role="alert">
+          <span class="ic ic-alert" aria-hidden="true"></span> {{ t().newPlot.review.errors[e] }}
+        </p>
+      }
+
       @if (geoError(); as g) {
         <p id="geo-error" class="error" role="alert">
           <span class="ic ic-alert" aria-hidden="true"></span> {{ t().newPlot.map.geo[g] }}
@@ -169,11 +181,22 @@
   </section>
 
   <footer class="bar bar--row">
-    <button type="button" class="btn btn-quiet" id="undo" [disabled]="!canUndo()" (click)="undo()">
+    <button type="button" class="btn btn-quiet" id="undo" [disabled]="!canUndo() || saving()" (click)="undo()">
       {{ t().newPlot.map.undo }}
     </button>
-    <button type="button" class="btn" id="done" [disabled]="!canFinish()" (click)="done()">
-      {{ t().newPlot.map.done }}
+    <button
+      type="button"
+      class="btn"
+      id="done"
+      [disabled]="!canFinish() || saving()"
+      [attr.aria-busy]="saving()"
+      (click)="done()"
+    >
+      @if (redrawId) {
+        {{ saving() ? t().manage.redrawSaving : t().manage.redrawSave }}
+      } @else {
+        {{ t().newPlot.map.done }}
+      }
     </button>
   </footer>
 </main>

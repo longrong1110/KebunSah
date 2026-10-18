@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, type Provider } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -15,11 +15,13 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { DocumentsPage } from './documents-page';
 import { DraftService } from './draft.service';
 import { MAX_FILE_BYTES } from './image';
+import { SubmitService } from './submit.service';
+import { ApiError } from '../../core/api/api.service';
 
 @Component({ template: '' })
 class Blank {}
 
-async function setup(url = '/plots/new') {
+async function setup(url = '/plots/new', providers: Provider[] = []) {
   TestBed.configureTestingModule({
     providers: [
       provideRouter([
@@ -27,7 +29,11 @@ async function setup(url = '/plots/new') {
         { path: 'plots/new', component: DocumentsPage },
         { path: 'plots/new/camera/:doc', component: Blank },
         { path: 'plots/new/map', component: Blank },
+        { path: 'plots/:id/documents', component: DocumentsPage },
+        { path: 'plots/:id', component: Blank },
+        { path: 'plots/:id/checking', component: Blank },
       ]),
+      ...providers,
     ],
   });
   const harness = await RouterTestingHarness.create();
@@ -220,5 +226,90 @@ describe('DocumentsPage（屏 3）', () => {
       expect(p.q('#notice')).toBeNull();
       expect(p.draft.firstPending()).toBe('land_title');
     });
+  });
+});
+
+
+describe('DocumentsPage：给已有地块补文件（plots/:id/documents）', () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => localStorage.clear());
+
+  const existing = async (
+    runDocuments: ReturnType<typeof vi.fn> = vi.fn(async () => undefined),
+    url = '/plots/p1/documents?member=m9',
+  ) => {
+    const t = await setup(url, [{ provide: SubmitService, useValue: { runDocuments } }]);
+    return { ...t, runDocuments };
+  };
+  const shoot = (t: { draft: DraftService }) => t.draft.addPage('mpob_licence', new Blob(['x']), 'camera');
+
+  it('标题、说明和按钮是补文件的；没有步骤条，没有「跳过」，三张卡片都在', async () => {
+    const t = await existing();
+    expect(t.q('.topbar__title')?.textContent?.trim()).toBe('Tambah dokumen');
+    expect(t.q('#docs-lead')?.textContent).toContain('akan diganti');
+    expect(t.q('.progress')).toBeNull();
+    expect(t.cards().length).toBe(3);
+    expect(t.q('#skip-land_title')).toBeNull();
+    expect(t.q('#next')?.textContent?.trim()).toBe('Hantar dan semak semula');
+  });
+
+  it('一张都没拍：不能发送，说明要先拍一张', async () => {
+    const t = await existing();
+    expect((t.q('#next') as HTMLButtonElement).disabled).toBe(true);
+    expect(t.q('#next-help')?.textContent).toContain('sekurang-kurangnya satu gambar');
+  });
+
+  it('拍了一份就能发送：传上去、草稿清空，去屏 7（替换历史，保留 ?member）', async () => {
+    const t = await existing();
+    shoot(t);
+    await settle(t.fixture);
+    expect((t.q('#next') as HTMLButtonElement).disabled).toBe(false);
+    await t.click('#next');
+    expect(t.runDocuments).toHaveBeenCalledTimes(1);
+    expect(t.runDocuments.mock.calls[0][0]).toBe('p1');
+    expect(t.router.url).toBe('/plots/p1/checking?member=m9');
+    expect(t.draft.doc('mpob_licence').status).toBe('pending');
+  });
+
+  it('发送失败：说明发生了什么，留在这页，照片不丢，可以再发', async () => {
+    const runDocuments = vi.fn(async () => {
+      throw new ApiError(0, 'network');
+    });
+    const t = await existing(runDocuments);
+    shoot(t);
+    await settle(t.fixture);
+    await t.click('#next');
+    expect(t.q('#send-error')?.textContent).toContain('Tiada sambungan ke pelayan');
+    expect(t.router.url).toBe('/plots/p1/documents?member=m9');
+    expect(t.draft.pagesOf('mpob_licence').length).toBe(1);
+    expect((t.q('#next') as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('发送中：按钮禁用，不会重复发送', async () => {
+    let finish!: () => void;
+    const runDocuments = vi.fn(() => new Promise<void>((r) => (finish = r)));
+    const t = await existing(runDocuments);
+    shoot(t);
+    await settle(t.fixture);
+    await t.click('#next');
+    expect((t.q('#next') as HTMLButtonElement).disabled).toBe(true);
+    expect(t.q('#next')?.textContent?.trim()).toBe('Menghantar gambar…');
+    await t.click('#next');
+    expect(runDocuments).toHaveBeenCalledTimes(1);
+    finish();
+    await settle(t.fixture);
+  });
+
+  it('返回：回这块地的结果页（没有历史时）', async () => {
+    const t = await existing();
+    await t.click('#back');
+    expect(t.router.url).toBe('/plots/p1?member=m9');
+  });
+
+  it('新建地块流程不受影响：没有 :id 时有步骤条和「跳过」，三份都处理了才能下一步', async () => {
+    const t = await setup();
+    expect(t.q('.progress')).not.toBeNull();
+    expect(t.q('#skip-land_title')).not.toBeNull();
+    expect((t.q('#next') as HTMLButtonElement).disabled).toBe(true);
   });
 });
