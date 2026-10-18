@@ -5,6 +5,7 @@ import { BackNavigator } from '../../core/back-navigator';
 import { formatArea } from '../../core/format';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { LangButton } from '../../shared/lang-button';
+import { OfflineQueue } from '../offline/offline-queue';
 import { DOC_TYPES, DraftService } from './draft.service';
 import { SubmitService, type SubmitProgress } from './submit.service';
 
@@ -68,7 +69,16 @@ export function submitErrorKey(err: unknown): SubmitErrorKey {
       <p class="step-label">{{ t().newPlot.review.step }}</p>
 
       <section class="content content--tight">
-        @if (summary(); as s) {
+        @if (queued()) {
+          <div id="review-queued" class="queued" role="status">
+            <span class="ic ic-cloud-up ic--xl" aria-hidden="true"></span>
+            <h2 class="review-title">{{ t().offline.savedTitle }}</h2>
+            <p>{{ t().offline.savedBody }}</p>
+            <button type="button" class="btn" id="back-to-list" (click)="toList()">
+              {{ t().offline.backToList }}
+            </button>
+          </div>
+        } @else if (summary(); as s) {
           <h2 class="review-title">{{ t().newPlot.review.summary }}</h2>
           <ul id="review-summary" class="review-list">
             <li id="review-method">{{ s.method }}</li>
@@ -114,6 +124,7 @@ export function submitErrorKey(err: unknown): SubmitErrorKey {
 export class ReviewPage {
   private readonly draft = inject(DraftService);
   private readonly submit = inject(SubmitService);
+  private readonly queue = inject(OfflineQueue);
   private readonly router = inject(Router);
   private readonly backNav = inject(BackNavigator);
   protected readonly t = inject(I18nService).t;
@@ -121,6 +132,8 @@ export class ReviewPage {
   private readonly keep = { queryParamsHandling: 'preserve' } as const;
 
   protected readonly busy = signal(false);
+  /** 没信号：整份草稿已经存进手机，等有网自动送出（这页改成说明这件事） */
+  protected readonly queued = signal(false);
   private readonly progress = signal<SubmitProgress | null>(null);
   protected readonly error = signal<SubmitErrorKey | null>(null);
 
@@ -169,16 +182,36 @@ export class ReviewPage {
     this.busy.set(true);
     this.error.set(null);
     try {
+      // 浏览器明说没网：不白白试一次，直接存进手机
+      if (!this.queue.online()) {
+        await this.saveForLater();
+        return;
+      }
       const plotId = await this.submit.run((p) => this.progress.set(p));
       // 先跳走再清草稿：清草稿会撤销照片的预览地址，屏 7 不需要它们
       await this.router.navigate(['/plots', plotId, 'checking']);
       this.draft.reset();
     } catch (err) {
-      this.error.set(submitErrorKey(err));
+      // 请求中途断网：已建好的地块、已传好的照片记在草稿里，存进手机后接着送，不重复
+      if (err instanceof ApiError && err.code === 'network') await this.saveForLater();
+      else this.error.set(submitErrorKey(err));
     } finally {
       this.busy.set(false);
       this.progress.set(null);
     }
+  }
+
+  private async saveForLater(): Promise<void> {
+    const snapshot = this.draft.snapshot();
+    if (!snapshot) return;
+    await this.queue.enqueue(snapshot);
+    this.draft.reset();
+    this.queued.set(true);
+  }
+
+  /** 存好之后回地块列表（那里最上面能看到「Menunggu dihantar」） */
+  protected toList(): void {
+    void this.router.navigate(['/'], this.keep);
   }
 
   protected back(): void {

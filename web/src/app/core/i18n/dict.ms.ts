@@ -263,6 +263,27 @@ export const ms = {
       failed: 'Tidak dapat menjawab sekarang. Cuba lagi sebentar lagi.',
     },
   },
+  offline: {
+    banner:
+      'Tiada talian. Anda masih boleh mengambil gambar dan melukis tanah; data dihantar apabila ada talian.',
+    sent: 'Tanah yang disimpan telah dihantar. Semakan sedang berjalan.',
+    view: 'Lihat',
+    dismiss: 'Tutup',
+    pendingTitle: 'Menunggu dihantar',
+    waiting: 'Menunggu talian',
+    failed: 'Gagal dihantar',
+    card: (docs: number, ha: string | null) =>
+      `Tanah baharu · ${docs} gambar${ha ? ` · ${ha} ha` : ''}`,
+    waitingNote: 'Disimpan dalam telefon ini. Akan dihantar secara automatik apabila ada talian.',
+    failedNote: 'Pelayan tidak menerima data ini. Buang dan tambah semula tanah ini.',
+    sendNow: 'Hantar sekarang',
+    sending: 'Menghantar…',
+    remove: 'Buang',
+    savedTitle: 'Disimpan dalam telefon',
+    savedBody:
+      'Tiada talian sekarang. Gambar dan sempadan tanah disimpan dalam telefon ini dan akan dihantar secara automatik apabila ada talian.',
+    backToList: 'Kembali ke tanah saya',
+  },
   camera: {
     frameHint: 'Letak dokumen dalam bingkai',
     lightHint: 'Pastikan cukup cahaya, tiada bayang.',

@@ -1,4 +1,5 @@
 import { Injectable, computed, signal } from '@angular/core';
+import type { PendingSnapshot } from '../offline/pending-plot';
 import { GeometryDraft, LngLat, MapTab, Ring, evaluate } from './geometry';
 
 // 新建地块的"草稿"：屏 3 三份文档的状态与拍下的照片，屏 5 圈出的地块（各页签的输入与当前页签的结果）。
@@ -81,6 +82,24 @@ export class DraftService {
 
   doc(type: DocType): DraftDoc {
     return this.docs()[type];
+  }
+
+  /** 草稿的快照（没信号时存进手机用）：圈好的地块、每一页照片、后端已建好的地块和已传好的页。没有可完成的地块时是 null */
+  snapshot(): PendingSnapshot | null {
+    const geometry = this.geometry();
+    if (!geometry) return null;
+    const pages = DOC_TYPES.flatMap((type) =>
+      this.pagesOf(type).map((page, i) => ({
+        type,
+        pageNo: i + 1,
+        source: page.source,
+        blob: page.blob,
+      })),
+    );
+    const uploaded = pages
+      .filter((p) => this.uploaded.get(`${p.type}#${p.pageNo}`) === p.blob)
+      .map((p) => `${p.type}#${p.pageNo}`);
+    return { memberId: this.memberId(), geometry, pages, plotId: this.plotId(), uploaded };
   }
 
   /** 这份文件已拍的所有页（没拍是空表） */

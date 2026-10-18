@@ -2482,3 +2482,100 @@ a.plot-card:hover {
   font-size: 1.125rem;
   line-height: 1.5;
 }
+
+
+// ---- 离线：顶部提示条、等着送的草稿 ----
+.conn {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 10px 16px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.conn > span:not(.ic) {
+  flex: 1;
+}
+
+.conn--off {
+  background: color-mix(in srgb, var(--warn) 22%, var(--surface));
+  color: var(--warn-ink);
+  border-bottom: 2px solid var(--warn);
+}
+
+.conn--ok {
+  background: color-mix(in srgb, var(--ok) 16%, var(--surface));
+  color: var(--ok-ink);
+  border-bottom: 2px solid var(--ok);
+}
+
+.conn .btn-link {
+  min-height: 40px;
+  padding: 4px 8px;
+}
+
+.conn .icon-btn {
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.pending {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.pending .section-title {
+  margin: 0;
+}
+
+.pending-card {
+  border-style: dashed;
+}
+
+.pending-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.pending-card__btn {
+  min-height: 44px;
+  padding: 6px 14px;
+  font-size: 0.9375rem;
+}
+
+.queued {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+}
+
+.queued .ic--xl {
+  color: var(--palm);
+}
+
+.queued h2,
+.queued p {
+  margin: 0;
+}
+
+.queued .btn {
+  justify-self: stretch;
+}

@@ -4,7 +4,10 @@ import {
   connectFirestoreEmulator,
   doc,
   getFirestore,
+  initializeFirestore,
   onSnapshot,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   query,
   where,
   type Firestore,
@@ -52,9 +55,24 @@ export interface FirestoreFacade {
 
 let db: Firestore | null = null;
 
+/**
+ * 缓存存在 IndexedDB 里（多个标签页共用）：没信号时刷新页面，看过的地块和结果还在（屏 2 的「来自缓存」提示就是为这个）。
+ * 初始化过了（热更新）或浏览器不让用 IndexedDB（部分隐私模式）就退回默认的内存缓存。
+ */
+function createDb(): Firestore {
+  const app = getFirebaseApp();
+  try {
+    return initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+    });
+  } catch {
+    return getFirestore(app);
+  }
+}
+
 function getDb(): Firestore {
   if (db) return db;
-  db = getFirestore(getFirebaseApp());
+  db = createDb();
   const emu = environment.emulators;
   const g = globalThis as Record<string, unknown>;
   if (emu && !g[wiredFlag('firestore')]) {

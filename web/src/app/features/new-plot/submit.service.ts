@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiError, ApiService, type GeometryBody } from '../../core/api/api.service';
 import { DOC_TYPES, DraftService } from './draft.service';
+import { pageKey, type PendingPlot } from '../offline/pending-plot';
 import { toGeoJsonPolygon, type PlotGeometry } from './geometry';
 
 // 屏 6「开始检查」：把草稿交给后端——建地块 → 保存位置与面积 → 登记并直传每份照片 → 触发评估。
@@ -51,6 +52,39 @@ export class SubmitService {
 
     await this.uploadPages(plotId, onProgress);
     await this.startAssessment(plotId, onProgress);
+    return plotId;
+  }
+
+  /**
+   * 送出手机里存着的一份草稿（没信号时存的）：和 run 一样的几步，但数据来自存档而不是内存里的草稿。
+   * 每一步之后通过 save 记下进度（地块建好了、哪一页传好了），所以中途又断网，下次接着送、不重复建、不重复传。
+   * 返回后端的地块 id。
+   */
+  async runPending(
+    entry: PendingPlot,
+    save: (patch: Partial<PendingPlot>) => Promise<void>,
+  ): Promise<string> {
+    let plotId = entry.plotId;
+    if (!plotId) {
+      plotId = await this.api.createPlot(entry.memberId);
+      await save({ plotId });
+    }
+    await this.api.saveGeometry(plotId, geometryBody(entry.geometry));
+    const uploaded = new Set(entry.uploaded);
+    for (const page of entry.pages) {
+      const key = pageKey(page.type, page.pageNo);
+      if (uploaded.has(key)) continue;
+      const reg = await this.api.registerDocument(plotId, {
+        docType: page.type,
+        contentType: 'image/jpeg',
+        source: page.source,
+        ...(page.pageNo > 1 ? { pageNo: page.pageNo } : {}),
+      });
+      await this.api.uploadPhoto(reg.upload, page.blob);
+      uploaded.add(key);
+      await save({ uploaded: [...uploaded] });
+    }
+    await this.startAssessment(plotId, () => undefined);
     return plotId;
   }
 

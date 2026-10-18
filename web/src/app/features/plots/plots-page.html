@@ -64,6 +64,7 @@
           @if (mode() === 'officer' && !memberId()) {
             <app-member-list [(query)]="memberQuery" (selected)="selectMember($event)" />
           } @else {
+            <app-pending-list [memberId]="memberId()" />
             @switch (plotsState()) {
               @case ('loading') {
                 <p id="plots-loading" class="hint">{{ t().plots.loadingPlots }}</p>

@@ -261,6 +261,27 @@ export const en: Dict = {
       failed: "Couldn't answer right now. Please try again in a moment.",
     },
   },
+  offline: {
+    banner:
+      'You are offline. You can still take photos and draw your land; the data is sent when you are back online.',
+    sent: 'The saved land has been sent. The check is running.',
+    view: 'View',
+    dismiss: 'Close',
+    pendingTitle: 'Waiting to be sent',
+    waiting: 'Waiting for a connection',
+    failed: 'Could not be sent',
+    card: (docs: number, ha: string | null) =>
+      `New land · ${docs} ${docs === 1 ? 'photo' : 'photos'}${ha ? ` · ${ha} ha` : ''}`,
+    waitingNote: 'Saved on this phone. It will be sent automatically when you are back online.',
+    failedNote: 'The server did not accept this data. Remove it and add the land again.',
+    sendNow: 'Send now',
+    sending: 'Sending…',
+    remove: 'Remove',
+    savedTitle: 'Saved on this phone',
+    savedBody:
+      'There is no connection right now. The photos and the boundary are saved on this phone and will be sent automatically when you are back online.',
+    backToList: 'Back to my land',
+  },
   camera: {
     frameHint: 'Place the document inside the frame',
     lightHint: 'Make sure there is enough light and no shadows.',

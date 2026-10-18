@@ -20,6 +20,7 @@ import { titleCaseName } from '../../core/format';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { collectionConfirmed, docConfirmed, loadState$, type Load } from '../../core/load-state';
 import { LangButton } from '../../shared/lang-button';
+import { PendingList } from '../offline/pending-list';
 import { DraftService } from '../new-plot/draft.service';
 import { MemberList } from './member-list';
 import { PlotCard } from './plot-card';
@@ -33,7 +34,7 @@ type Mode = 'loading' | 'offline' | 'error' | 'noprofile' | 'owner' | 'officer';
 // 写入类动作（「Tambah tanah」之后的新建地块、上传照片）本轮只做本机草稿，见 DraftService。
 @Component({
   selector: 'app-plots-page',
-  imports: [LangButton, MemberList, PlotCard],
+  imports: [LangButton, MemberList, PlotCard, PendingList],
   templateUrl: './plots-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

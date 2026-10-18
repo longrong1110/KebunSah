@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../../core/api/api.service';
 import { stubHistory } from '../../../testing/back';
 import { settle } from '../../../testing/fake-facade';
+import { OfflineQueue } from '../offline/offline-queue';
 import { DraftService } from './draft.service';
 import type { LngLat } from './geometry';
 import { ReviewPage, submitErrorKey } from './review-page';
@@ -22,15 +23,22 @@ const RECT: LngLat[] = [
 ];
 
 async function setup(
-  opts: { preload?: (d: DraftService) => void; run?: ReturnType<typeof vi.fn> } = {},
+  opts: {
+    preload?: (d: DraftService) => void;
+    run?: ReturnType<typeof vi.fn>;
+    online?: boolean;
+  } = {},
 ) {
   const run = opts.run ?? vi.fn(async () => 'plot-7');
+  const queue = { online: signal(opts.online ?? true), enqueue: vi.fn(async () => undefined) };
   TestBed.configureTestingModule({
     providers: [
       { provide: SubmitService, useValue: { run } },
+      { provide: OfflineQueue, useValue: queue },
       provideRouter([
         { path: 'plots/new/map', component: Blank },
         { path: 'plots/:id/checking', component: Blank },
+        { path: '', component: Blank },
         { path: 'plots/new/review', component: ReviewPage },
       ]),
     ],
@@ -42,6 +50,7 @@ async function setup(
   const el = harness.fixture.nativeElement as HTMLElement;
   return {
     run,
+    queue,
     el,
     fixture: harness.fixture,
     router: TestBed.inject(Router),
@@ -131,13 +140,13 @@ describe('ReviewPage（屏 6）', () => {
   it('提交失败：留在本页，写明原因，按钮变「Cuba lagi」，草稿还在，可以重试', async () => {
     const run = vi
       .fn()
-      .mockRejectedValueOnce(new ApiError(0, 'network'))
+      .mockRejectedValueOnce(new ApiError(500, 'http_error'))
       .mockResolvedValueOnce('plot-7');
     const p = await setup({ preload: withRect, run });
     await p.click('#start');
     expect(p.router.url).toBe('/plots/new/review?member=p9');
     expect(p.el.querySelector('#review-error')?.getAttribute('role')).toBe('alert');
-    expect(p.text('#review-error')).toContain('Tiada sambungan ke pelayan');
+    expect(p.text('#review-error')).toContain('Sesuatu tidak kena semasa menghantar');
     expect(p.text('#start')).toBe('Cuba lagi');
     expect(p.draft.geometry()).not.toBeNull();
     await p.click('#start');
@@ -165,5 +174,58 @@ describe('ReviewPage（屏 6）', () => {
     await p.click('#back');
     expect(back).toHaveBeenCalledTimes(1);
     expect(p.router.url).toBe('/plots/new/review?member=p9');
+  });
+});
+
+describe('ReviewPage：没信号时存进手机', () => {
+  it('浏览器说没网：不去试，整份草稿存进手机，这页改成说明；草稿清空', async () => {
+    const p = await setup({ preload: withRect, online: false });
+    const snapshotBefore = p.draft.snapshot();
+    expect(snapshotBefore).not.toBeNull();
+    await p.click('#start');
+    expect(p.run).not.toHaveBeenCalled();
+    expect(p.queue.enqueue).toHaveBeenCalledTimes(1);
+    expect(p.queue.enqueue).toHaveBeenCalledWith(
+      expect.objectContaining({ memberId: null, geometry: expect.objectContaining({ kind: 'polygon' }) }),
+    );
+    expect(p.text('#review-queued')).toContain('Disimpan dalam telefon');
+    expect(p.text('#review-queued')).toContain('dihantar secara automatik');
+    expect(p.el.querySelector('#start')).toBeNull();
+    expect(p.draft.geometry()).toBeNull();
+  });
+
+  it('请求中途断网：同样存进手机，不报错；传了一半的进度（地块 id）也带上', async () => {
+    const run = vi.fn(async () => {
+      throw new ApiError(0, 'network');
+    });
+    const p = await setup({
+      preload: (d) => {
+        withRect(d);
+        d.plotId.set('plot-half');
+      },
+      run,
+    });
+    await p.click('#start');
+    expect(run).toHaveBeenCalledTimes(1);
+    expect(p.queue.enqueue).toHaveBeenCalledWith(expect.objectContaining({ plotId: 'plot-half' }));
+    expect(p.el.querySelector('#review-error')).toBeNull();
+    expect(p.el.querySelector('#review-queued')).not.toBeNull();
+  });
+
+  it('别的失败（后端拒绝）不存进手机，还是原来的错误提示', async () => {
+    const run = vi.fn(async () => {
+      throw new ApiError(422, 'geometry_invalid');
+    });
+    const p = await setup({ preload: withRect, run });
+    await p.click('#start');
+    expect(p.queue.enqueue).not.toHaveBeenCalled();
+    expect(p.text('#review-error')).toContain('Sempadan tanah tidak sah');
+  });
+
+  it('存好之后点「Kembali ke tanah saya」回地块列表，保留 ?member', async () => {
+    const p = await setup({ preload: withRect, online: false });
+    await p.click('#start');
+    await p.click('#back-to-list');
+    expect(p.router.url).toBe('/?member=p9');
   });
 });
