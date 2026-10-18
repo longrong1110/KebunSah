@@ -26,6 +26,17 @@ export interface GapData {
   status?: string;
 }
 
+/** 流水线的一步日志（后端写进评估文档的 steps[]，给「智能体日志」页看） */
+export interface AssessmentStep {
+  step?: string;
+  /** ok／degraded／failed */
+  status?: string;
+  ms?: number;
+  /** 后端写的英文一句话，如 "extracted=3"；不含姓名 */
+  detail?: string;
+  models?: string[];
+}
+
 export interface AssessmentData {
   /** 评估哪块地（合同的 plot_id）；看板订阅所有评估时靠它对上地块 */
   plotId?: string;
@@ -36,6 +47,14 @@ export interface AssessmentData {
   createdAt?: Date | null;
   startedAt?: Date | null;
   finishedAt?: Date | null;
+  /** 说明文字由哪个模型写的；'template' = 没调模型的兜底文案，只有以 gemini 开头的才标「AI 说明」 */
+  summaryText?: string | null;
+  summaryLang?: string | null;
+  summaryModel?: string | null;
+  /** 读证件用的模型（逗号分隔） */
+  modelVersion?: string | null;
+  rulesVersion?: string | null;
+  steps?: AssessmentStep[];
   forestRisk?: string | null;
   /** 森林数据的来源。'precomputed-demo' = 演示用的固定数据，不是真的卫星查询结果 */
   forestDataset?: string | null;
@@ -297,4 +316,21 @@ export function forestNote(a: AssessmentData): ForestNote {
   if (a.forestRisk === 'medium' || a.forestRisk === 'high') return { kind: 'loss', ha: null };
   if (a.forestRisk === 'low' && loss === 0) return { kind: 'low' };
   return { kind: 'unknown' };
+}
+
+// ---- AI 说明（Gemini 写的一两句话） ----
+
+const MAX_AI_NOTE = 500;
+
+/**
+ * Gemini 写的总结。只有确认是 Gemini 写的才给（summaryModel 以 gemini 开头）：
+ * 兜底模板（'template'）、种子里手写的文案都不是 AI 写的，不能标成「AI 说明」。
+ * 提示词里要求模型不写人名、不推断亲属关系；这里再截断长度，且只当纯文本显示。
+ */
+export function aiNote(a: AssessmentData): { text: string; model: string } | null {
+  const model = a.summaryModel;
+  const text = a.summaryText;
+  if (typeof model !== 'string' || !/^gemini/i.test(model)) return null;
+  if (typeof text !== 'string' || text.trim() === '') return null;
+  return { text: text.trim().slice(0, MAX_AI_NOTE), model };
 }

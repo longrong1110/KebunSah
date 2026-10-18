@@ -164,6 +164,22 @@
               {{ v.forest }} {{ t().result.forest.prelim }}
             </p>
           }
+
+          @if (v.aiNote; as n) {
+            <section id="ai-note" class="ai-note" aria-labelledby="ai-note-title">
+              <h2 id="ai-note-title" class="ai-note__title">
+                <span aria-hidden="true">✦</span> {{ t().result.aiNote.title }}
+              </h2>
+              <p id="ai-note-text" class="ai-note__text">{{ n.text }}</p>
+              <p class="hint">{{ t().result.aiNote.by(n.model) }}</p>
+            </section>
+          }
+
+          @if (v.hasLog) {
+            <button type="button" class="btn-link" id="see-log" (click)="openLog()">
+              {{ t().result.agentLog }}
+            </button>
+          }
         }
       }
     }

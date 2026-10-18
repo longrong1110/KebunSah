@@ -66,6 +66,13 @@ export const routes: Routes = [
     data: { titleKey: 'checking' },
     loadComponent: () => import('./features/checking/checking-page').then((m) => m.CheckingPage),
   },
+  // 智能体日志：这块地最近一次检查每一步做了什么（steps[]），评估还在跑时一步一步出现
+  {
+    path: 'plots/:id/log',
+    canActivate: [requireAuth],
+    data: { titleKey: 'log' },
+    loadComponent: () => import('./features/log/log-page').then((m) => m.LogPage),
+  },
   // 导出档案（A4 版面，浏览器打印成 PDF）：从看板里选中地块后进入。不写 titleKey：这一页自己写带地块号的标题
   {
     path: 'plots/:id/dossier',

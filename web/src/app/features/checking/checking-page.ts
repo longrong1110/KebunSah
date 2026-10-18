@@ -59,6 +59,12 @@ export class CheckingPage {
     void this.router.navigate(['/'], this.keep);
   }
 
+  /** 智能体日志：评估在跑时一步一步出现（演示时可以并排放） */
+  protected openLog(): void {
+    const id = this.plotId();
+    if (id) void this.router.navigate(['/plots', id, 'log'], this.keep);
+  }
+
   protected seeResult(): void {
     const id = this.plotId();
     // 进度页只是过渡页：替换历史，屏 9 的 ← 不会退回已经完成的进度页

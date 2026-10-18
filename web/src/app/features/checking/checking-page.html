@@ -82,6 +82,9 @@
                 {{ t().checking.seeResult }}
               </button>
             }
+            <button type="button" class="btn-link" id="see-log" (click)="openLog()">
+              {{ t().result.agentLog }}
+            </button>
             <button type="button" class="btn btn-quiet" id="back-to-plots" (click)="backToPlots()">
               {{ t().checking.backToPlots }}
             </button>

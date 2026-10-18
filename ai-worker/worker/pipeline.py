@@ -212,7 +212,9 @@ def _run(deps: Deps, plot_id: str, path: str, run: _Run) -> None:
         "forestRisk": forest.risk, "forestCover2020Pct": forest.cover_2020_pct,
         "forestLossAfter2020Ha": forest.loss_after_2020_ha, "forestDataset": forest.dataset,
         "ruleResults": [r.to_doc() for r in evaluation.results], "gaps": [g.to_doc() for g in explanation.gaps],
-        "summaryText": explanation.summary_text, "summaryLang": explanation.summary_lang, "errorMessage": None,
+        "summaryText": explanation.summary_text, "summaryLang": explanation.summary_lang,
+        "summaryModel": explanation.model,  # "template" = 没调模型的兜底文案；界面只在是 Gemini 写的时候才标「AI 说明」
+        "errorMessage": None,
         "modelVersion": ",".join(models) or None, "rulesVersion": RULES_VERSION,
         "inputSnapshot": {"asOf": as_of, "plotHa": plot_ha,
                           "documents": [{"documentId": i, "docType": d.get("docType"), "extractionStatus": d.get("extractionStatus")}

@@ -24,6 +24,8 @@ export const ms = {
     result: 'Keputusan',
     issue: 'Butiran masalah',
     checking: 'Sedang menyemak',
+    log: 'Bagaimana semakan dibuat',
+    confirm: 'Semak nilai',
     coop: 'Papan pemuka koperasi',
   },
   months: ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogo', 'Sep', 'Okt', 'Nov', 'Dis'],
@@ -243,6 +245,11 @@ export const ms = {
       },
     },
     todo: 'Perlu dibuat',
+    aiNote: {
+      title: 'Catatan AI',
+      by: (model: string) => `Ditulis oleh ${model}, model AI. Sila semak dengan dokumen anda.`,
+    },
+    agentLog: 'Lihat bagaimana semakan dibuat',
     seeProgress: 'Lihat kemajuan',
     startCheck: 'Mulakan semakan',
     startFailed:
@@ -539,6 +546,31 @@ export const ms = {
     },
     disclaimer:
       'Dokumen ini dijana oleh KebunSah sebagai bahan sokongan. Ia bukan Pernyataan Usaha Wajar (DDS) rasmi dan bukan pengesahan pematuhan. Saringan hutan hanyalah saringan awal. Semua data dibaca oleh sistem dan perlu disemak oleh manusia sebelum digunakan.',
+  },
+  log: {
+    title: 'Bagaimana semakan dibuat',
+    lead: 'Setiap langkah yang diambil sistem untuk tanah ini, seperti yang berlaku.',
+    none: 'Belum ada semakan dijalankan untuk tanah ini.',
+    running: 'Semakan masih berjalan. Langkah baharu muncul di sini apabila siap.',
+    steps: {
+      read: 'Baca dokumen',
+      check: 'Semak peraturan',
+      forest: 'Saring kehilangan hutan',
+      actions: 'Tulis nasihat',
+      pipeline: 'Keseluruhan semakan',
+    },
+    status: { ok: 'Siap', degraded: 'Siap dengan pilihan lain', failed: 'Gagal' },
+    ms: (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)} s` : `${n} ms`),
+    facts: {
+      title: 'Apa yang digunakan',
+      reader: 'Dokumen dibaca oleh',
+      writer: 'Nasihat ditulis oleh',
+      template: 'teks terbina dalam (tanpa AI)',
+      forest: 'Data hutan',
+      rules: 'Versi peraturan',
+      total: 'Jumlah masa',
+    },
+    back: 'Kembali ke keputusan',
   },
   checking: {
     title: 'Sedang menyemak',

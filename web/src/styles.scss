@@ -1922,3 +1922,67 @@ a.plot-card:hover {
   padding: 0;
   list-style: none;
 }
+
+
+// AI 说明：Gemini 写的一两句话，单独一块并写明是 AI 写的
+.ai-note {
+  margin: 24px 0 8px;
+  padding: 16px;
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.ai-note__title {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  color: var(--palm);
+}
+.ai-note__text {
+  margin: 0 0 8px;
+}
+
+// 智能体日志
+.log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.log-row {
+  padding: 12px 16px;
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.log-row__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+.log-row__ms {
+  margin-left: auto;
+}
+.log-row__detail {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+.log-facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 16px;
+  margin: 0;
+
+  dt {
+    color: var(--muted);
+  }
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}

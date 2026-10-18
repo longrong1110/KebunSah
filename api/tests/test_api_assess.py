@@ -323,3 +323,32 @@ def test_clean_real_forest_data_keeps_the_result(world, store):
     assess(client, pid)
     _, a = latest(store, pid)
     assert a["result"] == "green" and a["forestRisk"] == "low" and a["forestCover2020Pct"] == 0.0
+
+
+def test_the_summary_records_which_model_wrote_it(world, store):
+    client, _, _ = world()  # TemplateExplainer
+    pid = make_plot(client)
+    assess(client, pid)
+    assert latest(store, pid)[1]["summaryModel"] == "template"
+
+
+def test_summary_model_is_the_gemini_model_when_gemini_wrote_it(store, make_deps):
+    import json as _json
+    from types import SimpleNamespace
+
+    from fastapi.testclient import TestClient
+
+    reply = _json.dumps({"summary_text": "Lesen anda hampir tamat.",
+                         "gaps": [{"index": 0, "description": "d", "suggested_action": "a"}]})
+    client_stub = SimpleNamespace(models=SimpleNamespace(generate_content=lambda **kw: SimpleNamespace(text=reply)))
+    store.set("mspoCertificates/cert1", {"certNo": "MSPO 900001", "expiryDate": "2029-02-28"})
+    store.set("mspoCertificates/cert1/members/m1", {"memberName": "TAN AH KOW"})
+    expiring = {**GOOD, "mpob_licence": {**GOOD["mpob_licence"], "mpob_licence.valid_until": ("05/12/2026", 0.93)}}
+    deps = make_deps(extractor=ScriptedExtractor(expiring), explainer=GeminiExplainer(model="gemini-test", client=client_stub),
+                     forest=PrecomputedForest())
+    client = TestClient(create_app(deps))
+    pid = make_plot(client)
+    assess(client, pid)
+    a = latest(store, pid)[1]
+    assert a["summaryModel"] == "gemini-test" and a["result"] == "yellow"  # 执照临期的缺口让 Gemini 写了说明
+    assert a["summaryText"] == "Lesen anda hampir tamat."

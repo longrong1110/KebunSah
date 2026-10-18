@@ -12,6 +12,7 @@ import { LangButton } from '../../shared/lang-button';
 import { plotHeading, plotSubtitle } from '../plots/plot-title';
 import type { PlotData, TitleData } from '../plots/plot-types';
 import {
+  aiNote,
   bannerKey,
   checkedAt,
   concludedAssessment,
@@ -107,6 +108,8 @@ export class ResultPage {
       total: items.length,
       passed: done ? passedRules(done) : [],
       forest,
+      aiNote: done ? aiNote(done) : null,
+      hasLog: (latest?.steps?.length ?? 0) > 0,
       fromCache: this.fromCache(),
     };
   });
@@ -156,6 +159,12 @@ export class ResultPage {
     }
     this.starting.set(false);
     this.openChecking();
+  }
+
+  /** 智能体日志：这次检查每一步做了什么 */
+  protected openLog(): void {
+    const id = this.plotId();
+    if (id) void this.router.navigate(['/plots', id, 'log'], this.keep);
   }
 
   /** 评估还在跑：去屏 7 看分步进度 */

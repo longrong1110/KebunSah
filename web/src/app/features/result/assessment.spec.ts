@@ -1,4 +1,5 @@
 import {
+  aiNote,
   areaCompare,
   assessmentTime,
   bannerKey,
@@ -518,5 +519,30 @@ describe('forestNote：演示数据不下结论', () => {
     ).toEqual({
       kind: 'low',
     });
+  });
+});
+
+describe('aiNote（Gemini 写的说明）', () => {
+  it('summaryModel 以 gemini 开头且有文字：给出文字和模型', () => {
+    expect(
+      aiNote({ summaryModel: 'gemini-3.5-flash', summaryText: '  Lesen anda hampir tamat.  ' }),
+    ).toEqual({
+      text: 'Lesen anda hampir tamat.',
+      model: 'gemini-3.5-flash',
+    });
+  });
+
+  it('兜底模板、没写模型的老数据（种子）、空文字：不是 AI 写的，不给', () => {
+    expect(aiNote({ summaryModel: 'template', summaryText: 'Semua semakan lulus.' })).toBeNull();
+    expect(aiNote({ summaryText: 'Semua semakan lulus.' })).toBeNull();
+    expect(aiNote({ summaryModel: 'gemini-3.5-flash', summaryText: '   ' })).toBeNull();
+    expect(aiNote({ summaryModel: 'gemini-3.5-flash' })).toBeNull();
+    expect(aiNote({ summaryModel: 42 as never, summaryText: 'x' })).toBeNull();
+  });
+
+  it('文字太长就截断', () => {
+    expect(aiNote({ summaryModel: 'gemini-x', summaryText: 'a'.repeat(900) })?.text).toHaveLength(
+      500,
+    );
   });
 });

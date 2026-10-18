@@ -23,6 +23,7 @@ async function setup(url = '/plots/p1', extra: Provider[] = []) {
         { path: 'plots/:id', component: ResultPage },
         { path: 'plots/:id/issue/:key', component: Blank },
         { path: 'plots/:id/checking', component: Blank },
+        { path: 'plots/:id/log', component: Blank },
       ]),
       { provide: FIRESTORE_FACADE, useValue: facade },
       ...extra,
@@ -646,5 +647,42 @@ describe('ResultPage（屏 9）', () => {
       expect(t.facade.activeDocs('plots/p2').length).toBe(1);
       expect(t.facade.activeCollections('plots/p2/assessments').length).toBe(1);
     });
+  });
+});
+
+describe('ResultPage：AI 说明与智能体日志入口', () => {
+  const steps = [{ step: 'read', status: 'ok', ms: 9000, detail: 'extracted=3' }];
+
+  it('Gemini 写的说明：单独一块，写明是 AI 写的和哪个模型；纯文本', async () => {
+    const t = await setup();
+    await t.ready(
+      assessment({
+        summaryModel: 'gemini-3.5-flash',
+        summaryText: 'Lesen anda hampir tamat. <b>x</b>',
+      }),
+    );
+    expect(t.q('#ai-note-title')?.textContent).toContain('Catatan AI');
+    expect(t.q('#ai-note-text')?.textContent).toBe('Lesen anda hampir tamat. <b>x</b>');
+    expect(t.q('#ai-note b')).toBeNull();
+    expect(t.q('#ai-note')?.textContent).toContain('gemini-3.5-flash');
+  });
+
+  it('不是 AI 写的（兜底模板、种子里的老文案，含中文占位）：不显示这一块', async () => {
+    const t = await setup();
+    await t.ready(assessment({ summaryModel: 'template', summaryText: 'Semua semakan lulus.' }));
+    expect(t.q('#ai-note')).toBeNull();
+    await t.ready(assessment());
+    expect(t.q('#ai-note')).toBeNull();
+    expect(t.text()).not.toMatch(CJK);
+  });
+
+  it('评估里有 steps：显示「智能体日志」入口，点击进日志页并保留 ?member；没有 steps（老数据）就没有', async () => {
+    const t = await setup('/plots/p1?member=m9');
+    await t.ready(assessment());
+    expect(t.q('#see-log')).toBeNull();
+    await t.ready(assessment({ steps }));
+    expect(t.q('#see-log')?.textContent?.trim()).toBe('Lihat bagaimana semakan dibuat');
+    await t.click('#see-log');
+    expect(t.router.url).toBe('/plots/p1/log?member=m9');
   });
 });
