@@ -2222,7 +2222,8 @@ a.plot-card:hover {
 }
 
 // 登录页首屏：深林绿底，地形等高线纹理（暗示地块与地图），品牌标识 + 一句话说明
-.login__hero {
+.login__hero,
+.coop-login__side {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -2247,12 +2248,14 @@ a.plot-card:hover {
   color: var(--on-palm);
 }
 
-.login__hero .lockup {
+.login__hero .lockup,
+.coop-login__side .lockup {
   color: var(--on-palm);
   font-size: 2rem;
 }
 
-.login__hero .brand-mark {
+.login__hero .brand-mark,
+.coop-login__side .brand-mark {
   width: 48px;
   height: 48px;
 
@@ -2593,4 +2596,137 @@ a.plot-card:hover {
 .camera-controls--stack > .btn {
   flex: none;
   width: 100%;
+}
+
+// ---- 合作社看板的登录（电脑）：左边品牌和说明，右边邮箱＋密码 ----
+.coop-login {
+  display: grid;
+  grid-template-columns: minmax(360px, 5fr) 6fr;
+  min-height: 100dvh;
+}
+
+.coop-login__side {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100dvh;
+  justify-content: space-between;
+  gap: 48px;
+  padding: 56px;
+  border-radius: 0;
+  background-position: right -140px top -40px, center;
+  background-size: 640px auto, auto;
+}
+
+.coop-login__pitch {
+  display: grid;
+  gap: 16px;
+  max-width: 30em;
+
+  h2 {
+    margin: 0;
+    color: var(--on-palm);
+    font-size: 2.25rem;
+    line-height: 1.15;
+  }
+
+  p {
+    margin: 0;
+    color: color-mix(in srgb, var(--on-palm) 88%, transparent);
+    font-size: 1.125rem;
+  }
+
+  ul {
+    display: grid;
+    gap: 10px;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+    color: var(--on-palm);
+    font-weight: 600;
+  }
+}
+
+.coop-login__main {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 56px 56px;
+}
+
+.coop-login__bar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.coop-login__form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-width: 440px;
+  margin: auto 0;
+
+  .lead {
+    margin-bottom: 14px;
+  }
+
+  label {
+    margin-top: 10px;
+  }
+
+  .btn {
+    margin-top: 18px;
+  }
+}
+
+.field--text {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 1.125rem;
+  letter-spacing: 0;
+}
+
+.pw {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  .field {
+    padding-right: 120px;
+  }
+}
+
+.pw__toggle {
+  position: absolute;
+  right: 4px;
+  text-decoration: none;
+}
+
+.coop-login__phone {
+  align-self: flex-start;
+  margin-top: 8px;
+}
+
+.login__coop {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 16px;
+}
+
+@media (max-width: 900px) {
+  .coop-login {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .coop-login__side {
+    position: static;
+    height: auto;
+    gap: 24px;
+    padding: 28px 24px;
+  }
+
+  .coop-login__main {
+    padding: 16px 24px 40px;
+  }
 }

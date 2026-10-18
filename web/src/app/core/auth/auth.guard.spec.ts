@@ -7,7 +7,7 @@ import {
   type RouterStateSnapshot,
 } from '@angular/router';
 import { AuthService } from '../firebase/auth.service';
-import { redirectIfAuthed, requireAuth } from './auth.guard';
+import { redirectIfAuthed, redirectIfCoopAuthed, requireAuth, requireCoopAuth } from './auth.guard';
 
 function run(guard: typeof requireAuth, user: unknown, ready = true) {
   let resolveReady!: () => void;
@@ -51,5 +51,19 @@ describe('auth guards', () => {
     expect(authed.router.serializeUrl((await authed.result) as UrlTree)).toBe('/');
     TestBed.resetTestingModule();
     expect(await run(redirectIfAuthed, null).result).toBe(true);
+  });
+
+  it('requireCoopAuth：已登录 → 放行；未登录 → 去看板自己的登录页 /coop/login（不是手机的 /login）', async () => {
+    expect(await run(requireCoopAuth, { uid: 'u1' }).result).toBe(true);
+    TestBed.resetTestingModule();
+    const { result, router } = run(requireCoopAuth, null);
+    expect(router.serializeUrl((await result) as UrlTree)).toBe('/coop/login');
+  });
+
+  it('redirectIfCoopAuthed：已登录 → 直接进看板 /coop；未登录 → 放行登录页', async () => {
+    const authed = run(redirectIfCoopAuthed, { uid: 'u1' });
+    expect(authed.router.serializeUrl((await authed.result) as UrlTree)).toBe('/coop');
+    TestBed.resetTestingModule();
+    expect(await run(redirectIfCoopAuthed, null).result).toBe(true);
   });
 });

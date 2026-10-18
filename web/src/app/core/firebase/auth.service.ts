@@ -2,6 +2,7 @@ import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import {
   RecaptchaVerifier,
   onAuthStateChanged,
+  signInWithEmailAndPassword,
   signInWithPhoneNumber,
   signOut as fbSignOut,
   type ConfirmationResult,
@@ -73,6 +74,12 @@ export class AuthService {
       this.clearVerifier();
       throw err;
     }
+  }
+
+  /** 合作社看板（电脑）用邮箱＋密码登录；手机上的园主、外勤走手机号验证码 */
+  async signInWithEmail(email: string, password: string): Promise<void> {
+    if (!this.configured) throw new NotConfiguredError();
+    await signInWithEmailAndPassword(getFirebaseAuth(), email, password);
   }
 
   async confirmCode(code: string): Promise<void> {

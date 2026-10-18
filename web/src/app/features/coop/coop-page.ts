@@ -279,7 +279,7 @@ export class CoopPage {
     // 会话在别处失效：回登录页，不停在一个读不到数据的页面
     effect(() => {
       if (this.auth.ready() && !this.auth.user() && !this.loggingOut()) {
-        void this.router.navigateByUrl('/login', { replaceUrl: true });
+        void this.router.navigateByUrl('/coop/login', { replaceUrl: true });
       }
     });
   }
@@ -372,7 +372,7 @@ export class CoopPage {
     this.loggingOut.set(true); // 先把内容藏起来：登出瞬间监听会收到 permission-denied，不让用户看到
     try {
       await this.auth.signOut();
-      await this.router.navigateByUrl('/login', { replaceUrl: true });
+      await this.router.navigateByUrl('/coop/login', { replaceUrl: true });
     } catch {
       this.loggingOut.set(false);
       this.logoutFailed.set(true);

@@ -16,6 +16,7 @@ import type { Dict } from '../../core/i18n/dict.ms';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { normalizePhone } from '../../core/phone';
 import { BrandMark } from '../../shared/brand-mark';
+import { RouterLink } from '@angular/router';
 import { LangButton } from '../../shared/lang-button';
 
 type Step = 'phone' | 'code';
@@ -31,7 +32,6 @@ export const DEMO_NUMBERS = [
   { role: 'smallholderYellow', phone: '+60 10-000 0012' },
   { role: 'smallholderRed', phone: '+60 10-000 0013' },
   { role: 'officer', phone: '+60 10-000 0001' },
-  { role: 'admin', phone: '+60 10-000 0002' },
 ] as const;
 
 function errorKeyFor(err: unknown): LoginErrorKey {
@@ -60,7 +60,7 @@ function errorKeyFor(err: unknown): LoginErrorKey {
 // 屏 1 登录（线框 docs/ui/screen-01.png）：两步，手机号 → 验证码；右上角常驻语言按钮。
 @Component({
   selector: 'app-login',
-  imports: [BrandMark, LangButton],
+  imports: [BrandMark, LangButton, RouterLink],
   templateUrl: './login.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -5,15 +5,15 @@
 Built for the Google Cloud AI Builder Cup 2026, track *Sustainability & Social Impact*.
 
 - **Live prototype:** https://kebunsah.web.app (open it on a phone)
-- **Demo access:** on the sign-in page, open **"Demo access for judges"**. No real SMS is sent; the code for every test number is `123456`.
+- **Demo access (phone app):** on the sign-in page, open **"Demo access for judges"**. No real SMS is sent; the code for every test number is `123456`.
+- **Cooperative dashboard (computer):** https://kebunsah.web.app/coop/login, with email `koperasi@kebunsah.demo` and password `Koperasi-Demo-2026` (the same box on that page fills it in). It is a separate sign-in from the phone app.
 
 | Test number | Role |
 | --- | --- |
 | `+60 10-000 0011` | Smallholder, plots mostly green |
 | `+60 10-000 0012` | Smallholder, yellow plots |
 | `+60 10-000 0013` | Smallholder, red plots |
-| `+60 10-000 0001` | Field officer |
-| `+60 10-000 0002` | Cooperative admin (dashboard) |
+| `+60 10-000 0001` | Field officer (picks a member, adds land for them) |
 
 All data in the demo is synthetic. The 200 sample plots are flagged `isSynthetic`, their photos are watermarked, and they cannot be deleted from the app.
 

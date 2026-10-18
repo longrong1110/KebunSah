@@ -10,6 +10,22 @@ export const requireAuth: CanActivateFn = async () => {
   return auth.user() ? true : router.createUrlTree(['/login']);
 };
 
+// 合作社看板（电脑）：未登录 → /coop/login（和手机上的 /login 分开）
+export const requireCoopAuth: CanActivateFn = async () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  await auth.whenReady();
+  return auth.user() ? true : router.createUrlTree(['/coop/login']);
+};
+
+// 看板登录页：已登录的人直接进看板
+export const redirectIfCoopAuthed: CanActivateFn = async () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  await auth.whenReady();
+  return auth.user() ? router.createUrlTree(['/coop']) : true;
+};
+
 // 登录页：已登录的人不该再看到它 → /
 export const redirectIfAuthed: CanActivateFn = async () => {
   const auth = inject(AuthService);

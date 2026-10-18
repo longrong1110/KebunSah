@@ -1,5 +1,10 @@
 import { Routes } from '@angular/router';
-import { redirectIfAuthed, requireAuth } from './core/auth/auth.guard';
+import {
+  redirectIfAuthed,
+  redirectIfCoopAuthed,
+  requireAuth,
+  requireCoopAuth,
+} from './core/auth/auth.guard';
 
 // 页面一律懒加载，初始包只带路由与登录状态。
 // 角色分流（园主／外勤）放在懒加载的页面里，不放守卫：守卫不能注入 FirestoreReader（会把 Firestore 拖进初始包）。
@@ -101,8 +106,14 @@ export const routes: Routes = [
   },
   // 屏 11 合作社看板（电脑宽屏）：筛选条件与选中的地块在查询参数里（?status=&issue=&q=&plot=）
   {
+    path: 'coop/login',
+    canActivate: [redirectIfCoopAuthed],
+    data: { titleKey: 'coopLogin' },
+    loadComponent: () => import('./features/coop-login/coop-login').then((m) => m.CoopLogin),
+  },
+  {
     path: 'coop',
-    canActivate: [requireAuth],
+    canActivate: [requireCoopAuth],
     data: { titleKey: 'coop' },
     loadComponent: () => import('./features/coop/coop-page').then((m) => m.CoopPage),
   },

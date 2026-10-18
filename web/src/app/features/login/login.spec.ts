@@ -326,4 +326,26 @@ describe('Login 无障碍', () => {
     expect(c.error()).toBe('codeWrong');
     expect(document.activeElement).toBe(el.querySelector('#code'));
   });
+
+  it('评审试用：只列园主和外勤的手机号（合作社管理员走电脑登录），点一个填进输入框', () => {
+    const { c, fixture } = setup();
+    const el = fixture.nativeElement as HTMLElement;
+    const items = [...el.querySelectorAll<HTMLButtonElement>('.demo__item')];
+    expect(items.map((b) => b.querySelector('.demo__phone')?.textContent)).toEqual([
+      '+60 10-000 0011',
+      '+60 10-000 0012',
+      '+60 10-000 0013',
+      '+60 10-000 0001',
+    ]);
+    expect(el.textContent).not.toContain('Pentadbir koperasi (papan pemuka)');
+    items[3].click();
+    expect(c.phone()).toBe('+60 10-000 0001');
+  });
+
+  it('有一个去合作社电脑登录页的链接', () => {
+    const { fixture } = setup();
+    const link = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>('#coop-link');
+    expect(link?.getAttribute('href')).toBe('/coop/login');
+    expect(link?.textContent).toContain('Log masuk di komputer');
+  });
 });

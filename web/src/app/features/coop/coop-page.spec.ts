@@ -155,6 +155,7 @@ async function setup(
       provideRouter([
         { path: '', component: Blank },
         { path: 'login', component: Blank },
+        { path: 'coop/login', component: Blank },
         { path: 'coop', component: CoopPage },
         { path: 'plots/:id', component: Blank },
         { path: 'plots/:id/dossier', component: Blank },
@@ -931,12 +932,12 @@ describe('CoopPage（屏 11）', () => {
       expect(t.rows()[0][3]).toBe('Lesen MPOB sudah tamat (+1)');
     });
 
-    it('登出成功：回 /login', async () => {
+    it('登出成功：回看板自己的登录页 /coop/login（和手机的 /login 分开）', async () => {
       const t = await setup();
       await t.ready();
       await t.click('#logout');
       expect(t.auth.signOut).toHaveBeenCalled();
-      expect(t.router.url).toBe('/login');
+      expect(t.router.url).toBe('/coop/login');
     });
 
     it('登出失败：恢复内容并提示，不留空白页', async () => {
@@ -951,7 +952,7 @@ describe('CoopPage（屏 11）', () => {
     it('会话失效（没有用户了）：回登录页', async () => {
       const t = await setup({ user: false });
       await settle(t.fixture);
-      expect(t.router.url).toBe('/login');
+      expect(t.router.url).toBe('/coop/login');
     });
   });
 });
