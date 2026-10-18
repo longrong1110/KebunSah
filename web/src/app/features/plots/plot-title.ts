@@ -8,7 +8,7 @@ import type { PlotData, TitleData } from './plot-types';
 // 一块地的标题与副标题。屏 2 的卡片和屏 9 的头部共用，两处写法一致。
 
 /**
- * 标题：没有地契 → Lot baharu；title 读到了 → Lot {lotNo}, {district}；
+ * 标题：没有登记地契 → 评估读出了地段号就用它，否则 Lot baharu；title 读到了 → Lot {lotNo}, {district}；
  * title 确认不存在或迟迟读不到 → 退回 plots 上复制的 titleNo / nickname + district，不冒充「Lot baharu」；
  * 还在读 → heading 为 null、loading 为 true（调用方显示骨架）。
  */
@@ -17,7 +17,11 @@ export function plotHeading(
   p: PlotData,
   title: Load<DocState<TitleData>> | null,
 ): { heading: string | null; loading: boolean } {
-  if (!p.landTitleId) return { heading: t.plots.newLot, loading: false };
+  if (!p.landTitleId) {
+    // 评估从照片读出了地段号：用它，不让每块新建的地都叫「Lot baharu」
+    const lot = p.lotNo?.trim();
+    return { heading: lot ? t.plots.lot(lot, p.district?.trim() ?? '') : t.plots.newLot, loading: false };
+  }
   const lot = title?.kind === 'data' ? title.value.data : null;
   if (lot?.lotNo) {
     return { heading: t.plots.lot(lot.lotNo, lot.district ?? p.district ?? ''), loading: false };

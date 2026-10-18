@@ -39,6 +39,21 @@ def merged_fields(docs: list[Doc], doc_type: str) -> dict[str, tuple[str, dict]]
     return out
 
 
+def title_identity(docs: list[Doc]) -> dict[str, str]:
+    """从地契照片读出的、用来给地块起名和做看板筛选的几项：地段号、地契号、县、州。读不到的不写；不含任何人名。"""
+    if not any(d.get("docType") == "land_title" for _, d in docs):
+        return {}
+    fields = merged_fields(docs, "land_title")
+    out: dict[str, str] = {}
+    for plot_key, field_key in (("lotNo", "land_title.lot_no"), ("titleNo", "land_title.title_no"),
+                                ("district", "land_title.district"), ("state", "land_title.state")):
+        entry = fields.get(field_key)
+        value = (effective(entry[1]) or "").strip() if entry else ""
+        if value:
+            out[plot_key] = value[:80]
+    return out
+
+
 def _has(docs: list[Doc], doc_type: str) -> bool:
     return any(d.get("docType") == doc_type for _, d in docs)
 

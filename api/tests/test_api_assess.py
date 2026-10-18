@@ -85,6 +85,27 @@ def test_green_end_to_end(world, store):
     assert licence["fields"]["mpob_licence.valid_until"]["normalizedValue"] == "2027-03-31"
 
 
+def test_plot_gets_its_lot_number_and_district_from_the_title_photo(world, store):
+    """新建的地块没有登记地契，屏 2 的卡片靠评估时复制到 plots 上的这几项起标题（不含人名）。"""
+    script = {**GOOD, "land_title": {**GOOD["land_title"], "land_title.district": ("Kampar", 0.9),
+                                      "land_title.state": ("Perak", 0.9), "land_title.title_no": ("HSM 145/78", 0.8)}}
+    client, _, _ = world(script)
+    pid = make_plot(client)
+    assess(client, pid)
+    plot = store.get(f"plots/{pid}")
+    assert (plot["lotNo"], plot["district"], plot["state"], plot["titleNo"]) == ("1052", "Kampar", "Perak", "HSM 145/78")
+    assert plot["status"] == "green"
+    assert not any(isinstance(v, str) and "TAN AH KOW" in v for v in plot.values())
+
+
+def test_plot_identity_is_left_alone_when_the_title_is_not_read(world, store):
+    client, _, _ = world({"mpob_licence": GOOD["mpob_licence"]})
+    pid = make_plot(client, upload=("mpob_licence",))
+    assess(client, pid)
+    plot = store.get(f"plots/{pid}")
+    assert "lotNo" not in plot and "district" not in plot
+
+
 def test_document_shape_matches_the_seed_assessments(world, store):
     client, _, _ = world()
     pid = make_plot(client)

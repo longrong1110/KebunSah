@@ -18,6 +18,16 @@ describe('plotHeading', () => {
     expect(plotHeading(en, {}, null).heading).toBe('New lot');
   });
 
+  it('没有登记地契但评估读出了地段号：Lot {lotNo}, {district}（不再每块都叫 Lot baharu）', () => {
+    expect(plotHeading(ms, { lotNo: '1052', district: 'Kampar' }, null)).toEqual({
+      heading: 'Lot 1052, Kampar',
+      loading: false,
+    });
+    expect(plotHeading(ms, { lotNo: ' 88 ' }, null).heading).toBe('Lot 88');
+    expect(plotHeading(ms, { lotNo: '  ' }, null).heading).toBe('Lot baharu');
+    expect(plotHeading(en, { lotNo: null }, null).heading).toBe('New lot');
+  });
+
   it('title 读到了：Lot {lotNo}, {district}；district 优先取 title 的，缺则取 plots 上的', () => {
     const p = { landTitleId: 't1', district: 'Perak Tengah' };
     expect(plotHeading(ms, p, data({ lotNo: '1052', district: 'Kampar' }))).toEqual({

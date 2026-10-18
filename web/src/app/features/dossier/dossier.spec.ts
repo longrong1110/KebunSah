@@ -107,6 +107,9 @@ describe('buildDossier：页头', () => {
 
   it('地块标题：没登记地契 → Lot baharu；地契读不到 → 用 plots 上复制的地契号；都没有 → Belum diisi；从不用 nickname', () => {
     expect(build({ plot: plotData({ landTitleId: null }) }).header.heading).toBe('Lot baharu');
+    expect(
+      build({ plot: plotData({ landTitleId: null, lotNo: '1052', district: 'Kampar' }) }).header.heading,
+    ).toBe('Lot 1052, Kampar');
     expect(build({ title: null }).header.heading).toBe('HSM 2217/91, Kampar');
     const bare = build({ title: null, plot: plotData({ titleNo: null, district: null }) });
     expect(bare.header.heading).toBe('Belum diisi');

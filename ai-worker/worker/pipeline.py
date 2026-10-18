@@ -20,7 +20,7 @@ from kebunsah_core.rules import valid_area_ha
 from app.deps import Deps
 
 from .explain import TemplateExplainer
-from .facts import build_facts
+from .facts import build_facts, title_identity
 from .forest import ForestResult, UnavailableForest
 from .gemini import WrongDocument
 
@@ -221,4 +221,6 @@ def _run(deps: Deps, plot_id: str, path: str, run: _Run) -> None:
                                         for i, d in docs]},
         "steps": run.steps, "progress": run.progress,
     })
-    store.update(f"plots/{plot_id}", {"status": status, "lastAssessedAt": finished, "updatedAt": finished})
+    # 地块没有登记的地契时，用照片读出的地段号等给它起名（屏 2 的卡片和看板都读 plots 上这几项）
+    store.update(f"plots/{plot_id}", {**title_identity(docs), "status": status, "lastAssessedAt": finished,
+                                      "updatedAt": finished})

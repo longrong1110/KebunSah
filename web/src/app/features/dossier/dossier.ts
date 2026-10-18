@@ -95,7 +95,10 @@ export interface DossierHeader {
  * 没登记地契 → Lot baharu。**不用 nickname**（像「Kebun Arwah Ayah」会带出对第三人的推断，档案要离开系统）。
  */
 function headingOf(t: Dict, plot: PlotData, title: TitleData | null): string {
-  if (!plot.landTitleId) return t.plots.newLot;
+  if (!plot.landTitleId) {
+    const own = cleanText(plot.lotNo);
+    return own ? t.plots.lot(own, cleanText(plot.district) ?? '') : t.plots.newLot;
+  }
   const lot = cleanText(title?.lotNo);
   const district = cleanText(title?.district) ?? cleanText(plot.district) ?? '';
   if (lot) return t.plots.lot(lot, district);

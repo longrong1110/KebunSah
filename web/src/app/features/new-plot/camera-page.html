@@ -64,7 +64,7 @@
     <p class="camera-hint">{{ t().camera.lightHint }}</p>
   }
 
-  <footer class="camera-controls">
+  <footer class="camera-controls" [class.camera-controls--stack]="view() === 'preview'">
     @if (view() === 'preview') {
       <button type="button" class="btn btn--light" id="use" (click)="use()">
         {{ t().camera.use }}

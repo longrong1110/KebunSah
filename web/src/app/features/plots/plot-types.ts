@@ -10,6 +10,8 @@ export interface PlotData {
   /** plots 上复制的 titleNo / district（企划书 §8.9：为看板筛选而复制），title 读不到时的回退 */
   titleNo?: string | null;
   district?: string | null;
+  /** 评估从地契照片读出的地段号（后端复制到 plots 上）：没有登记地契（landTitleId）的新地块靠它起标题 */
+  lotNo?: string | null;
   status?: unknown;
   areaHaComputed?: number | null;
   areaHaDeclared?: number | null;

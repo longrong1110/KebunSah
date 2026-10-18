@@ -2583,3 +2583,14 @@ a.plot-card:hover {
 .pending-card .chip {
   margin-left: 0;
 }
+
+// 预览页有三个按钮（用这张、用这张并拍下一页、重拍）：竖着排满宽，不挤成一行
+.camera-controls--stack {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.camera-controls--stack > .btn {
+  flex: none;
+  width: 100%;
+}
