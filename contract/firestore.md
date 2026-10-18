@@ -53,7 +53,7 @@
 
 1. **评估文档自带 `coopId`**（冗余自 `plots.coopId`）——**已做**。看板用 collection group 一次读全部评估，现在靠文档路径 `plots/{id}/assessments/{aid}` 认地块；`firestore.rules` 收紧时，collection group 要单独写规则，评估带 `coopId` 才能写成「只能读本合作社的」。
 2. **逐步进度字段（可选）**：屏 7 的四步（读文件／核对／森林／行动清单）现在**只能推导**（文件还有没读完的 → 第 1 步；评估 `running` 且文件读完 → 第 2 步；第 3、4 步在结束前保持未开始）。**后端已写** `progress: { read, check, forest, actions }`（各为 `pending`／`running`／`done`／`failed`），另有 `steps[]`（每步一条日志：`step`、`status`、`at`、`ms`、`detail`，给演示视频的「智能体日志」画面用，前端不读）。前端可以改读 `progress`，不改也行。
-3. **谁创建 `users/{uid}`、`lastLoginAt` 谁写**：后端，`POST /api/me`（见 `api.md`），前端登录后调用。没有档案的账号屏 2 显示「Profil anda belum dibuat.」。
+3. **谁创建 `users/{uid}`、`lastLoginAt` 谁写**：后端，`POST /api/me`（见 `api.md`）；前端**暂不调用**——产品设计是合作社外勤预建账号（种子或 Admin SDK），没有档案的账号屏 2 显示「Profil anda belum dibuat.」。
 4. **示例**：`examples/` 有三份评估（绿／黄／红）；`documents`、`plots` 的示例照 `seed/data/` 的同名文件。
 
 ## `plots/{plotId}/documents/{docId}`

@@ -70,7 +70,7 @@ Google Cloud AI Builder Cup 2026 参赛项目。原型提交截止 **2026-10-18*
 ## 系统还没做的（交接清单，按优先度）
 
 > 2026-10-14 整理。前端负责人 10/15 起不在（回来日期待补）。**只列系统还没做的**；已做完的见上面的「队友处理须知」和 `web/README.md`。
-> **现状一句话：** 前端「读」的流程全部做完（登录、我的地块、拍文件、圈地块、评估中、结果、问题详情、合作社看板、导出档案），数据来自本地 Firebase 模拟器里的种子；**「写」的路径：后端 2026-10-17 已做完**（`api/`、`ai-worker/`，用真 Gemini 在本地模拟器上跑通，见 `api/README.md`），**但前端还没接线**（屏 6 仍是壳，`web/src` 里没有任何 `/api/*` 调用），也还没有线上项目。
+> **现状一句话：** 前端「读」的流程全部做完（登录、我的地块、拍文件、圈地块、评估中、结果、问题详情、合作社看板、导出档案），数据来自本地 Firebase 模拟器里的种子；**「写」的路径：后端 2026-10-17 已做完**（`api/`、`ai-worker/`，用真 Gemini 在本地模拟器上跑通，见 `api/README.md`），**前端 2026-10-18 已接上屏 6「开始检查」和屏 9 的「Mulakan semakan」**（`web/src/app/core/api/`、`features/new-plot/submit.service.ts`，单元测试和脚本层的端到端都通过，**但还没有在真浏览器里连着后端走过一遍**）；屏 8 确认字段前端还没做；也还没有线上项目。
 > 时间：10/16 功能冻结，10/18 提交（要求公开可访问网址，并用 Gemini／Gemma）。
 
 ### P0：演示和提交的系统必需
@@ -80,8 +80,8 @@ Google Cloud AI Builder Cup 2026 参赛项目。原型提交截止 **2026-10-18*
 | 1 | **后端 API 与 AI 服务** | **已做**（10/17）：`POST /api/me`、`POST /api/plots`、`PATCH /api/plots/{id}`、`POST …/documents`（含 `pageNo`）、`POST …/assess`、`PATCH /api/documents/{id}/fields`、`GET /api/documents/{id}/image`；Gemini 抽取、规则 CC-01／02／03、森林初筛（**固定的演示数据 `precomputed-demo`，Earth Engine 没接**）、写出 `assessments`／`plots.status`。没做：`GET /api/plots`、`/api/coop/*`。用法与形状见 `api/README.md`。**还差：线上部署**（#3） | 后端 | — |
 | 2 | **审并 Approve [#14](https://github.com/longrong1110/KebunSah/pull/14)、[#23](https://github.com/longrong1110/KebunSah/pull/23)** | 无回应。#14 是评估文档形状、鉴权、`assess`、屏 8 字段确认；#23 是建地块、保存位置与面积、登记文件，堆叠在 #14 上，先审 #14。不同意的地方直接在 PR 里改，以你们为准 | 队友 | — |
 | 3 | **线上项目与部署（公开网址）** | 没有 Firebase／GCP 项目。要：建项目开计费（哪些要钱见上面「三、要付费或要账号的云服务」）、开 Firestore／Auth／Storage、`web/src/environments/environment.ts` 填 Firebase Web 配置和正式 Maps key、Hosting 发布前端、Cloud Run 发布 `kebunsah-api`、把 `seed/` 灌进线上 Firestore（要服务账号，**不进仓库**） | 有卡的人开通计费账号；**Hosting 部署归接手前端的人**（`docs/PLAN.md` 里 Hosting 归前端），Cloud Run 归后端 | 上面「三」里的决定 |
-| 4 | **前端接线：屏 6 本体、建地块、上传、开始评估** | 现在屏 6 只是壳（`web/src/app/features/new-plot/review-placeholder.ts`）。批准后要做：建地块 → `PATCH` 保存屏 5 的多边形／点（草稿已在 `DraftService`，面积由后端重算）→ 每份文件取签名网址并 `PUT` 直传 → `POST /assess` → 跳屏 7（`/plots/:id/checking` 已有）；加载态和错误态；屏 9 里「Belum mula」状态补「开始检查」按钮。**粗估 1 天** | 前端接手人 | #1、#2 |
-| 5 | **端到端联调** | 用 5 份仿真证件照跑完整链路（联调 #1），再按演示脚本彩排（联调 #2）；跑通打标签 `v0.1-e2e` | 两人 | #1、#4 |
+| 4 | **前端接线：屏 6 本体、建地块、上传、开始评估** | **已做**（10/18）：屏 6「Mulakan semakan」依次建地块 → 保存位置 → 登记并直传照片 → 触发评估 → 跳屏 7，失败留在本页、已建的地块和已传的照片重试时不重复；屏 9「还没开始」的地块有同一个「Mulakan semakan」按钮。读评估时按 CC-02 每份文件一条处理。后端地址在 `web/src/environments/`（开发是 `http://127.0.0.1:8000`，**线上的 `apiBaseUrl` 还是空**，Cloud Run 发布后填）。**还差：真浏览器联调**（`web` 用 `npm start`，后端 `python scripts/run_api.py`，见 `api/README.md`） | 前端 | — |
+| 5 | **端到端联调** | 后端用 `seed/photos` 的仿真证件照 + 真 Gemini 在本地模拟器上跑通（`scripts/e2e_local.py`），前端的单元测试用假后端；**前端连着真后端在浏览器里走一遍，还没做**。再按演示脚本彩排（联调 #2）；跑通打标签 `v0.1-e2e` | 两人 | #1、#4 |
 
 ### P1：强烈建议
 
@@ -89,7 +89,7 @@ Google Cloud AI Builder Cup 2026 参赛项目。原型提交截止 **2026-10-18*
 | --- | --- | --- |
 | 6 | **收紧 `infra/firestore.rules`**（若用 Storage 还要 `storage.rules`） | 现在任何登录用户都能读全部集合，包括 `persons` 的 `icHash`／`icLast4`。至少改成只能读本合作社；看板用 collection group 读评估，所以评估文档要带 `coopId`（#14 的提议）。`docs/PLAN.md` 把 Firestore 规则归在前端名下，但它是共管文件，改动要对方 Approve（两人共审） |
 | 7 | **接上 PR 检查（Cloud Build）** | `infra/cloudbuild/pr.yaml` 的后端步骤已改成跑 pytest；但 Cloud Build 触发器还没接到 GitHub，PR 页面现在看不到任何检查（要有 GCP 项目才能接） |
-| 8 | **谁创建 `users/{uid}`、谁写 `lastLoginAt`** | 后端已做 `POST /api/me`（首次登录建 `smallholder` 档案、已有档案更新 `lastLoginAt`；自己注册的园主没有 `coopId`，看板看不到）。**前端要在登录后调用它**，现在没有档案的账号首页仍显示「Profil anda belum dibuat.」 |
+| 8 | **谁创建 `users/{uid}`、谁写 `lastLoginAt`** | 后端有 `POST /api/me`（首次登录建 `smallholder` 档案、已有档案更新 `lastLoginAt`；自己注册的园主没有 `coopId`，看板看不到，姓名也只能是手机号，姓名比对一定不过）。**前端没有调它**：产品设计是由合作社外勤预建账号（种子 / Admin SDK），没有档案的账号首页仍写「请合作社外勤为您开通账号」（`Profil anda belum dibuat.`）。线上要用的话，登录后要先让用户填姓名再调 |
 | 9 | **森林初筛（Earth Engine）** | 先让 1 块地查通；1–2 块演示地块的坐标要落在真实有森林变化的区域，种子里的森林数据只是占位 |
 | 10 | **换正式 Maps key** | 现在是 Google Demo key，只适合原型，用量上限不明；限制 HTTP 来源（`localhost:4200` 和 Hosting 网址），只开 Maps JavaScript API |
 | 11 | **真机验证（只能人手做）** | 屏 3／4／5 的相机、手电筒、触摸、双指缩放、定位权限、iOS Safari；看板真实大屏；档案打印预览（取消「页眉和页脚」）。手机访问本机要 HTTPS 或隧道；步骤和逐条清单见 [`docs/real-device-testing.md`](docs/real-device-testing.md) |
