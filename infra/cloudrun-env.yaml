@@ -1,0 +1,7 @@
+# Cloud Run 服务 kebunsah-api 的环境变量（gcloud run deploy --env-vars-file=infra/cloudrun-env.yaml）。
+# 都不是密钥；GEMINI_API_KEY 在 Secret Manager 里（gemini-api-key），部署时用 --set-secrets 挂进来。
+GOOGLE_CLOUD_PROJECT: "kebunsah"
+BLOBS_MODE: "gcs"
+STORAGE_BUCKET: "kebunsah.firebasestorage.app"
+DEV_ENDPOINTS: "false"
+CORS_ORIGINS: "https://kebunsah.web.app,https://kebunsah.firebaseapp.com"

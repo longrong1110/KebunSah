@@ -1,0 +1,22 @@
+# gcloud run deploy --source . 上传哪些文件：只要构建镜像用的（Dockerfile、requirements.txt、core、api、ai-worker）。
+# 有这个文件时 gcloud 不再读 .gitignore，所以密钥和本地配置要在这里明确排除。
+.git
+.gitignore
+.venv
+.env
+.env.*
+.local-blobs
+.pytest_cache
+.superpowers
+.claude
+.firebaserc
+web
+seed
+docs
+contract
+infra
+scripts
+**/__pycache__
+**/*.pyc
+**/node_modules
+**/tests

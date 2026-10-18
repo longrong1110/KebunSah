@@ -13,6 +13,6 @@ export const environment: AppEnvironment = {
   emulators: null,
   // 正式 key 要限制 HTTP 来源（Hosting 网址）；还没有，先留空，屏 5 的地图会显示「尚未配置」
   mapsApiKey: '',
-  // 线上后端 kebunsah-api 的网址；Cloud Run 发布后填进来（还没有）
-  apiBaseUrl: '',
+  // 线上后端 kebunsah-api（Cloud Run，asia-southeast1）。后端的 CORS 只放行 Hosting 的两个域名
+  apiBaseUrl: 'https://kebunsah-api-533984680346.asia-southeast1.run.app',
 };
