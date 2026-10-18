@@ -256,7 +256,7 @@ export function build({ seed = SEED, scenarios: injected = null } = {}) {
       path: `plots/${ids.plot}/assessments/${ids.assessment}`,
       data: {
         plotId: ids.plot, runStatus: 'done', result: ev.status, startedAt: times.startedAt, finishedAt: times.finishedAt,
-        modelVersion: MODEL_VERSION, rulesVersion: RULES_VERSION, inputSnapshot: null, forestDataset: null,
+        modelVersion: MODEL_VERSION, rulesVersion: RULES_VERSION, inputSnapshot: null, forestDataset: 'precomputed-demo',
         forestCover2020Pct: forest.cover, forestLossAfter2020Ha: forest.loss, forestRisk: forest.risk,
         summaryText: summarize(ev.status, ev.gaps), summaryLang: 'ms', errorMessage: null,
         ruleResults: ev.results.map(stripMeta), gaps: ev.gaps,

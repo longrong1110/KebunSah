@@ -263,6 +263,7 @@ export const ms = {
       loss: (ha: string | null) =>
         `Saringan hutan: ada tanda kehilangan hutan selepas 2020${ha ? ` (${ha} ha)` : ''}. Pegawai akan menyemak.`,
       unknown: 'Saringan hutan belum dapat disemak. Pegawai akan menyemak.',
+      demo: 'Saringan hutan: data tunjuk cara sahaja. Data satelit hutan belum disambungkan.',
       prelim: 'Ini saringan awal sahaja.',
     },
     /** 文件名；不认识或没写 docType 时给通用的「Dokumen」，标题读起来才通顺 */

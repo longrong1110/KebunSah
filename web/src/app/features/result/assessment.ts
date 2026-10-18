@@ -37,6 +37,8 @@ export interface AssessmentData {
   startedAt?: Date | null;
   finishedAt?: Date | null;
   forestRisk?: string | null;
+  /** 森林数据的来源。'precomputed-demo' = 演示用的固定数据，不是真的卫星查询结果 */
+  forestDataset?: string | null;
   forestCover2020Pct?: number | null;
   forestLossAfter2020Ha?: number | null;
   ruleResults?: RuleResultData[];
@@ -275,14 +277,19 @@ export function passedRules(a: AssessmentData): string[] {
 
 // ---- 森林初筛 ----
 
+/** 森林数据来源写着这个，说明数值是演示用的固定数据（后端没连卫星数据），不能当成查询结果 */
+export const DEMO_FOREST_DATASET = 'precomputed-demo';
+
 export type ForestNote =
-  { kind: 'low' } | { kind: 'loss'; ha: string | null } | { kind: 'unknown' };
+  { kind: 'low' } | { kind: 'loss'; ha: string | null } | { kind: 'unknown' } | { kind: 'demo' };
 
 /**
  * 只是初筛，不夸大：「没有损失」要风险为 low 且损失明确为 0 才说；
  * 有损失（哪怕风险写 low，数据矛盾）或风险为 medium／high 一律按有损失处理；其余（缺失、unknown、null）不当成 0。
+ * 数据来源是演示用的固定数据（forestDataset = precomputed-demo）时，不下任何结论：那些数值没查过，说「没有毁林」是在编。
  */
 export function forestNote(a: AssessmentData): ForestNote {
+  if (a.forestDataset === DEMO_FOREST_DATASET) return { kind: 'demo' };
   const loss = a.forestLossAfter2020Ha;
   if (typeof loss === 'number' && Number.isFinite(loss) && loss > 0) {
     return { kind: 'loss', ha: formatArea(loss, null) };

@@ -213,7 +213,7 @@ export function buildDemo() {
     data: {
       plotId: DEMO_IDS.plot[i], runStatus: 'done', result: plotRows[i].status,
       startedAt: myt(...a.run[0]), finishedAt: myt(...a.run[1]), modelVersion: 'demo', rulesVersion: 'rules-0.1',
-      inputSnapshot: null, forestDataset: null,
+      inputSnapshot: null, forestDataset: 'precomputed-demo',
       forestCover2020Pct: a.forest[0], forestLossAfter2020Ha: a.forest[1], forestRisk: a.forest[2],
       summaryText: a.text, summaryLang: 'ms', errorMessage: null,
       ruleResults: a.rules, gaps: a.gaps,

@@ -264,6 +264,7 @@ export const en: Dict = {
       loss: (ha: string | null) =>
         `Forest screening: signs of forest loss after 2020${ha ? ` (${ha} ha)` : ''}. An officer will review.`,
       unknown: 'Forest screening could not be checked yet. An officer will review.',
+      demo: 'Forest screening: demonstration data only. Satellite forest data is not connected yet.',
       prelim: 'This is a preliminary screening only.',
     },
     docName: (type: string | null) =>

@@ -309,12 +309,14 @@ function forestView(t: Dict, a: AssessmentData): ForestView {
   const note = forestNote(a);
   const cover = plain(a.forestCover2020Pct, 100);
   const loss = plain(a.forestLossAfter2020Ha, Number.MAX_SAFE_INTEGER);
+  // 演示数据（没查过）：覆盖率和损失的数字也是编的，一个都不写
+  const demo = note.kind === 'demo';
   return {
     line: forestLine(t, note),
     prelim: t.result.forest.prelim,
-    cover: cover === null ? null : t.dossier.forest.cover(cover),
+    cover: cover === null || demo ? null : t.dossier.forest.cover(cover),
     // 风险没写（unknown）时一句话是「belum dapat disemak」，再写「损失 0 ha」会自相矛盾：不写这行
-    loss: loss === null || note.kind === 'unknown' ? null : t.dossier.forest.loss(loss),
+    loss: loss === null || note.kind === 'unknown' || demo ? null : t.dossier.forest.loss(loss),
   };
 }
 

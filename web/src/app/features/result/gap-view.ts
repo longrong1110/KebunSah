@@ -9,7 +9,9 @@ export function forestLine(t: Dict, note: ForestNote): string {
     ? t.result.forest.low
     : note.kind === 'loss'
       ? t.result.forest.loss(note.ha)
-      : t.result.forest.unknown;
+      : note.kind === 'demo'
+        ? t.result.forest.demo
+        : t.result.forest.unknown;
 }
 
 /**

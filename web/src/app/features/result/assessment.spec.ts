@@ -496,3 +496,27 @@ describe('forestNote', () => {
     });
   });
 });
+
+describe('forestNote：演示数据不下结论', () => {
+  it('forestDataset = precomputed-demo：不管风险和数值写什么，都是 demo（不说「没有毁林」）', () => {
+    const demo = { forestDataset: 'precomputed-demo' };
+    expect(forestNote({ ...demo, forestRisk: 'low', forestLossAfter2020Ha: 0 })).toEqual({
+      kind: 'demo',
+    });
+    expect(forestNote({ ...demo, forestRisk: 'high', forestLossAfter2020Ha: 2 })).toEqual({
+      kind: 'demo',
+    });
+    expect(forestNote({ ...demo })).toEqual({ kind: 'demo' });
+  });
+
+  it('别的数据来源（真的查询）：照常判断', () => {
+    expect(
+      forestNote({ forestDataset: 'JRC/GFC2020', forestRisk: 'low', forestLossAfter2020Ha: 0 }),
+    ).toEqual({ kind: 'low' });
+    expect(
+      forestNote({ forestDataset: null, forestRisk: 'low', forestLossAfter2020Ha: 0 }),
+    ).toEqual({
+      kind: 'low',
+    });
+  });
+});
