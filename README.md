@@ -31,7 +31,7 @@ EUDR applies from 30 December 2026 to larger operators and from 30 June 2027 to 
 6. **Decide:** the plot is green, yellow or red, with a short to-do list in Bahasa Malaysia or English, a plain-language AI note and a step log showing how the check was made.
 7. **Cooperatives** see all member plots on a wide-screen dashboard, filter by status and issue, and export a CSV summary or a printable dossier per plot.
 
-Also in the app: redraw the boundary of an existing plot, add or replace documents, delete a plot, ask a question **by voice** (Malay or English), and keep working **with no signal** (drafts are saved on the phone and sent automatically later).
+Also in the app: redraw the boundary of an existing plot, add or replace documents, delete a plot, ask a question **by typing or by voice** (Malay or English; it only answers about the plot's check, the EUDR rules and the documents needed, and politely refuses anything else), and keep working **with no signal** (drafts are saved on the phone and sent automatically later).
 
 ## How AI is used
 
@@ -41,7 +41,7 @@ Also in the app: redraw the boundary of an existing plot, add or replace documen
 | Decide pass / warn / fail | Rules engine in Python (`core/`) | Area within 10% or 0.1 ha, expiry over 90 days, name similarity 0.85; same input gives the same answer |
 | Forest loss screening | Earth Engine: JRC GFC2020 V4 + Hansen global forest change v1.13 | Pixel statistics on the plot polygon; labelled preliminary |
 | Plain-language note | Gemini | Written from the rule results; template text if Gemini is unavailable |
-| Spoken question | Gemini (audio input) | Answers only from that plot's results; says when it cannot help |
+| Typed or spoken question | Gemini (text or audio input) | Answers only about this plot, the EUDR and the documents needed; anything else gets a fixed refusal written by the server, not the model |
 
 **Gemini reads and explains; rules decide.** The pipeline is a fixed sequence of steps with Gemini and Earth Engine as tools, not an autonomous agent. Every assessment stores the model version, rules version, an input snapshot and a step log (`steps[]`), which the app shows under *How the check was made*. Results are always described as a preliminary screening, not legal advice or certification.
 
