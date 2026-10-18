@@ -2224,15 +2224,17 @@ a.plot-card:hover {
 // 登录页首屏：深林绿底，地形等高线纹理（暗示地块与地图），品牌标识 + 一句话说明
 .login__hero,
 .coop-login__side {
+  --hero-art: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='720'%20height='720'%20viewBox='0%200%20720%20720'%3E%3Cdefs%3E%3Cpattern%20id='p'%20width='64'%20height='56'%20patternUnits='userSpaceOnUse'%3E%3Cg%20transform='translate%2816%2014%29'%20opacity='0.5'%3E%3Cg%20stroke='%23cfe3d6'%20stroke-width='1.6'%20stroke-linecap='round'%3E%3Cpath%20d='M0-9V9M-7.8-4.5%207.8%204.5M-7.8%204.5%207.8-4.5'/%3E%3C/g%3E%3Ccircle%20r='2.4'%20fill='%23e3efe7'/%3E%3C/g%3E%3Cg%20transform='translate%2848%2042%29'%20opacity='0.5'%3E%3Cg%20stroke='%23cfe3d6'%20stroke-width='1.6'%20stroke-linecap='round'%3E%3Cpath%20d='M0-9V9M-7.8-4.5%207.8%204.5M-7.8%204.5%207.8-4.5'/%3E%3C/g%3E%3Ccircle%20r='2.4'%20fill='%23e3efe7'/%3E%3C/g%3E%3C/pattern%3E%3C/defs%3E%3Crect%20width='720'%20height='720'%20fill='url%28%23p%29'/%3E%3Cpolygon%20points='300,200%20560,160%20620,350%20520,530%20330,500%20250,350'%20fill='%23e7b98f'%20fill-opacity='0.14'%20stroke='%23e7b98f'%20stroke-width='3'%20stroke-dasharray='10%208'%20stroke-linejoin='round'/%3E%3Cg%20fill='%23e7b98f'%3E%3Ccircle%20cx='300'%20cy='200'%20r='8'/%3E%3Ccircle%20cx='560'%20cy='160'%20r='8'/%3E%3Ccircle%20cx='620'%20cy='350'%20r='8'/%3E%3Ccircle%20cx='520'%20cy='530'%20r='8'/%3E%3Ccircle%20cx='330'%20cy='500'%20r='8'/%3E%3Ccircle%20cx='250'%20cy='350'%20r='8'/%3E%3C/g%3E%3Ccircle%20cx='432'%20cy='345'%20r='44'%20fill='%230d3b29'%20stroke='%23e7b98f'%20stroke-width='3'/%3E%3Cpath%20d='M412%20346%20428%20362%20456%20328'%20fill='none'%20stroke='%23ffd48a'%20stroke-width='7'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E");
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding: 14px 20px 44px;
   border-radius: 0 0 28px 28px;
-  // 地籍测量图：地块边界、测量桩、方位角与边长、指北针
+  // 油棕园（俯视）里圈出一块地；往文字那边渐隐，文字永远压在纯色上
   background:
-    url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='520'%20height='340'%20viewBox='0%200%20520%20340'%20fill='none'%20stroke='white'%20stroke-opacity='0.34'%20stroke-width='1.3'%20font-family='ui-monospace,Consolas,monospace'%20font-size='10'%20fill-opacity='0.5'%3E%3Cg%20stroke-dasharray='5%204'%3E%3Cpath%20d='M168%2070%20372%2048%20452%20150%20408%20262%20232%20292%20150%20196Z'/%3E%3C/g%3E%3Cpath%20d='M232%20292%20262%20150%20372%2048'%20stroke-opacity='0.2'/%3E%3Cpath%20d='M262%20150%20452%20150'%20stroke-opacity='0.2'/%3E%3Cg%20fill='white'%20fill-opacity='0.55'%20stroke='none'%3E%3Ccircle%20cx='168'%20cy='70'%20r='4'/%3E%3Ccircle%20cx='372'%20cy='48'%20r='4'/%3E%3Ccircle%20cx='452'%20cy='150'%20r='4'/%3E%3Ccircle%20cx='408'%20cy='262'%20r='4'/%3E%3Ccircle%20cx='232'%20cy='292'%20r='4'/%3E%3Ccircle%20cx='150'%20cy='196'%20r='4'/%3E%3C/g%3E%3Cg%20fill='white'%20fill-opacity='0.5'%20stroke='none'%3E%3Ctext%20x='252'%20y='168'%3ELOT%201052%3C/text%3E%3Ctext%20x='252'%20y='182'%3E4.20%20HA%3C/text%3E%3Ctext%20x='258'%20y='52'%20transform='rotate%28-6%20258%2052%29'%3EN%2081%C2%B012%E2%80%B2%20E%20208.4%20m%3C/text%3E%3Ctext%20x='440'%20y='214'%20transform='rotate%28-65%20440%20214%29'%3ES%2024%C2%B040%E2%80%B2%20E%20119.6%20m%3C/text%3E%3Ctext%20x='296'%20y='294'%20transform='rotate%28-4%20296%20294%29'%3ES%2080%C2%B005%E2%80%B2%20W%20176.2%20m%3C/text%3E%3Ctext%20x='456'%20y='156'%3ET3%3C/text%3E%3Ctext%20x='146'%20y='214'%3ET6%3C/text%3E%3C/g%3E%3Cg%20stroke-opacity='0.6'%3E%3Ccircle%20cx='60'%20cy='60'%20r='16'/%3E%3Cpath%20d='M60%2078V42M60%2042l-5%209M60%2042l5%209'/%3E%3C/g%3E%3Cg%20fill='white'%20fill-opacity='0.5'%20stroke='none'%3E%3Ctext%20x='56'%20y='34'%3EU%3C/text%3E%3C/g%3E%3C/svg%3E") right -150px top -70px / 520px auto no-repeat,
+    linear-gradient(90deg, var(--palm-deep) 0%, var(--palm-deep) 36%, transparent 100%),
+    var(--hero-art) right -40px center / auto 135% no-repeat,
     var(--palm-deep);
   color: var(--on-palm);
 }
@@ -2614,8 +2616,11 @@ a.plot-card:hover {
   gap: 48px;
   padding: 56px;
   border-radius: 0;
-  background-position: right -140px top -40px, center;
-  background-size: 640px auto, auto;
+  background:
+    linear-gradient(0deg, var(--palm-deep) 0%, var(--palm-deep) 30%, transparent 62%),
+    linear-gradient(90deg, var(--palm-deep) 0%, transparent 60%),
+    var(--hero-art) right -60px top -30px / 130% auto no-repeat,
+    var(--palm-deep);
 }
 
 .coop-login__pitch {
@@ -2729,4 +2734,13 @@ a.plot-card:hover {
   .coop-login__main {
     padding: 16px 24px 40px;
   }
+}
+
+// 手机上的首屏矮，画缩小放右上，下半（说明文字）留成纯色
+.login__hero {
+  background:
+    linear-gradient(0deg, var(--palm-deep) 0%, var(--palm-deep) 40%, transparent 78%),
+    linear-gradient(90deg, var(--palm-deep) 0%, var(--palm-deep) 26%, transparent 100%),
+    var(--hero-art) right -30px top -10px / auto 112% no-repeat,
+    var(--palm-deep);
 }
