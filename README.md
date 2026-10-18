@@ -99,8 +99,8 @@ Without a Gemini key the check still completes: documents that cannot be read ar
 ## Tests
 
 ```bash
-pytest                    # 829 back-end tests (rules, API, pipeline, adapters)
-cd web && npm run verify  # read-only check, production build, bundle check, 957 front-end tests
+pytest                    # 831 back-end tests (rules, API, pipeline, adapters)
+cd web && npm run verify  # read-only check, production build, bundle check, 958 front-end tests
 ```
 
 The full journey (sign in, add land with a two-page title, go offline, save, send on reconnect, real check, voice question, delete) was also driven in a real browser against the deployed service.
