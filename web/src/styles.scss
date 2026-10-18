@@ -2744,3 +2744,50 @@ a.plot-card:hover {
     var(--hero-art) right -30px top -10px / auto 112% no-repeat,
     var(--palm-deep);
 }
+
+
+// ---- 问答：打字 + 说话 ----
+.ask {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+
+.ask .field {
+  min-width: 0;
+}
+
+.ask .btn {
+  min-height: 56px;
+  padding: 12px 20px;
+}
+
+.voice__scope {
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.voice__or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+}
+
+.voice__answer--off {
+  border-left-color: var(--muted);
+  background: color-mix(in srgb, var(--muted) 6%, var(--surface));
+}

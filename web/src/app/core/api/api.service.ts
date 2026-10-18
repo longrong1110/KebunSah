@@ -61,6 +61,8 @@ export interface VoiceReply {
   transcript: string;
   answer: string;
   lang: 'ms' | 'en';
+  /** false：问题不在范围内（只回答这块地、EUDR、需要的文件），answer 是固定的拒绝语。旧后端没有这一项，当 true */
+  inScope?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -147,6 +149,11 @@ export class ApiService {
     body: { audio: string; mimeType: 'audio/wav'; lang: 'ms' | 'en' },
   ): Promise<VoiceReply> {
     return this.request<VoiceReply>('POST', `/api/plots/${encodeURIComponent(plotId)}/voice`, body);
+  }
+
+  /** 打字问：最长 300 字。只回答这块地、EUDR、需要的文件；别的问题 inScope 为 false，answer 是拒绝语 */
+  askText(plotId: string, body: { text: string; lang: 'ms' | 'en' }): Promise<VoiceReply> {
+    return this.request<VoiceReply>('POST', `/api/plots/${encodeURIComponent(plotId)}/ask`, body);
   }
 
   /** 删掉整块地（连文件、评估）。演示用的模拟地块抛 403 demo_data_protected，评估在跑抛 409 assessment_in_progress */

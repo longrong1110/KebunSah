@@ -15,13 +15,24 @@ const tick = async () => {
   else await new Promise((resolve) => setTimeout(resolve));
 };
 
-function setup(over: { start?: () => Promise<void>; stop?: () => Promise<Blob>; ask?: () => Promise<unknown>; canSpeak?: boolean } = {}) {
+function setup(
+  over: {
+    start?: () => Promise<void>;
+    stop?: () => Promise<Blob>;
+    ask?: () => Promise<unknown>;
+    askText?: () => Promise<unknown>;
+    canSpeak?: boolean;
+  } = {},
+) {
   const recorder = {
     start: vi.fn(over.start ?? (async () => undefined)),
     stop: vi.fn(over.stop ?? (async () => new Blob(['RIFFwav']))),
     cancel: vi.fn(),
   };
-  const api = { askVoice: vi.fn(over.ask ?? (async () => REPLY)) };
+  const api = {
+    askVoice: vi.fn(over.ask ?? (async () => REPLY)),
+    askText: vi.fn(over.askText ?? (async () => REPLY)),
+  };
   const speaking = signal(false);
   const speech = { speaking, supported: over.canSpeak ?? true, speak: vi.fn(), cancel: vi.fn() };
   TestBed.configureTestingModule({
@@ -62,7 +73,7 @@ describe('VoicePanel：用声音问', () => {
   it('一开始：说明和「Tekan untuk bercakap」，不请求麦克风', async () => {
     const t = setup();
     await settle(t.fixture);
-    expect(t.text('#voice-title')).toContain('Tanya dengan suara');
+    expect(t.text('#voice-title')).toContain('Tanya KebunSah');
     expect(t.text('#mic')).toBe('Tekan untuk bercakap');
     expect(t.recorder.start).not.toHaveBeenCalled();
     expect(t.q('#voice-answer')).toBeNull();
@@ -213,5 +224,125 @@ describe('voiceErrorKey', () => {
     expect(voiceErrorKey(new ApiError(413, 'audio_too_long'))).toBe('unreadable');
     expect(voiceErrorKey(new ApiError(500, 'http_error'))).toBe('failed');
     expect(voiceErrorKey(new Error('x'))).toBe('failed');
+  });
+});
+
+describe('VoicePanel：打字提问，只限这块地、EUDR 和需要的文件', () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => {
+    vi.useRealTimers();
+    localStorage.clear();
+  });
+
+  const type = async (t: ReturnType<typeof setup>, value: string) => {
+    const input = t.q('#question') as HTMLInputElement;
+    input.value = value;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    await settle(t.fixture);
+  };
+
+  it('有输入框、范围说明和「Hantar」；一开始没有输入，发送按钮禁用', async () => {
+    const t = setup();
+    await settle(t.fixture);
+    expect(t.q('#question')?.getAttribute('maxlength')).toBe('300');
+    expect(t.text('#send')).toBe('Hantar');
+    expect((t.q('#send') as HTMLButtonElement).disabled).toBe(true);
+    expect(t.text('.voice__scope')).toContain('hanya menjawab soalan tentang tanah ini, EUDR dan dokumen');
+    expect(t.text('#voice-title')).toContain('Tanya KebunSah');
+  });
+
+  it('只有空格也不能发送', async () => {
+    const t = setup();
+    await type(t, '    ');
+    expect((t.q('#send') as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('打一句话发送：去掉首尾空格后发给后端，显示「Soalan anda」和回答，念出来，输入框清空', async () => {
+    const t = setup({ askText: async () => ({ ...REPLY, transcript: 'Bila EUDR bermula?' }) });
+    await type(t, '  Bila EUDR bermula?  ');
+    expect((t.q('#send') as HTMLButtonElement).disabled).toBe(false);
+    await t.click('#send');
+    expect(t.api.askText).toHaveBeenCalledWith('p1', { text: 'Bila EUDR bermula?', lang: 'ms' });
+    expect(t.api.askVoice).not.toHaveBeenCalled();
+    expect(t.text('.voice__said')).toContain('Soalan anda');
+    expect(t.text('.voice__said')).toContain('Bila EUDR bermula?');
+    expect(t.text('#voice-text')).toBe('Keluasan tidak sepadan dengan geran.');
+    expect(t.speech.speak).toHaveBeenCalledWith('Keluasan tidak sepadan dengan geran.', 'ms');
+    expect((t.q('#question') as HTMLInputElement).value).toBe('');
+  });
+
+  it('回车也能发送（表单提交）', async () => {
+    const t = setup();
+    await type(t, 'Kenapa kuning?');
+    (t.q('form.ask') as HTMLFormElement).dispatchEvent(new Event('submit', { cancelable: true }));
+    for (let i = 0; i < 4; i++) await new Promise((r) => setTimeout(r));
+    await settle(t.fixture);
+    expect(t.api.askText).toHaveBeenCalledTimes(1);
+  });
+
+  it('英语界面：用英语问', async () => {
+    const t = setup();
+    t.i18n.set('en');
+    await type(t, 'When does EUDR start?');
+    await t.click('#send');
+    expect(t.api.askText).toHaveBeenCalledWith('p1', { text: 'When does EUDR start?', lang: 'en' });
+    expect(t.text('#send')).toBe('Send');
+    expect(t.text('.voice__said')).toContain('Your question');
+  });
+
+  it('范围外的问题：显示固定的拒绝语，标题是「Di luar skop」，灰色样式，不念、没有「Dengar」和 AI 提示', async () => {
+    const refusal = 'Maaf, saya hanya boleh menjawab soalan tentang semakan tanah ini.';
+    const t = setup({ askText: async () => ({ transcript: 'tulis puisi', answer: refusal, lang: 'ms', inScope: false }) });
+    await type(t, 'tulis puisi');
+    await t.click('#send');
+    expect(t.text('#voice-text')).toBe(refusal);
+    expect(t.text('.voice__title')).toBe('Di luar skop');
+    expect(t.q('#voice-answer')?.classList.contains('voice__answer--off')).toBe(true);
+    expect(t.speech.speak).not.toHaveBeenCalled();
+    expect(t.q('#listen')).toBeNull();
+    expect(t.q('#voice-answer .hint')).toBeNull();
+  });
+
+  it('旧后端没有 inScope 字段：当成范围内', async () => {
+    const t = setup({ askText: async () => ({ transcript: 'x', answer: 'jawapan', lang: 'ms' }) });
+    await type(t, 'x');
+    await t.click('#send');
+    expect(t.text('.voice__title')).toBe('Jawapan');
+    expect(t.speech.speak).toHaveBeenCalled();
+  });
+
+  it('发送中：输入框和按钮禁用；失败：人话说明，输入保留，可以再发', async () => {
+    let fail!: (e: unknown) => void;
+    const t = setup({ askText: () => new Promise((_, reject) => (fail = reject)) });
+    await type(t, 'Kenapa kuning?');
+    await t.click('#send');
+    expect((t.q('#question') as HTMLInputElement).disabled).toBe(true);
+    expect((t.q('#send') as HTMLButtonElement).disabled).toBe(true);
+    expect(t.text('#voice-status')).toBe('Sedang mendengar dan menjawab…');
+    fail(new ApiError(0, 'network'));
+    for (let i = 0; i < 3; i++) await new Promise((r) => setTimeout(r));
+    await settle(t.fixture);
+    expect(t.text('#voice-error')).toContain('Tiada sambungan');
+    expect((t.q('#question') as HTMLInputElement).value).toBe('Kenapa kuning?');
+    expect((t.q('#send') as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('后端说还没配置：说明「belum tersedia」', async () => {
+    const t = setup({
+      askText: async () => {
+        throw new ApiError(503, 'voice_unavailable');
+      },
+    });
+    await type(t, 'hi');
+    await t.click('#send');
+    expect(t.text('#voice-error')).toContain('belum tersedia');
+  });
+
+  it('录音中不能打字发送', async () => {
+    vi.useFakeTimers();
+    const t = setup();
+    await t.click('#mic');
+    expect((t.q('#question') as HTMLInputElement).disabled).toBe(true);
+    expect((t.q('#send') as HTMLButtonElement).disabled).toBe(true);
   });
 });

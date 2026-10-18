@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, signal } from '@angular/core';
 import { ApiError, ApiService, type VoiceReply } from '../../core/api/api.service';
 import { blobToBase64 } from '../../core/audio/wav';
 import { SpeechService } from '../../core/audio/speech';
@@ -7,6 +7,9 @@ import { I18nService } from '../../core/i18n/i18n.service';
 
 type Phase = 'idle' | 'recording' | 'sending' | 'answered';
 export type VoiceErrorKey = 'unsupported' | 'denied' | 'tooShort' | 'unreadable' | 'network' | 'unavailable' | 'failed';
+
+/** 打字问题的最大长度（后端也是 300） */
+export const MAX_QUESTION = 300;
 
 export function voiceErrorKey(err: unknown): VoiceErrorKey {
   if (err instanceof VoiceRecordError) return err.key;
@@ -18,18 +21,40 @@ export function voiceErrorKey(err: unknown): VoiceErrorKey {
   return 'failed';
 }
 
-// 结果页的「Tanya dengan suara」：园主对着手机问一句（马来语或英语），Gemini 直接听音频，
-// 只按这块地的检查结果回答，回答由手机念出来。读字吃力的年长园主也能用。
-// 点一下开始录、再点一下停；最长 MAX_RECORD_S 秒自动停。麦克风只在点了之后才请求权限。
+// 结果页的「Tanya KebunSah」：打字或说话都行，问一句关于这块地、EUDR 规定或需要的文件的话。
+// Gemini 只回答这个范围里的问题，范围外的（闲聊、写代码、政治、价格……）一律得到固定的拒绝语（后端换的，不是模型写的）。
+// 说话：点一下开始录、再点一下停，最长 MAX_RECORD_S 秒自动停，麦克风只在点了之后才请求权限；回答由手机念出来。
 @Component({
   selector: 'app-voice-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="voice" aria-labelledby="voice-title">
       <h2 id="voice-title" class="section-title">
-        <span class="ic ic-mic" aria-hidden="true"></span> {{ t().voice.title }}
+        <span class="ic ic-note" aria-hidden="true"></span> {{ t().voice.title }}
       </h2>
       <p class="hint voice__hint">{{ t().voice.hint }}</p>
+
+      <form class="ask" (submit)="sendText($event)">
+        <label for="question" class="sr-only">{{ t().voice.textLabel }}</label>
+        <input
+          id="question"
+          class="field field--text"
+          type="text"
+          enterkeyhint="send"
+          autocomplete="off"
+          [maxLength]="maxQuestion"
+          [placeholder]="t().voice.textPlaceholder"
+          [value]="question()"
+          [disabled]="phase() === 'recording' || phase() === 'sending'"
+          (input)="question.set($any($event.target).value)"
+        />
+        <button type="submit" class="btn" id="send" [disabled]="!canSend()">
+          {{ t().voice.send }}
+        </button>
+      </form>
+      <p class="hint voice__scope">{{ t().voice.scope }}</p>
+
+      <p class="voice__or" aria-hidden="true"><span>{{ t().voice.or }}</span></p>
 
       <button
         type="button"
@@ -76,19 +101,23 @@ export function voiceErrorKey(err: unknown): VoiceErrorKey {
       }
 
       @if (reply(); as r) {
-        <div id="voice-answer" class="voice__answer">
+        <div id="voice-answer" class="voice__answer" [class.voice__answer--off]="r.inScope === false">
           @if (r.transcript) {
-            <p class="voice__said">{{ t().voice.youSaid }}: “{{ r.transcript }}”</p>
+            <p class="voice__said">
+              {{ lastKind() === 'text' ? t().voice.youTyped : t().voice.youSaid }}: “{{ r.transcript }}”
+            </p>
           }
-          <h3 class="voice__title">{{ t().voice.answerTitle }}</h3>
+          <h3 class="voice__title">{{ r.inScope === false ? t().voice.outOfScope : t().voice.answerTitle }}</h3>
           <p id="voice-text" class="voice__text">{{ r.answer }}</p>
-          @if (canSpeak) {
+          @if (canSpeak && r.inScope !== false) {
             <button type="button" class="btn btn-quiet" id="listen" (click)="listen()">
               <span class="ic ic-speaker" aria-hidden="true"></span>
               {{ speaking() ? t().voice.stopListening : t().voice.listen }}
             </button>
           }
-          <p class="hint">{{ t().voice.note }}</p>
+          @if (r.inScope !== false) {
+            <p class="hint">{{ t().voice.note }}</p>
+          }
         </div>
       }
     </section>
@@ -102,13 +131,20 @@ export class VoicePanel {
   private readonly speech = inject(SpeechService);
   private readonly i18n = inject(I18nService);
   protected readonly t = this.i18n.t;
+  protected readonly maxQuestion = MAX_QUESTION;
 
   protected readonly phase = signal<Phase>('idle');
   protected readonly elapsed = signal(0);
   protected readonly error = signal<VoiceErrorKey | null>(null);
   protected readonly reply = signal<VoiceReply | null>(null);
+  protected readonly question = signal('');
+  /** 这个回答是打字问的还是说话问的（决定显示「Soalan anda」还是「Anda kata」） */
+  protected readonly lastKind = signal<'text' | 'voice'>('voice');
   protected readonly speaking = this.speech.speaking;
   protected readonly canSpeak = this.speech.supported;
+  protected readonly canSend = computed(
+    () => this.question().trim().length > 0 && this.phase() !== 'recording' && this.phase() !== 'sending',
+  );
 
   private timer: ReturnType<typeof setInterval> | null = null;
 
@@ -119,6 +155,29 @@ export class VoicePanel {
       this.speech.cancel();
     });
   }
+
+  // ---- 打字 ----
+
+  /** 回车或点「Hantar」：把这句话发给后端 */
+  protected async sendText(event: Event): Promise<void> {
+    event.preventDefault();
+    if (!this.canSend()) return;
+    const text = this.question().trim().slice(0, MAX_QUESTION);
+    this.error.set(null);
+    this.speech.cancel();
+    this.phase.set('sending');
+    const lang = this.i18n.lang();
+    try {
+      const answer = await this.api.askText(this.plotId(), { text, lang });
+      this.show(answer, 'text', lang);
+      this.question.set('');
+    } catch (err) {
+      this.error.set(voiceErrorKey(err));
+      this.phase.set(this.reply() ? 'answered' : 'idle');
+    }
+  }
+
+  // ---- 说话 ----
 
   protected toggle(): void {
     const phase = this.phase();
@@ -156,13 +215,19 @@ export class VoicePanel {
         mimeType: 'audio/wav',
         lang,
       });
-      this.reply.set(answer);
-      this.phase.set('answered');
-      this.speech.speak(answer.answer, lang);
+      this.show(answer, 'voice', lang);
     } catch (err) {
       this.error.set(voiceErrorKey(err));
       this.phase.set(this.reply() ? 'answered' : 'idle');
     }
+  }
+
+  /** 显示回答；在范围内的才念出来（范围外只是一句拒绝语，不必念） */
+  private show(answer: VoiceReply, kind: 'text' | 'voice', lang: 'ms' | 'en'): void {
+    this.reply.set(answer);
+    this.lastKind.set(kind);
+    this.phase.set('answered');
+    if (answer.inScope !== false) this.speech.speak(answer.answer, lang);
   }
 
   protected listen(): void {

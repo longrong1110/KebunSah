@@ -198,7 +198,8 @@ describe('ResultPage（屏 9）', () => {
       expect(t.q('#gap-list')).toBeNull();
       expect(t.text()).not.toContain('Perlu dibuat');
       expect(t.text()).not.toMatch(/0 perkara/);
-      expect(t.text()).not.toMatch(/EUDR|patuh|compliant/i);
+      expect(t.q('#banner')?.textContent).not.toMatch(/EUDR|patuh|compliant/i); // 横幅不下「合规」的结论
+      expect(t.text()).not.toMatch(/patuh|compliant/i); // 整页也不说「patuh」
     });
 
     it('red：Perlu tindakan，不用「gagal」', async () => {
