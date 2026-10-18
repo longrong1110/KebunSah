@@ -165,7 +165,7 @@ def _run(deps: Deps, plot_id: str, path: str, run: _Run) -> None:
         def screen() -> tuple[ForestResult, str, int]:
             t = time.monotonic()
             try:
-                result, note = deps.forest.screen(plot.get("centroidLat"), plot.get("centroidLng"), ring), "ok"
+                result, note = deps.forest.screen(plot.get("centroidLat"), plot.get("centroidLng"), ring, plot_ha), "ok"
             except Exception as exc:
                 log.warning("forest screening failed", extra={"error": str(exc)})
                 result, note = UnavailableForest().screen(0, 0, None), f"degraded: {type(exc).__name__}: {exc}"[:200]
@@ -188,6 +188,8 @@ def _run(deps: Deps, plot_id: str, path: str, run: _Run) -> None:
     forest_ok = forest.risk != "unknown"
     if not forest_ok and status == "green":
         status = "needs_review"  # 森林没查成，不能当作没有毁林
+    elif forest.risk in {"medium", "high"} and status in {"green", "yellow"}:
+        status = "needs_review"  # 2020 年后有森林损失的迹象：交给人复核（红色保持红色）
     run.finish("forest", time.monotonic(), "ok" if forest_ok else "degraded",
                f"risk={forest.risk}, dataset={forest.dataset}" + ("" if forest_note == "ok" else f" ({forest_note})"),
                ms=forest_ms)

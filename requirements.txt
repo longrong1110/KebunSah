@@ -7,3 +7,4 @@ pydantic>=2.7,<3
 firebase-admin>=6.5,<8
 google-cloud-storage>=2.18,<4
 google-genai>=1.0,<3
+earthengine-api>=1.0,<2

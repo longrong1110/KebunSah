@@ -47,6 +47,17 @@ def load_dotenv(path: str | Path = ".env") -> None:
         os.environ.setdefault(key.strip(), value.strip().strip("\"'"))
 
 
+def _forest(settings):
+    """森林初筛：FOREST_BACKEND=earthengine 才真的查；否则固定的演示数据（界面会如实写「演示数据」）"""
+    from worker.forest import PrecomputedForest
+
+    if settings.forest_backend == "earthengine":
+        from worker.earthengine import EarthEngineForest
+
+        return EarthEngineForest(project=settings.project_id)
+    return PrecomputedForest()
+
+
 def _models(spec: str) -> list[str]:
     """GEMINI_*_MODEL 可以写成逗号分隔的一串备选模型"""
     return [m.strip() for m in spec.split(",") if m.strip()]
@@ -89,5 +100,5 @@ def create_app_from_env() -> FastAPI:
     deps = Deps(
         settings=settings, store=store, blobs=blobs, verifier=FirebaseTokenVerifier(settings.project_id),
         extractor=GeminiExtractor(settings.gemini_api_key, _models(settings.gemini_extract_model), settings.gemini_timeout_s),
-        explainer=explainer, forest=PrecomputedForest(), params=_load_params(store))
+        explainer=explainer, forest=_forest(settings), params=_load_params(store))
     return create_app(deps)

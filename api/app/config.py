@@ -25,6 +25,7 @@ class Settings:
     cors_origins: tuple[str, ...] = ("http://localhost:4200", "http://127.0.0.1:4200")
     stale_after_s: int = 600  # 超过这么久没结束的 queued / running 当残留
     dev_endpoints: bool = True  # PUT /dev/blobs/*，只在 local 模式开
+    forest_backend: str = "demo"  # demo = 固定的演示数据；earthengine = 真的查 Google Earth Engine
     assess_as_of: str | None = None  # 演示时钉死评估日期（YYYY-MM-DD）；默认取当天（马来西亚时间）
 
     @classmethod
@@ -44,5 +45,6 @@ class Settings:
             cors_origins=tuple(o.strip() for o in origins.split(",") if o.strip()) if origins else cls.cors_origins,
             stale_after_s=int(os.environ.get("ASSESS_STALE_S", "600")),
             dev_endpoints=_bool("DEV_ENDPOINTS", mode == "local"),
+            forest_backend=os.environ.get("FOREST_BACKEND", "demo").strip().lower(),
             assess_as_of=os.environ.get("ASSESS_AS_OF") or None,
         )

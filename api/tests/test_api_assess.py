@@ -276,3 +276,50 @@ def test_nothing_the_pipeline_stores_contains_chinese(world, store, script):
     assess(client, pid)
     offenders = [(p, v) for path, doc in store._docs.items() for p, v in _cjk_in(doc, path)]
     assert offenders == [], offenders[:5]
+
+
+class _FixedForest:
+    def __init__(self, risk, loss, cover=100.0):
+        from worker.forest import ForestResult
+
+        self.result = ForestResult(cover_2020_pct=cover, loss_after_2020_ha=loss, risk=risk, dataset="JRC/GFC2020/V4 + hansen")
+        self.seen = None
+
+    def screen(self, lat, lng, ring, area_ha=None):
+        self.seen = (lat, lng, ring, area_ha)
+        return self.result
+
+
+def test_the_plot_geometry_and_area_reach_the_forest_screen(world, store):
+    forest = _FixedForest("low", 0.0)
+    client, _, _ = world(forest=forest)
+    pid = make_plot(client)
+    assess(client, pid)
+    lat, lng, ring, area = forest.seen
+    assert ring and ring[0] == ring[-1] and 4.1 < area < 4.3 and 4.3 < lat < 4.32 and 101.14 < lng < 101.16
+
+
+@pytest.mark.parametrize("risk,loss", [("medium", 0.05), ("high", 3.56)])
+def test_forest_loss_after_2020_sends_a_green_plot_to_a_person(world, store, risk, loss):
+    client, _, _ = world(forest=_FixedForest(risk, loss))
+    pid = make_plot(client)
+    assess(client, pid)
+    _, a = latest(store, pid)
+    assert a["result"] == "needs_review" and store.get(f"plots/{pid}")["status"] == "needs_review"
+    assert a["forestRisk"] == risk and a["forestLossAfter2020Ha"] == loss and a["forestDataset"] == "JRC/GFC2020/V4 + hansen"
+
+
+def test_forest_loss_does_not_soften_a_red_plot(world, store):
+    bad = {**GOOD, "land_title": {**GOOD["land_title"], "land_title.area_value": ("2.0", 0.95)}}
+    client, _, _ = world(script=bad, forest=_FixedForest("high", 3.0))
+    pid = make_plot(client)
+    assess(client, pid)
+    assert latest(store, pid)[1]["result"] == "red"
+
+
+def test_clean_real_forest_data_keeps_the_result(world, store):
+    client, _, _ = world(forest=_FixedForest("low", 0.0, cover=0.0))
+    pid = make_plot(client)
+    assess(client, pid)
+    _, a = latest(store, pid)
+    assert a["result"] == "green" and a["forestRisk"] == "low" and a["forestCover2020Pct"] == 0.0
